@@ -39,8 +39,7 @@ set( TUT 013 )
 project( armc-${TUT}-tutorial C ASM )
 
 
-
-# We had to adjust the CMAKE_C_FLAGS variable in the toolchain file to make sure
+# We had to adjust the CMAKE_C_FLAGS variable on the command line to make sure
 # the compiler would work with CMake's simple program compilation test. So unset
 # it explicitly before re-setting it correctly for our system
 unset( CMAKE_C_FLAGS )
@@ -55,7 +54,11 @@ add_executable( armc-${TUT}
     armc-${TUT}-cstubs.c
     armc-${TUT}-start.S
     rpi-interrupts.c
-    rpi-systimer.c )
+    rpi-armtimer.c
+    rpi-armtimer.h
+    rpi-armtimer.h
+    rpi-systimer.c
+    rpi-systimer.h )
 
 add_custom_command(
     TARGET armc-${TUT} POST_BUILD

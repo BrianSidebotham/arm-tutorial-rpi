@@ -17,21 +17,57 @@ void interrupt_vector(void) __attribute__((interrupt("IRQ")));
 void fast_interrupt_vector(void) __attribute__((interrupt("FIQ")));
 
 
-void reset_vector(void) { }
-void undefined_instruction_vector(void) { }
-void supervisor_call_vector(void) { }
-void prefetch_abort_vector(void) { }
-void data_abort_vector(void) { }
-void interrupt_vector(void) { }
-void fast_interrupt_vector(void) { }
+void reset_vector(void)
+{
+
+}
+
+void undefined_instruction_vector(void)
+{
+
+}
+
+
+void supervisor_call_vector(void)
+{
+
+}
+
+
+void prefetch_abort_vector(void)
+{
+
+}
+
+
+void data_abort_vector(void)
+{
+
+}
+
+
+void interrupt_vector(void)
+{
+
+}
+
+
+void fast_interrupt_vector(void)
+{
+
+}
+
 
 void pre_main_init_exceptions(void)
 {
-    uint32_t* tp = &_exception_table;
-    uint32_t* exceptions = (void*)0;
-    int i;
+    /* Set the interrupt base register */
+    asm volatile( "mcr p15, 0, %[addr], c12, c0, 0" : : [addr] "r" (&_exception_table) );
 
-    /* Copy all 7 exception vectors, AND the UNUSED vector! */
-    for( i=0; i<8; i++ )
-        exceptions[i] = tp[i];
+    /* Enable interrupts! */
+    asm volatile( "cpsie i" );
+
+    /* Enable the timer interrupt IRQ */
+    rpiIRQController->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
+
+    /* Setup the system timer interrupt */
 }

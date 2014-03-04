@@ -6,7 +6,7 @@
 
 #include "rpi-base.h"
 
-#define RPI_SYSTIMER_BASE       0x20003000
+#define RPI_SYSTIMER_BASE       0x2000B200
 
 
 typedef struct {
