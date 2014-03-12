@@ -38,10 +38,6 @@
 #include "rpi-gpio.h"
 #include "rpi-systimer.h"
 
-/** GPIO Register set */
-volatile unsigned int* gpio = (unsigned int*)GPIO_BASE;
-
-
 /** Main function - we'll never return from here */
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
@@ -51,7 +47,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
     /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
        peripheral register to enable GPIO16 as an output */
-    gpio[GPIO_GPFSEL1] |= (1 << 18);
+    RPI_GetGpio()->GPFSEL1 |= (1 << 18);
 
     /* Never exit as there is no OS to exit to! */
     while(1)
@@ -59,7 +55,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
         if( brightness > 0 )
         {
             /* Set the GPIO16 output high ( Turn OK LED off )*/
-            gpio[GPIO_GPSET0] = (1 << 16);
+            RPI_GetGpio()->GPSET0 = (1 << 16);
 
             /* Wait half a second */
             RPI_WaitMicroSeconds( brightness );
@@ -68,7 +64,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
         if( ( 255 - brightness ) >= 0 )
         {
             /* Set the GPIO16 output low ( Turn OK LED on )*/
-            gpio[GPIO_GPCLR0] = (1 << 16);
+            RPI_GetGpio()->GPCLR0 = (1 << 16);
 
             /* Wait half a second */
             RPI_WaitMicroSeconds( 255 - brightness );

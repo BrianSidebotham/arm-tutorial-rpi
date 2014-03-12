@@ -53,10 +53,13 @@ add_executable( armc-${TUT}
     armc-${TUT}-cstartup.c
     armc-${TUT}-cstubs.c
     armc-${TUT}-start.S
-    rpi-interrupts.c
     rpi-armtimer.c
     rpi-armtimer.h
-    rpi-armtimer.h
+    rpi-base.h
+    rpi-gpio.c
+    rpi-gpio.h
+    rpi-interrupts.c
+    rpi-interrupts.h
     rpi-systimer.c
     rpi-systimer.h )
 
