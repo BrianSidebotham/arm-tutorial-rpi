@@ -43,6 +43,7 @@
 /** Main function - we'll never return from here */
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
+    int lit = 0;
 
     /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
        peripheral register to enable GPIO16 as an output */
@@ -68,6 +69,19 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     /* Never exit as there is no OS to exit to! */
     while(1)
     {
-        /* Nothing to do - everything happens in the timer interupt */
+        /*
+        if( RPI_GetArmTimer()->RAWIRQ && lit )
+        {
+            RPI_GetArmTimer()->IRQClear = 1;
+            RPI_GetGpio()->GPSET0 = (1 << 16);
+            lit = 0;
+        }
+        else if( RPI_GetArmTimer()->RAWIRQ && !lit )
+        {
+            RPI_GetArmTimer()->IRQClear = 1;
+            RPI_GetGpio()->GPCLR0 = (1 << 16);
+            lit = 1;
+        }
+        */
     }
 }

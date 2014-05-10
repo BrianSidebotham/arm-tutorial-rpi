@@ -7,26 +7,6 @@
 #include "rpi-gpio.h"
 #include "rpi-interrupts.h"
 
-static bool lit = false;
-
-/* The exception table is a set of branch instructions which branch to the
-   following interrupt service routine implementations. The exception table
-   is therefore in an assembler file, and referenced via an external
-   declaration here */
-__attribute__ ((naked, aligned(32))) static void _exception_table(void)
-{
-    asm volatile(
-        "b   reset_vector\n"
-        "b   undefined_instruction_vector\n"
-        "b   supervisor_call_vector\n"
-        "b   prefetch_abort_vector\n"
-        "b   data_abort_vector\n"
-        "b   reset_vector\n"
-        "b   interrupt_vector\n"
-        "b   fast_interrupt_vector\n"
-    );
-}
-
 /** @brief The BCM2835 Interupt controller peripheral at it's base address */
 static rpi_irq_controller_t* rpiIRQController =
         (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
@@ -74,7 +54,7 @@ void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
     The CPU will start executing this function. Just trap here as a debug
     solution.
 */
-void __attribute__((interrupt("SWI"))) supervisor_call_vector(void)
+void __attribute__((interrupt("SWI"))) software_interrupt_vector(void)
 {
     while( 1 )
     {
@@ -117,21 +97,23 @@ void __attribute__((interrupt("ABORT"))) data_abort_vector(void)
 */
 void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 {
+    static int lit = 0;
+
     /* Clear the ARM Timer interrupt - it's the only interrupt we have
        enabled, so we want don't have to work out which interrupt source
        caused us to interrupt */
-    RPI_GetArmTimer()->IRQClear = 0;
+    RPI_GetArmTimer()->IRQClear = 1;
 
     /* Flip the LED */
     if( lit )
     {
         RPI_GetGpio()->GPSET0 = (1 << 16);
-        lit = false;
+        lit = 0;
     }
     else
     {
         RPI_GetGpio()->GPCLR0 = (1 << 16);
-        lit = true;
+        lit = 1;
     }
 }
 
@@ -164,11 +146,4 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 void __attribute__((interrupt("FIQ"))) fast_interrupt_vector(void)
 {
 
-}
-
-
-void pre_main_init_exceptions(void)
-{
-    /* Set the interrupt base register */
-    _set_interrupt_vector_base( &_exception_table );
 }
