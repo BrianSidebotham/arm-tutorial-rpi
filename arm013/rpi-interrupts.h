@@ -67,4 +67,7 @@ typedef struct {
     volatile uint32_t Disable_Basic_IRQs;
     } rpi_irq_controller_t;
 
+
+extern rpi_irq_controller_t* RPI_GetIrqController( void );
+
 #endif

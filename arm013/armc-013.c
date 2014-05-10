@@ -36,61 +36,38 @@
 #include <stdlib.h>
 
 #include "rpi-gpio.h"
+#include "rpi-armtimer.h"
 #include "rpi-systimer.h"
+#include "rpi-interrupts.h"
 
 /** Main function - we'll never return from here */
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
-    int brightness = 255;
-    int speed = 16;
-    int up = 0;
 
     /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
        peripheral register to enable GPIO16 as an output */
     RPI_GetGpio()->GPFSEL1 |= (1 << 18);
 
+    /* Enable the timer interrupt IRQ */
+    RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
+
+    /* Setup the system timer interrupt */
+    /* Timer frequency = Clk/256 * 0x400 */
+    RPI_GetArmTimer()->Load = 0x400;
+
+    /* Setup the ARM Timer */
+    RPI_GetArmTimer()->Control =
+            RPI_ARMTIMER_CTRL_23BIT |
+            RPI_ARMTIMER_CTRL_ENABLE |
+            RPI_ARMTIMER_CTRL_INT_ENABLE |
+            RPI_ARMTIMER_CTRL_PRESCALE_256;
+
+    /* Enable interrupts! */
+    _enable_interrupts();
+
     /* Never exit as there is no OS to exit to! */
     while(1)
     {
-        if( brightness > 0 )
-        {
-            /* Set the GPIO16 output high ( Turn OK LED off )*/
-            RPI_GetGpio()->GPSET0 = (1 << 16);
-
-            /* Wait half a second */
-            RPI_WaitMicroSeconds( brightness );
-        }
-
-        if( ( 255 - brightness ) >= 0 )
-        {
-            /* Set the GPIO16 output low ( Turn OK LED on )*/
-            RPI_GetGpio()->GPCLR0 = (1 << 16);
-
-            /* Wait half a second */
-            RPI_WaitMicroSeconds( 255 - brightness );
-        }
-
-        speed--;
-        if( speed == 0 )
-        {
-            speed = 16;
-
-            if( up )
-            {
-                if( brightness < 255 )
-                    brightness++;
-
-                if( brightness == 255 )
-                    up = 0;
-            }
-            else
-            {
-                if( brightness )
-                    brightness--;
-
-                if( brightness == 0 )
-                    up = 1;
-            }
-        }
+        /* Nothing to do - everything happens in the timer interupt */
     }
 }

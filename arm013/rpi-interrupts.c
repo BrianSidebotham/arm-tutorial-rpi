@@ -1,19 +1,45 @@
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "rpi-armtimer.h"
 #include "rpi-base.h"
+#include "rpi-gpio.h"
 #include "rpi-interrupts.h"
+
+static bool lit = false;
 
 /* The exception table is a set of branch instructions which branch to the
    following interrupt service routine implementations. The exception table
    is therefore in an assembler file, and referenced via an external
    declaration here */
-extern uint32_t _exception_table;
+__attribute__ ((naked, aligned(32))) static void _exception_table(void)
+{
+    asm volatile(
+        "b   reset_vector\n"
+        "b   undefined_instruction_vector\n"
+        "b   supervisor_call_vector\n"
+        "b   prefetch_abort_vector\n"
+        "b   data_abort_vector\n"
+        "b   reset_vector\n"
+        "b   interrupt_vector\n"
+        "b   fast_interrupt_vector\n"
+    );
+}
 
 /** @brief The BCM2835 Interupt controller peripheral at it's base address */
-rpi_irq_controller_t* rpiIRQController =
+static rpi_irq_controller_t* rpiIRQController =
         (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
+
+
+/**
+    @brief Return the IRQ Controller register set
+*/
+rpi_irq_controller_t* RPI_GetIrqController( void )
+{
+    return rpiIRQController;
+}
+
 
 /**
     @brief The Reset vector interrupt handler
@@ -95,6 +121,18 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
        enabled, so we want don't have to work out which interrupt source
        caused us to interrupt */
     RPI_GetArmTimer()->IRQClear = 0;
+
+    /* Flip the LED */
+    if( lit )
+    {
+        RPI_GetGpio()->GPSET0 = (1 << 16);
+        lit = false;
+    }
+    else
+    {
+        RPI_GetGpio()->GPCLR0 = (1 << 16);
+        lit = true;
+    }
 }
 
 
@@ -133,21 +171,4 @@ void pre_main_init_exceptions(void)
 {
     /* Set the interrupt base register */
     _set_interrupt_vector_base( &_exception_table );
-
-    /* Enable the timer interrupt IRQ */
-    rpiIRQController->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
-
-    /* Setup the system timer interrupt */
-    /* Timer frequency = Clk/256 * 0x400 */
-    RPI_GetArmTimer()->Load = 0x400;
-
-    /* Setup the ARM Timer */
-    RPI_GetArmTimer()->Control =
-            RPI_ARMTIMER_CTRL_23BIT |
-            RPI_ARMTIMER_CTRL_ENABLE |
-            RPI_ARMTIMER_CTRL_INT_ENABLE |
-            RPI_ARMTIMER_CTRL_PRESCALE_256;
-
-    /* Enable interrupts! */
-    _enable_interrupts();
 }
