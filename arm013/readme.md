@@ -57,7 +57,7 @@ There is basically a mode per exception. As was mentioned previously we start at
 
 The next section of the Architecture Reference Manual describes the registers available. This is again, another important section. Look at Figure A2-1 (Register Organization) and you'll see something interesting...
 
-(Insert Image!)
+![ARMv5 Figure A2-1](https://github.com/BrianSidebotham/arm-tutorial-rpi/raw/master/arm013/images/armv5-figure-a2-1-register-organization.png)
 
 As seen by the small icon and note at the bottom of the table, some of the registers are mode-specific. This can be useful, for example in the Fast Interrupt exception a lot of registers have been replaced by mode-specific registers. This means that we can use these registers without fear of altering the behaviour of code that was operating in User or Supervisor mode before the Fast Interrupt Exception occurred.
 
