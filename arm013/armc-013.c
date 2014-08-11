@@ -29,7 +29,8 @@
 */
 
 /*
-    PWM Example using the System Timer for brightness control of the OK LED
+    Interrupts example, show how to use the interrupt controller and to load
+    the vector table at runtime.
 */
 
 #include <string.h>
@@ -69,19 +70,6 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     /* Never exit as there is no OS to exit to! */
     while(1)
     {
-        /*
-        if( RPI_GetArmTimer()->RAWIRQ && lit )
-        {
-            RPI_GetArmTimer()->IRQClear = 1;
-            RPI_GetGpio()->GPSET0 = (1 << 16);
-            lit = 0;
-        }
-        else if( RPI_GetArmTimer()->RAWIRQ && !lit )
-        {
-            RPI_GetArmTimer()->IRQClear = 1;
-            RPI_GetGpio()->GPCLR0 = (1 << 16);
-            lit = 1;
-        }
-        */
+
     }
 }
