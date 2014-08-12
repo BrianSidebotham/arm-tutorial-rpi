@@ -8,8 +8,9 @@ code is at http://www.valvers.com/embedded-linux/raspberry-pi
 You can build on linux, windows, or MAC - all you need is the arm-none-eabi
 toolchain.
 
-For all plaforms, you can get the required toolchain used in this tutorial from
-the https://launchpad.net/gcc-arm-embedded project
+For all platforms, you can get the required toolchain used in this tutorial
+from the https://launchpad.net/gcc-arm-embedded project - I recommend
+getting the 4.7 toolchain because I've had problems with the 4.9 toolchain.
 
 Have fun, and remember to experiment!
 

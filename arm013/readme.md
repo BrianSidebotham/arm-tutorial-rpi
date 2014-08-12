@@ -21,6 +21,8 @@ The code for the tutorial is hosted on [https://github.com/](GitHub), [https://g
 
 Some of the code that's specific to the tutorial and differs from the last tutorial will be discussed here.
 
+This tutorial only uses the armc-013 folder.
+
 ## Interrupts
 
 Let's get straight what an interrupt is. In terms of the ARM processor we're using an interrupt is simply a type of exception. An exception in the processor causes the PC (Program Counter) to be set to a pre-defined value. This pre-defined value will cause code execution to be interrupted and for code execution to run an exception handler put the pre-defined position. At the end of this exception handler control is generally returned to the previously executing code. Exception handlers should be quick and concise as they can occur frequently and obviously take time away from the main code.
@@ -79,9 +81,13 @@ For gcc and ld we can look at the gcc manual on function attributes relating to 
 
 It reads:
 
-    Use this attribute on the ARC, ARM, AVR, CR16, ... ports to indicate that the specified function is an interrupt handler. The compiler generates function entry and exit sequences suitable for use in an interrupt handler when this attribute is present.
+    Use this attribute on the ARC, ARM, AVR, CR16, ... ports to indicate that
+    the specified function is an interrupt handler. The compiler generates
+    function entry and exit sequences suitable for use in an interrupt handler
+    when this attribute is present.
 
-    Note, for the ARM, you can specify the kind of interrupt to be handled by adding an optional parameter to the interrupt attribute like this:
+    NOTE, for the ARM, you can specify the kind of interrupt to be handled by
+    adding an optional parameter to the interrupt attribute like this:
 
         void f () __attribute__ ((interrupt ("IRQ")));
 
@@ -278,6 +284,310 @@ You can go ahead and see that the arm013 tutorial is in fact using this solution
 
 ## The Interrupt Controller
 
-TODO: Finish this section and then hopefully the tutorial is complete!
+So now we have the exception vectors tied to our exception handlers (which are implemented in C) but the processor still doesn't know when to interrupt.
+
+Interrupts on a processor are enabled per interrupt source and then globally enabled and disabled. This way we can select which interrupt sources we're interested in and also whether to allow interrupts or not. Sometimes we want to temporarily disable interrupts to guard a non-atomic memory operation if the same memory is used in an interrupt handler for example.
+
+The Raspberry-Pi ARM has an interrupt controller where we can set up the enable and disable the interrupt sources we're interested in. From the [BCM2835 ARM peripherals datasheet](http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf) we can see section 7 describe the interrupt controller present.
+
+The documentation here is a bit lacking - but see the section that says ARM peripherals interrupts table. These are basically the interrupt sources we have control over.
+
+We're blinking an LED and so we just want to capture the ARM Timer interrupt source. In the tutorial code, we will map a C structure to the address of the interrupt controller to give us access to the registers.
+
+This is how we define the struct for the interrupt controller registers and implement an instance at the base address, again this information is from section 7.5 of the document above:
+
+In rpi-interrupts.h:
+
+    /** @brief See Section 7.5 of the BCM2836 ARM Peripherals documentation, the base
+        address of the controller is actually xxxxB000, but there is a 0x200 offset
+        to the first addressable register for the interrupt controller, so offset the
+        base to the first register */
+    #define RPI_INTERRUPT_CONTROLLER_BASE   0x2000B200
+
+    /** @brief The interrupt controller memory mapped register set */
+    typedef struct {
+        volatile uint32_t IRQ_basic_pending;
+        volatile uint32_t IRQ_pending_1;
+        volatile uint32_t IRQ_pending_2;
+        volatile uint32_t FIQ_control;
+        volatile uint32_t Enable_IRQs_1;
+        volatile uint32_t Enable_IRQs_2;
+        volatile uint32_t Enable_Basic_IRQs;
+        volatile uint32_t Disable_IRQs_1;
+        volatile uint32_t Disable_IRQs_2;
+        volatile uint32_t Disable_Basic_IRQs;
+        } rpi_irq_controller_t;
+
+and in rpi-interrupts.c:
+
+    /** @brief The BCM2835 Interupt controller peripheral at it's base address */
+    static rpi_irq_controller_t* rpiIRQController =
+            (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
+
+
+    /**
+        @brief Return the IRQ Controller register set
+    */
+    rpi_irq_controller_t* RPI_GetIrqController( void )
+    {
+        return rpiIRQController;
+    }
+
+## The ARM Timer Peripheral
+
+The ARM timer is in the Basic interrupt set. So to tell the processor we want to enable interrupts from the ARM Timer peripheral we set the relavent bit in the Basic Interrupt enable register:
+
+Also in rpi-interrupts.h:
+
+    /** @brief Bits in the Enable_Basic_IRQs register to enable various interrupts.
+        See the BCM2835 ARM Peripherals manual, section 7.5 */
+    #define RPI_BASIC_ARM_TIMER_IRQ         (1 << 0)
+    #define RPI_BASIC_ARM_MAILBOX_IRQ       (1 << 1)
+    #define RPI_BASIC_ARM_DOORBELL_0_IRQ    (1 << 2)
+    #define RPI_BASIC_ARM_DOORBELL_1_IRQ    (1 << 3)
+    #define RPI_BASIC_GPU_0_HALTED_IRQ      (1 << 4)
+    #define RPI_BASIC_GPU_1_HALTED_IRQ      (1 << 5)
+    #define RPI_BASIC_ACCESS_ERROR_1_IRQ    (1 << 6)
+    #define RPI_BASIC_ACCESS_ERROR_0_IRQ    (1 << 7)
+
+and in our main C code to enable the ARM Timer IRQ:
+
+    /* Enable the timer interrupt IRQ */
+    RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
+
+The ARM Timer interrupt source is now enabled. However, the processor still needs to have interrupts globally enabled for any interrupt to execute the Interrupt handler, and the ARM Timer peripheral also needs to be enabled and configured to generate the interrupts!
+
+The ARM Timer peripheral is documented in the same [BCM2835 ARM peripherals datasheet](http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf) in section 14.
+
+Again, we map the peripherals register set to a C struct to give us access to the registers:
+
+In rpi-armtimer.h:
+
+    /** @brief See the documentation for the ARM side timer (Section 14 of the
+        BCM2835 Peripherals PDF) */
+    #define RPI_ARMTIMER_BASE               0x2000B400
+
+    /** @brief 0 : 16-bit counters - 1 : 23-bit counter */
+    #define RPI_ARMTIMER_CTRL_23BIT         ( 1 << 1 )
+
+    #define RPI_ARMTIMER_CTRL_PRESCALE_1    ( 0 << 2 )
+    #define RPI_ARMTIMER_CTRL_PRESCALE_16   ( 1 << 2 )
+    #define RPI_ARMTIMER_CTRL_PRESCALE_256  ( 2 << 2 )
+
+    /** @brief 0 : Timer interrupt disabled - 1 : Timer interrupt enabled */
+    #define RPI_ARMTIMER_CTRL_INT_ENABLE    ( 1 << 5 )
+    #define RPI_ARMTIMER_CTRL_INT_DISABLE   ( 0 << 5 )
+
+    /** @brief 0 : Timer disabled - 1 : Timer enabled */
+    #define RPI_ARMTIMER_CTRL_ENABLE        ( 1 << 7 )
+    #define RPI_ARMTIMER_CTRL_DISABLE       ( 0 << 7 )
+
+    /** @brief Section 14.2 of the BCM2835 Peripherals documentation details
+        the register layout for the ARM side timer */
+    typedef struct {
+
+        /** The timer load register sets the time for the timer to count down.
+            This value is loaded into the timer value register after the load
+            register has been written or if the timer-value register has counted
+            down to 0. */
+        volatile uint32_t Load;
+
+        /** This register holds the current timer value and is counted down when
+            the counter is running. It is counted down each timer clock until the
+            value 0 is reached. Then the value register is re-loaded from the
+            timer load register and the interrupt pending bit is set. The timer
+            count down speed is set by the timer pre-divide register. */
+        volatile uint32_t Value;
+
+        /** The standard SP804 timer control register consist of 8 bits but in the
+            BCM implementation there are more control bits for the extra features.
+            Control bits 0-7 are identical to the SP804 bits, albeit some
+            functionality of the SP804 is not implemented. All new control bits
+            start from bit 8 upwards. */
+        volatile uint32_t Control;
+
+        /** The timer IRQ clear register is write only. When writing this register
+            the interrupt-pending bit is cleared. When reading this register it
+            returns 0x544D5241 which is the ASCII reversed value for "ARMT". */
+        volatile uint32_t IRQClear;
+
+        /** The raw IRQ register is a read-only register. It shows the status of
+            the interrupt pending bit. 0 : The interrupt pending bits is clear.
+            1 : The interrupt pending bit is set.
+
+            The interrupt pending bits is set each time the value register is
+            counted down to zero. The interrupt pending bit can not by itself
+            generates interrupts. Interrupts can only be generated if the
+            interrupt enable bit is set. */
+        volatile uint32_t RAWIRQ;
+
+        /** The masked IRQ register is a read-only register. It shows the status
+            of the interrupt signal. It is simply a logical AND of the interrupt
+            pending bit and the interrupt enable bit. 0 : Interrupt line not
+            asserted. 1 :Interrupt line is asserted, (the interrupt pending and
+            the interrupt enable bit are set.)  */
+        volatile uint32_t MaskedIRQ;
+
+        /** This register is a copy of the timer load register. The difference is
+            that a write to this register does not trigger an immediate reload of
+            the timer value register. Instead the timer load register value is
+            only accessed if the value register has finished counting down to
+            zero. */
+        volatile uint32_t Reload;
+
+        /** The Pre-divider register is not present in the SP804. The pre-divider
+            register is 10 bits wide and can be written or read from. This
+            register has been added as the SP804 expects a 1MHz clock which we do
+            not have. Instead the pre-divider takes the APB clock and divides it
+            down according to:
+
+            timer_clock = apb_clock/(pre_divider+1)
+
+            The reset value of this register is 0x7D so gives a divide by 126. */
+        volatile uint32_t PreDivider;
+
+        /** The free running counter is not present in the SP804. The free running
+            counter is a 32 bits wide read only register. The register is enabled
+            by setting bit 9 of the Timer control register. The free running
+            counter is incremented immediately after it is enabled. The timer can
+            not be reset but when enabled, will always increment and roll-over.
+
+            The free running counter is also running from the APB clock and has
+            its own clock pre-divider controlled by bits 16-23 of the timer
+            control register.
+
+            This register will be halted too if bit 8 of the control register is
+            set and the ARM is in Debug Halt mode. */
+        volatile uint32_t FreeRunningCounter;
+
+        } rpi_arm_timer_t;
+
+and the same in rpi-armtimer.c:
+
+    static rpi_arm_timer_t* rpiArmTimer = (rpi_arm_timer_t*)RPI_ARMTIMER_BASE;
+
+    rpi_arm_timer_t* RPI_GetArmTimer(void)
+    {
+        return rpiArmTimer;
+    }
+
+Then, we can setup the ARM Timer peripheral from the main C code with something like:
+
+    /* Setup the system timer interrupt */
+    /* Timer frequency = Clk/256 * 0x400 */
+    RPI_GetArmTimer()->Load = 0x400;
+
+    /* Setup the ARM Timer */
+    RPI_GetArmTimer()->Control =
+            RPI_ARMTIMER_CTRL_23BIT |
+            RPI_ARMTIMER_CTRL_ENABLE |
+            RPI_ARMTIMER_CTRL_INT_ENABLE |
+            RPI_ARMTIMER_CTRL_PRESCALE_256;
+
+As documented the load register is the value loaded into the timer each time the timer elapses. This value is loaded into the Value register either when the register is written, or else when the Value register has counted down to 0. The timer decrements the Value register at a frequency dervied from the system clock.
+
+When the Value register reaches 0 the Value register is re-loaded with the Load value and the interrupt pending bit is set.
+
+It's at this point our interrupt handler should get called. The bits in the Control register that we're setting should be reasonably self-explanatory. Although the documentation says CTRL_23BIT I suspect (as do others) that this is a typo and it's meant to read CTRL_32BIT!
+
+All that's left after configuring the ARM Timer and the Interrupt controller is to globally enable interrupts. This is a function that I wrote in assembler again because the instructions to enable the registers are not available through any C instructions:
+
+In armc-013-start.S:
+
+    _enable_interrupts:
+        mrs     r0, cpsr
+        bic     r0, r0, #0x80
+        msr     cpsr_c, r0
+
+        mov     pc, lr
+
+ This code is pretty straight forward. Section A1.1.3 of the ARM ARM describes the Status registers in the processor and describes the Current Program Status Register (CPSR). Some information is covered in this section and of important note is "The CPSR is accessed with special instructions".
+
+ Section A2.5 of the ARM ARM describes the format of the CPSR register in more detail and details the exact layout of the CPSR register.
+
+ Section A2.5.6 describes the interrupt disable bits, and that gets us the last bit of information we need.
+
+ Section A4.1.38 MRS describes the Move Program Status Register to general purpose register instruction which is the special instruction referred to in Section A1.1.3 of the manual.
+
+ So, we copy the contents of the Current Program Status Register into R0.
+
+ Then we clear bit 7 ( Remember (1 << 7) == 0x80 ) in the R0 to enable interrupts. Section A2.5.6 and A2.5 gave us the details for that instruction.
+
+ Then we copy r0 back to the Current Program Status Register which is the point at which interrupts become enabled.
+
+ Finally we load the Program Counter with the Link Register contents to return from enabling interrupts.
+
+ The last thing to do is to write something in the interrupt handler to deal with toggling the LED and to clear the interrupt pending bit. Clearing the interrupt pending bit for the ARM Timer is essential otherwise the processor will not know we have dealt with that interrupt and as soon as it exits from the interrupt handler it will immediately enter it again because the interrupt pending bit of an enabled interrupt source is still set.
+
+ The interrupt handler is in rpi-interrupts.c:
+
+    /**
+        @brief The IRQ Interrupt handler
+
+        This handler is run every time an interrupt source is triggered. It's
+        up to the handler to determine the source of the interrupt and most
+        importantly clear the interrupt flag so that the interrupt won't
+        immediately put us back into the start of the handler again.
+    */
+    void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
+    {
+        static int lit = 0;
+
+        /* Clear the ARM Timer interrupt - it's the only interrupt we have
+           enabled, so we want don't have to work out which interrupt source
+           caused us to interrupt */
+        RPI_GetArmTimer()->IRQClear = 1;
+
+        /* Flip the LED */
+        if( lit )
+        {
+            RPI_GetGpio()->GPSET0 = (1 << 16);
+            lit = 0;
+        }
+        else
+        {
+            RPI_GetGpio()->GPCLR0 = (1 << 16);
+            lit = 1;
+        }
+    }
+
+Simples! Our main code now has no code in the main while(1) {} loop because everything is being done in the interrupt handler.
+
+armc-013.c:
+
+    /** Main function - we'll never return from here */
+    void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
+    {
+        int lit = 0;
+
+        /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
+           peripheral register to enable GPIO16 as an output */
+        RPI_GetGpio()->GPFSEL1 |= (1 << 18);
+
+        /* Enable the timer interrupt IRQ */
+        RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
+
+        /* Setup the system timer interrupt */
+        /* Timer frequency = Clk/256 * 0x400 */
+        RPI_GetArmTimer()->Load = 0x400;
+
+        /* Setup the ARM Timer */
+        RPI_GetArmTimer()->Control =
+                RPI_ARMTIMER_CTRL_23BIT |
+                RPI_ARMTIMER_CTRL_ENABLE |
+                RPI_ARMTIMER_CTRL_INT_ENABLE |
+                RPI_ARMTIMER_CTRL_PRESCALE_256;
+
+        /* Enable interrupts! */
+        _enable_interrupts();
+
+        /* Never exit as there is no OS to exit to! */
+        while(1)
+        {
+
+        }
+    }
+
+We now have interrupts up and working and in the exceptions you can do different things with the LED to use them to debug any nasty situations. We'll get onto JTAG debug in a future tutorial, but the next tutorial has to be the mailbox and GPU to get something more interesting happening, and what's more interesting than graphics!?
 
 
