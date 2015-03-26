@@ -32,15 +32,11 @@
 .global _get_stack_pointer
 
 _start:
-    // Set the stack pointer at the end of RAM.
-    // Keep it within the limits and also keep it aligned to a 32-bit
-    // boundary!
-    ldr     sp, =(128 * (1024 * 1024))
-    //ldr     sp, =(256 * (1024 * 1024))
-    //ldr     sp, =(512 * (1024 * 1024))
+    // Set the stack pointer, which progresses downwards through memory
+    ldr     sp, =0x8000
     sub     sp, sp, #0x4
 
-    // The c-startup
+    // Run the c startup function - should not return and will call kernel_main
     b       _cstartup
 
 _inf_loop:

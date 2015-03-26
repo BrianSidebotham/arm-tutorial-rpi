@@ -44,13 +44,9 @@ volatile unsigned int* gpio = (unsigned int*)GPIO_BASE;
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
     int loop;
+
     /* Allocate a block of memory for counters */
-    unsigned int* counters;
-
-    gpio[GPIO_GPFSEL1] |= (1 << 18);
-    gpio[GPIO_GPSET0] = (1 << 16);
-
-    counters = malloc( 1024 * sizeof( unsigned int ) );
+    unsigned int* counters = malloc( 1024 * sizeof( unsigned int ) );
 
     /* Failed to allocate memory! */
     if( counters == NULL )
@@ -66,20 +62,20 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
     /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
        peripheral register to enable GPIO16 as an output */
-    gpio[GPIO_GPFSEL1] |= (1 << 18);
+    gpio[LED_GPFSEL] |= (1 << LED_GPFBIT);
 
     /* Never exit as there is no OS to exit to! */
     while(1)
     {
 
         /* Set the GPIO16 output high ( Turn OK LED off )*/
-        gpio[GPIO_GPSET0] = (1 << 16);
+        gpio[LED_GPSET] = (1 << LED_GPIO_BIT);
 
         for(counters[0] = 0; counters[0] < 500000; counters[0]++)
             ;
 
         /* Set the GPIO16 output low ( Turn OK LED on )*/
-        gpio[GPIO_GPCLR0] = (1 << 16);
+        gpio[LED_GPCLR] = (1 << LED_GPIO_BIT);
 
         for(counters[1] = 0; counters[1] < 500000; counters[1]++)
             ;
