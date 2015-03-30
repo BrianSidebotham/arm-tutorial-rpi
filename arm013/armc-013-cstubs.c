@@ -192,12 +192,9 @@ caddr_t _sbrk( int incr )
 
      prev_heap_end = heap_end;
 
-     if( ( heap_end + incr) > _get_stack_pointer() )
+     if( ( heap_end + incr ) > _get_stack_pointer() )
      {
-        while(1)
-        {
-            /* TRAP HERE! */
-        }
+        while( 1 ) { /* TRAP HERE! */ }
      }
 
      heap_end += incr;

@@ -88,7 +88,7 @@ _reset_:
     // stack pointer which differs to the application stack pointer:
     mov r0, #(CPSR_MODE_IRQ | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT )
     msr cpsr_c, r0
-    mov sp, #0x8000
+    mov sp, #(63 * 1024 * 1024)
 
     // Switch back to supervisor mode (our application mode) and
     // set the stack pointer towards the end of RAM. Remember that the
@@ -97,13 +97,12 @@ _reset_:
     mov r0, #(CPSR_MODE_SVR | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT )
     msr cpsr_c, r0
 
-    // Set the stack pointer at the end of RAM.
+    // Set the stack pointer at some point in RAM that won't harm us
+    // It's different from the IRQ stack pointer above and no matter
+    // what the GPU/CPU memory split, 64MB is available to the CPU
     // Keep it within the limits and also keep it aligned to a 32-bit
     // boundary!
-    mov     sp, #0x4000
-    // mov     sp, #(128 * (1024 * 1024)) - 4
-    //mov     sp, #(256 * (1024 * 1024)) - 4
-    //mov     sp, #(512 * (1024 * 1024)) - 4
+    mov     sp, #(64 * 1024 * 1024)
 
     // The c-startup function which we never return from. This function will
     // initialise the ro data section (most things that have the const
