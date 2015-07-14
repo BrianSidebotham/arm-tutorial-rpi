@@ -38,12 +38,10 @@ set( TUT 013 )
 # cross-compiler's ability to compile a simple program because that will fail
 project( armc-${TUT}-tutorial C ASM )
 
-
-# We had to adjust the CMAKE_C_FLAGS variable on the command line to make sure
-# the compiler would work with CMake's simple program compilation test. So unset
-# it explicitly before re-setting it correctly for our system
-unset( CMAKE_C_FLAGS )
-set( CMAKE_C_FLAGS "-O0 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -nostartfiles" )
+# Add any C compiler flags here. The C flags concerned with processor tuning
+# are in the toolchain files toolchain-arm-none-eabi-bcm2835.cmake, etc.
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 
 # Set the linker flags so that we use our "custom" linker script
 set( CMAKE_EXE_LINKER_FLAGS "-Wl,-T,${PROJECT_SOURCE_DIR}/rpi.x" )
@@ -65,6 +63,6 @@ add_executable( armc-${TUT}
 
 add_custom_command(
     TARGET armc-${TUT} POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} ./armc-${TUT} -O binary ./kernel-${TUT}.img
+    COMMAND ${CMAKE_OBJCOPY} ./armc-${TUT} -O binary ./kernel.img
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Convert the ELF output file to a binary image" )

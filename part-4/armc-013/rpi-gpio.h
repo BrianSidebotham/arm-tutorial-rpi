@@ -34,7 +34,7 @@
 #include "rpi-base.h"
 
 /** The base address of the GPIO peripheral (ARM Physical Address) */
-#define RPI_GPIO_BASE       0x20200000UL
+#define RPI_GPIO_BASE       ( PERIPHERAL_BASE + 0x200000UL )
 
 /***/
 #define RPI_GPIO_FSEL0_00_INPUT     ( 0 )

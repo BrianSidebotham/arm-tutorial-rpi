@@ -39,7 +39,7 @@
     address of the controller is actually xxxxB000, but there is a 0x200 offset
     to the first addressable register for the interrupt controller, so offset the
     base to the first register */
-#define RPI_INTERRUPT_CONTROLLER_BASE   0x2000B200
+#define RPI_INTERRUPT_CONTROLLER_BASE   ( PERIPHERAL_BASE + 0xB200 )
 
 /** @brief Bits in the Enable_Basic_IRQs register to enable various interrupts.
     See the BCM2835 ARM Peripherals manual, section 7.5 */

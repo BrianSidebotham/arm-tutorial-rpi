@@ -1,7 +1,6 @@
 /*
-
     Part of the Raspberry-Pi Bare Metal Tutorials
-    Copyright (c) 2013, Brian Sidebotham
+    Copyright (c) 2013-2015, Brian Sidebotham
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -28,48 +27,28 @@
 
 */
 
-/*
-    Interrupts example, show how to use the interrupt controller and to load
-    the vector table at runtime.
-*/
+#ifndef RPI_SYSTIMER_H
+#define RPI_SYSTIMER_H
 
-#include <string.h>
-#include <stdlib.h>
+#include <stdint.h>
 
-#include "rpi-gpio.h"
-#include "rpi-armtimer.h"
-#include "rpi-systimer.h"
-#include "rpi-interrupts.h"
+#include "rpi-base.h"
 
-/** Main function - we'll never return from here */
-void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
-{
-    int lit = 0;
+#define RPI_SYSTIMER_BASE       ( PERIPHERAL_BASE + 0x3000 )
 
-    /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
-       peripheral register to enable GPIO16 as an output */
-    RPI_GetGpio()->GPFSEL1 |= (1 << 18);
 
-    /* Enable the timer interrupt IRQ */
-    RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
+typedef struct {
+    volatile uint32_t control_status;
+    volatile uint32_t counter_lo;
+    volatile uint32_t counter_hi;
+    volatile uint32_t compare0;
+    volatile uint32_t compare1;
+    volatile uint32_t compare2;
+    volatile uint32_t compare3;
+    } rpi_sys_timer_t;
 
-    /* Setup the system timer interrupt */
-    /* Timer frequency = Clk/256 * 0x400 */
-    RPI_GetArmTimer()->Load = 0x400;
 
-    /* Setup the ARM Timer */
-    RPI_GetArmTimer()->Control =
-            RPI_ARMTIMER_CTRL_23BIT |
-            RPI_ARMTIMER_CTRL_ENABLE |
-            RPI_ARMTIMER_CTRL_INT_ENABLE |
-            RPI_ARMTIMER_CTRL_PRESCALE_256;
+extern rpi_sys_timer_t* RPI_GetSystemTimer(void);
+extern void RPI_WaitMicroSeconds( uint32_t us );
 
-    /* Enable interrupts! */
-    _enable_interrupts();
-
-    /* Never exit as there is no OS to exit to! */
-    while(1)
-    {
-
-    }
-}
+#endif
