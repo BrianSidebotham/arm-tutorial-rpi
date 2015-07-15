@@ -96,6 +96,7 @@ volatile unsigned int* gpio;
 volatile unsigned int tim;
 
 /** Main function - we'll never return from here */
+int main(void) __attribute__((naked));
 int main(void)
 {
     /* Assign the address of the GPIO peripheral (Using ARM Physical Address) */
