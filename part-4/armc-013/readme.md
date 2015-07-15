@@ -1,6 +1,6 @@
 # Part 4 - Interrupts
 
-In this tutorial, we're going to look at using interrupts to generate the LED flash. Interrupts are an essential ingredient in embedded programming. We're going to investigate the BCM2835 interrupt process and implement an interrupt for the ARM Timer peripheral to blink the LED. I appreciate that blinking an LED is probably starting to get boring, but small steps are the way to learn a big system, and learning how to handle interrupts will be enough of a learning curve without having to change what we're doing at the same time. In the next tutorial we'll move away from blinking an LED.
+In this tutorial, we're going to look at using interrupts to generate the LED flash. Interrupts are an essential ingredient in embedded programming. We're going to investigate the BCM2835/6 interrupt process and implement an interrupt for the ARM Timer peripheral to blink the LED. I appreciate that blinking an LED is probably starting to get boring, but small steps are the way to learn a big system, and learning how to handle interrupts will be enough of a learning curve without having to change what we're doing at the same time. In the next tutorial we'll move away from blinking an LED.
 
 ## Reference Material
 
@@ -8,15 +8,15 @@ We need some reading material for this tutorial - this is how I put the tutorial
 
 The material that's useful:
 
-- [http://infocenter.arm.com/help/topic/com.arm.doc.ddi0301h/DDI0301H_arm1176jzfs_r0p7_trm.pdf](ARM1176JZF-S Technical Reference Manual)
-- [http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf](BCM2385 ARM Peripherals)
-- [http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0406c/index.html](ARMv6 Architecture Reference Manual). This requires agreeing to an NDA to get hold of the PDF version of the document, but it's at least free and easy to get! This document also describes the ARMv7 architecture which the Cortex A7 uses in the BCM2836 (Raspberry-pi 2)
+- [ARM1176JZF-S Technical Reference Manual](http://infocenter.arm.com/help/topic/com.arm.doc.ddi0301h/DDI0301H_arm1176jzfs_r0p7_trm.pdf)
+- [BCM2385 ARM Peripherals](http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf)
+- [ARMv6 Architecture Reference Manual](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0406c/index.html). This requires agreeing to an NDA to get hold of the PDF version of the document, but it's at least free and easy to get! This document also describes the ARMv7 architecture which the Cortex A7 uses in the BCM2836 (Raspberry-pi 2)
 
 All of those documents, and an ARM instruction set reference are useful for this tutorial.
 
 ## The Code
 
-The code for the tutorial is hosted on [https://github.com/BrianSidebotham/arm-tutorial-rpi](GitHub). The best thing to do to get the code is to clone the repo if you haven't already. Otherwise you can [https://github.com/BrianSidebotham/arm-tutorial-rpi/archive/master.zip](grab the zip) of the latest code instead - but you won't be able to get fixes when they're released! ;)
+The code for the tutorial is hosted on [GitHub](https://github.com/BrianSidebotham/arm-tutorial-rpi). The best thing to do to get the code is to clone the repo if you haven't already. Otherwise you can [grab the zip](https://github.com/BrianSidebotham/arm-tutorial-rpi/archive/master.zip) of the latest code instead - but you won't be able to get fixes when they're released! ;)
 
 Some of the code that's specific to the tutorial and differs from the last tutorial will be discussed here.
 
@@ -66,7 +66,7 @@ There is basically a mode per exception. As was mentioned previously we start at
 
 The next section of the Architecture Reference Manual describes the registers available. This is again, another important section. Look at Figure A2-1 (Register Organization) and you'll see something interesting...
 
-![ARMv5 Figure A2-1](https://github.com/BrianSidebotham/arm-tutorial-rpi/raw/master/arm013/images/armv5-figure-a2-1-register-organization.png)
+![ARMv5 Figure A2-1](https://github.com/BrianSidebotham/arm-tutorial-rpi/raw/master/part-4/armc-013/images/armv5-figure-a2-1-register-organization.png)
 
 As seen by the small icon and note at the bottom of the table, some of the registers are mode-specific. This can be useful, for example in the Fast Interrupt exception a lot of registers have been replaced by mode-specific registers. This means that we can use these registers without fear of altering the behaviour of code that was operating in User or Supervisor mode before the Fast Interrupt Exception occurred.
 
@@ -98,6 +98,7 @@ The parameter options align well with the vector table we got from the manual. R
 
 Therefore to write a very basic "undefined instruction" handler we can define declare and implement our handler like this:
 
+```c
     /**
         @brief The undefined instruction interrupt handler
 
@@ -111,6 +112,7 @@ Therefore to write a very basic "undefined instruction" handler we can define de
             /* Do Nothing! */
         }
     }
+```
 
 While it looks like this is useless code, it is actually pretty useful. We can set a breakpoint on the while(1) and debug whilst looking out for this breakpoint to trip. Usually then we can do some stack unwinding (manually!) to find where the source of the undefined instruction.
 
@@ -130,6 +132,7 @@ Here is some modified assembler for our _statup: label which is where our linker
 
 At fist, I thought this was going to be easy - we just hard-code some values into a table and copy that table to the start of RAM where the vector table resides. Here's some initial code:
 
+```
     _start:
         ldr pc, =_reset_
         ldr pc, =undefined_instruction_vector
@@ -146,6 +149,7 @@ At fist, I thought this was going to be easy - we just hard-code some values int
         ldr     r1, #0x0000
         ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
         stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
+```
 
 There are only a few assembler instructions here, so don't panic! The labels refer to C functions that have been implemented with the correct attributes for each exception type. See the file rpi-interrupts.c to see these C functions.
 
@@ -163,14 +167,19 @@ But, before we go too much further, let me show you why this doesn't work!
 
 Compilation of the vector table is successful, but as always just a successful compilation doesn't get you a working application. Earlier in the tutorials I introduced the online disassembler - a great tool, but there's something else in our toolchain's toolbag already, objdump!
 
+```
     arm-none-eabi-objdump --help
+```
 
 That's your friend, and even more friendly is running this from the build directory of the part-4/armc-013/ tutorial folder once you've built the tutorial:
 
+```
     arm-none-eabi-objdump -S armc-013 > armc-013.disasm
+```
 
 This tells objdump to disassemble the executable and we then redirect objdumps output to the armc-013.diasm file which we can then look at in a text editor. Here's what we get at the start of that file with the vector table implementation I described above:
 
+```
     Disassembly of section .text:
 
     00008000 <_start>:
@@ -185,9 +194,11 @@ This tells objdump to disassemble the executable and we then redirect objdumps o
 
     00008020 <_reset_>:
         8020:   e3a00902    mov r0, #32768  ; 0x8000
+```
 
 Hmmm, well that doesn't look right, what we'd expect from the first line is an equivalent of ldr pc, #0x8020 which is the _reset_ label is. The toolchain appears to be loading a value far away from where we'd expect. Further down the file we can find the location 0x806C:
 
+```
     0000805c <_enable_interrupts>:
         805c:   e10f0000    mrs r0, CPSR
         8060:   e3c00080    bic r0, r0, #128    ; 0x80
@@ -199,6 +210,7 @@ Hmmm, well that doesn't look right, what we'd expect from the first line is an e
         8078:   00008600    .word   0x00008600
         807c:   00008628    .word   0x00008628
         8080:   0000869c    .word   0x0000869c
+```
 
 Some light at the end of the tunnel, the compiler has inserted some constants which are being loaded into the PC so actually, loading the PC with the value at PC + 0x6C is correct for the vector because the value at that location is 0x8020 which is the location of the _reset_ label.
 
@@ -208,6 +220,7 @@ The answer is to keep everything relative, but to create some constants of our o
 
 Let's set that up:
 
+```
     _start:
         ldr pc, _reset_h
         ldr pc, _undefined_instruction_vector_h
@@ -235,13 +248,15 @@ Let's set that up:
         stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
         ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
         stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
+```
 
 Note that we've now had to double the amount of data we copy so that we get the constants copied along with the relative PC loads of those constants. This feels like a bit of a cludge but as objdump will show us, this gets the job done and relocates the vector table as required.
 
 The vector table now references the labels directly suffixed to the vector table itself and so the relative position remains constant so long as both are copied as-is.
 
-The output of objdump -S shows us the workable solution:
+The output of `objdump -S` shows us the workable solution:
 
+```
     Disassembly of section .text:
 
     00008000 <_start>:
@@ -280,6 +295,7 @@ The output of objdump -S shows us the workable solution:
 
     00008040 <_reset_>:
         8040:   e3a00902    mov r0, #32768  ; 0x8000
+```
 
 You can go ahead and see that the armc-013 tutorial is in fact using this solution to provide the exception vector table at run time.
 
@@ -299,6 +315,7 @@ This is how we define the struct for the interrupt controller registers and impl
 
 In rpi-interrupts.h:
 
+```c
     /** @brief See Section 7.5 of the BCM2835 ARM Peripherals documentation, the base
         address of the controller is actually xxxxB000, but there is a 0x200 offset
         to the first addressable register for the interrupt controller, so offset the
@@ -318,9 +335,11 @@ In rpi-interrupts.h:
         volatile uint32_t Disable_IRQs_2;
         volatile uint32_t Disable_Basic_IRQs;
         } rpi_irq_controller_t;
+```
 
 and in rpi-interrupts.c:
 
+```c
     /** @brief The BCM2835 Interupt controller peripheral at it's base address */
     static rpi_irq_controller_t* rpiIRQController =
             (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
@@ -333,6 +352,7 @@ and in rpi-interrupts.c:
     {
         return rpiIRQController;
     }
+```
 
 ## The ARM Timer Peripheral
 
@@ -340,6 +360,7 @@ The ARM timer is in the Basic interrupt set. So to tell the processor we want to
 
 Also in rpi-interrupts.h:
 
+```c
     /** @brief Bits in the Enable_Basic_IRQs register to enable various interrupts.
         See the BCM2835 ARM Peripherals manual, section 7.5 */
     #define RPI_BASIC_ARM_TIMER_IRQ         (1 << 0)
@@ -350,11 +371,14 @@ Also in rpi-interrupts.h:
     #define RPI_BASIC_GPU_1_HALTED_IRQ      (1 << 5)
     #define RPI_BASIC_ACCESS_ERROR_1_IRQ    (1 << 6)
     #define RPI_BASIC_ACCESS_ERROR_0_IRQ    (1 << 7)
+```
 
 and in our main C code to enable the ARM Timer IRQ:
 
+```c
     /* Enable the timer interrupt IRQ */
     RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
+```
 
 The ARM Timer interrupt source is now enabled. However, the processor still needs to have interrupts globally enabled for any interrupt to execute the Interrupt handler, and the ARM Timer peripheral also needs to be enabled and configured to generate the interrupts!
 
@@ -364,6 +388,7 @@ Again, we map the peripherals register set to a C struct to give us access to th
 
 In rpi-armtimer.h:
 
+```c
     /** @brief See the documentation for the ARM side timer (Section 14 of the
         BCM2835 Peripherals PDF) */
     #define RPI_ARMTIMER_BASE               ( PERIPHERAL_BASE + 0xB400 )
@@ -462,18 +487,22 @@ In rpi-armtimer.h:
         volatile uint32_t FreeRunningCounter;
 
         } rpi_arm_timer_t;
+```
 
 and the same in rpi-armtimer.c:
 
+```c
     static rpi_arm_timer_t* rpiArmTimer = (rpi_arm_timer_t*)RPI_ARMTIMER_BASE;
 
     rpi_arm_timer_t* RPI_GetArmTimer(void)
     {
         return rpiArmTimer;
     }
+```
 
 Then, we can setup the ARM Timer peripheral from the main C code with something like:
 
+```c
     /* Setup the system timer interrupt */
     /* Timer frequency = Clk/256 * 0x400 */
     RPI_GetArmTimer()->Load = 0x400;
@@ -484,6 +513,7 @@ Then, we can setup the ARM Timer peripheral from the main C code with something 
             RPI_ARMTIMER_CTRL_ENABLE |
             RPI_ARMTIMER_CTRL_INT_ENABLE |
             RPI_ARMTIMER_CTRL_PRESCALE_256;
+```
 
 As documented the load register is the value loaded into the timer each time the timer elapses. This value is loaded into the Value register either when the register is written, or else when the Value register has counted down to 0. The timer decrements the Value register at a frequency dervied from the system clock.
 
@@ -495,12 +525,14 @@ All that's left after configuring the ARM Timer and the Interrupt controller is 
 
 In armc-013-start.S:
 
+```
     _enable_interrupts:
         mrs     r0, cpsr
         bic     r0, r0, #0x80
         msr     cpsr_c, r0
 
         mov     pc, lr
+```
 
  This code is pretty straight forward. Section A1.1.3 of the ARM ARM describes the Status registers in the processor and describes the Current Program Status Register (CPSR). Some information is covered in this section and of important note is "The CPSR is accessed with special instructions".
 
@@ -522,6 +554,7 @@ In armc-013-start.S:
 
  The interrupt handler is in rpi-interrupts.c:
 
+```c
     /**
         @brief The IRQ Interrupt handler
 
@@ -559,19 +592,25 @@ In armc-013-start.S:
             lit = 1;
         }
     }
+```
 
 Simples! Our main code now has no code in the main while(1) {} loop because everything is being done in the interrupt handler.
 
 part-4/armc-013/armc-013.c:
 
+```c
     /** Main function - we'll never return from here */
     void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     {
         int lit = 0;
 
-        /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
-           peripheral register to enable GPIO16 as an output */
-        RPI_GetGpio()->GPFSEL1 |= (1 << 18);
+        /* Write 1 to the LED init nibble in the Function Select GPIO
+           peripheral register to enable LED pin as an output */
+    #if defined( RPIBPLUS ) || defined( RPI2 )
+        RPI_GetGpio()->GPFSEL4 |= ( 1 << 21 );
+    #else
+        RPI_GetGpio()->GPFSEL1 |= ( 1 << 28 );
+    #endif
 
         /* Enable the timer interrupt IRQ */
         RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
@@ -596,6 +635,7 @@ part-4/armc-013/armc-013.c:
 
         }
     }
+```
 
 We now have interrupts up and working and in the exceptions you can do different things with the LED to use them to debug any nasty situations. We'll get onto JTAG debug in a future tutorial, but the next tutorial has to be the mailbox and GPU to get something more interesting happening, and what's more interesting than graphics!?
 
