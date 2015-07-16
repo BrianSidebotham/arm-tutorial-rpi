@@ -1,14 +1,12 @@
-<a href="https://github.com/BrianSidebotham/arm-tutorial-rpi"><img style="position: absolute; top: 0; left: 0; border: 0; width: 149px; height: 149px;" src="http://aral.github.com/fork-me-on-github-retina-ribbons/left-green@2x.png" alt="Fork me on GitHub"/></a>
-
 # Part 2 - The C Runtime
 
-[bs_lead]
-In this part of the tutorial we'll look deeper into the linker and the C-Library so that we end up with a working C-Library link. Exciting stuff, huh?! Let's look further into what the compiler and linker are doing in order to create our bare-metal executable.[/bs_lead]
+In this part of the tutorial we'll look deeper into the linker and the C-Library so that we end up with a working C-Library link. Exciting stuff, huh?! Let's look further into what the compiler and linker are doing in order to create our bare-metal executable.
 
 The C-Runtime (different to the C-Library!) is currently missing from our code. In a lot of embedded systems the C-Runtime is essential, or else things break instantly. The most notable thing that's instantly visible in most embedded systems is that static variables are not initialised.
 
 This is why in our previous example, we were working without pre-initialised variables. Instead, we initialise the variable in the code at the start of main from a pre-processor define.
 
+> **Github**
 > The code for the tutorials is now on [Github](https://github.com/BrianSidebotham/arm-tutorial-rpi). You can either browse the code, checkout the code, fork, branch, or download [as a zip](https://github.com/BrianSidebotham/arm-tutorial-rpi/archive/master.zip) from GibHub.</div>
 
 ## Understanding the C-Runtime Startup
