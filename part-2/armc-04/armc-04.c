@@ -37,6 +37,7 @@ volatile unsigned int* gpio = (unsigned int*)GPIO_BASE;
 volatile unsigned int tim;
 
 /** Main function - we'll never return from here */
+int main(void) __attribute__((naked));
 int main(void)
 {
     /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO

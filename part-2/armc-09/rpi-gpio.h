@@ -44,12 +44,16 @@
     #define LED_GPSET       GPIO_GPSET1
     #define LED_GPCLR       GPIO_GPCLR1
     #define LED_GPIO_BIT    15
+    #define LED_ON()        do { gpio[LED_GPCLR] = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { gpio[LED_GPSET] = ( 1 << LED_GPIO_BIT ); } while( 0 )
 #else
     #define LED_GPFSEL      GPIO_GPFSEL1
     #define LED_GPFBIT      18
     #define LED_GPSET       GPIO_GPSET0
     #define LED_GPCLR       GPIO_GPCLR0
     #define LED_GPIO_BIT    16
+    #define LED_ON()        do { gpio[LED_GPSET] = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { gpio[LED_GPCLR] = ( 1 << LED_GPIO_BIT ); } while( 0 )
 #endif
 
 #define GPIO_GPFSEL0    0
