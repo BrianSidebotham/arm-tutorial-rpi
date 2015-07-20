@@ -23,7 +23,7 @@ toolchain-arm-none-eabi-rpi.cmake that I've added to the arm010 folder:
 
 ## toolchain-arm-none-eabi-rpi.cmake
 
-```
+```cmake
 # A CMake toolchain file so we can cross-compile for the Rapsberry-Pi bare-metal
 
 include(CMakeForceCompiler)
@@ -110,7 +110,8 @@ CMake uses a file in each directory that needs building called CMakeLists.txt. I
 file as it's extension suggests. Here's the CMakeLists.txt file for arm010:
 
 ### CMakeLists.txt
-```
+
+```cmake
 cmake_minimum_required( VERSION 2.8 )
 
 # Mark the language as C so that CMake doesn't try to test the C++
@@ -223,7 +224,7 @@ this basic functionality. We don't even have to initialise the peripheral.
 
 Firstly, we'll need the base address of the system timer:
 
-```
+```c
 #define RPI_SYSTIMER_BASE       0x20003000
 ```
 
@@ -232,7 +233,7 @@ physical address 0x2000000, so 0x7E003000 becomes 0x20003000 to the processor!
 
 Then we can generate a struct which is structured the same as the registers for the peripheral:
 
-```
+```c
 typedef struct {
     volatile uint32_t control_status;
     volatile uint32_t counter_lo;
@@ -247,13 +248,13 @@ typedef struct {
 In the driver code, we can declare this type of structure at memory address RPI_SYSTIMER_BASE
 by using a variable:
 
-```
+```c
 static rpi_sys_timer_t* rpiSystemTimer = (rpi_sys_timer_t*)RPI_SYSTIMER_BASE;
 ```
 
 and then finally, we can implement our delay function:
 
-```
+```c
 void RPI_WaitMicroSeconds( uint32_t us )
 {
     volatile uint32_t ts = rpiSystemTimer->counter_lo;
@@ -273,7 +274,7 @@ for that long!
 
 ### armc-011.c
 
-```
+```c
 #include <string.h>
 #include <stdlib.h>
 
@@ -317,7 +318,7 @@ using a timer on the Raspberry-Pi!
 
 Don't forget to build armc-011 tutorial you need CMake installed. Then you can build with:
 
-```
+```bash
 cd arm011\scripts
 configure.bat
 mingw32-make
@@ -325,7 +326,7 @@ mingw32-make
 
 or on Linux
 
-```
+```bash
 cd arm011/scripts
 ./configure.sh
 make
