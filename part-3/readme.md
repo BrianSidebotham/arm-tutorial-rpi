@@ -7,7 +7,7 @@ installed to configure + build the tutorials.
 
 CMake is an excellent build system, I much prefer it to autotools and certainly prefer it in
 comparison to hand-crafting Makefile's!
-[CMake's documentation](http://www.cmake.org/cmake/help/v2.8.10/cmake.html) target="_blank">
+[CMake's documentation](http://www.cmake.org/cmake/help/v2.8.10/cmake.html)
 is great, so feel free to peruse it whilst reading this tutorial. The tutorial isn't going to
 cover CMake, other than showing how it can help and some rudimentary stuff which shows how CMake
 can be setup to do exactly what we were doing in our simple command-line build.
