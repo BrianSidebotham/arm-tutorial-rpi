@@ -37,7 +37,7 @@ generates incorrect code, so stick to the 4.7 series until that's sorted out.
 using throughout these tutorials. Having the same helps because you'll be able to step
 through the disassembly listings as the tutorial progresses.
 
-The [eLinux page](http://elinux.org/RPi_Software#ARM) gives us the optimal GCC settings
+The [eLinux page](http://elinux.org/RPi_Software#ARM) gives us the optimal GCC settings
 for compiling code for the original Raspberry-Pi:
 
 ```
@@ -221,7 +221,7 @@ to know that our code is running correctly.
 
 First, let's have a look at how a Raspberry-Pi processor boots. The BCM2385 from Broadcom includes
 two processors that we should know about, one is a Videocore(tm) GPU which is why the Raspberry-Pi
-makes such a good media-centre and the other is the ARM core which runs the operating system. Both
+makes such a good media-centre and the other is the ARM core which runs the operating system. Both
 of these processors share the peripheral bus and also have to share some interrupt resources.
 Although in this case, share means that some interrupt sources are not available to the ARM
 processor because they are already taken by the GPU.
@@ -507,10 +507,10 @@ that only includes machine code. We can extract this using the objcopy utility:
 arm-none-eabi-objcopy kernel.elf -O binary kernel.img
 ```
 
-### A quick note about  the ELF format
+### A quick note about the ELF format
 
 [ELF](http://en.wikipedia.org/wiki/Executable_and_Linkable_Format) is a file format used by some
-OS, including Linux which wraps the machine code with meta-data.  The meta-data can be useful.
+OS, including Linux which wraps the machine code with meta-data. The meta-data can be useful.
 In Linux and in fact most OS these days, running an executable doesn't mean the file gets loaded
 into memory and then the processor starts running from the address at which the file was loaded.
 There is usually an executable loader which uses formats like ELF to know more about the
