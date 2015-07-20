@@ -7,7 +7,7 @@ The C-Runtime (different to the C-Library!) is currently missing from our code. 
 This is why in our previous example, we were working without pre-initialised variables. Instead, we initialise the variable in the code at the start of main from a pre-processor define.
 
 > **Github**
-> The code for the tutorials is now on [Github](https://github.com/BrianSidebotham/arm-tutorial-rpi). You can either browse the code, checkout the code, fork, branch, or download [as a zip](https://github.com/BrianSidebotham/arm-tutorial-rpi/archive/master.zip) from GibHub.</div>
+> The code for the tutorials is now on [Github](https://github.com/BrianSidebotham/arm-tutorial-rpi). You can either browse the code, checkout the code, fork, branch, or download [as a zip](https://github.com/BrianSidebotham/arm-tutorial-rpi/archive/master.zip) from GibHub.
 
 ## Understanding the C-Runtime Startup
 
