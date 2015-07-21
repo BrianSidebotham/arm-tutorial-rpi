@@ -107,20 +107,12 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
     /* Flip the LED */
     if( lit )
     {
-#if defined( RPIBPLUS ) || defined( RPI2 )
-        RPI_GetGpio()->GPSET1 = (1 << 15);
-#else
-        RPI_GetGpio()->GPSET0 = (1 << 16);
-#endif
+        LED_OFF();
         lit = 0;
     }
     else
     {
-#if defined( RPIBPLUS ) || defined( RPI2 )
-        RPI_GetGpio()->GPCLR1 = (1 << 15);
-#else
-        RPI_GetGpio()->GPCLR0 = (1 << 16);
-#endif
+        LED_ON();
         lit = 1;
     }
 }

@@ -63,7 +63,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
     /* Write 1 to the GPIO16 init nibble in the Function Select 1 GPIO
        peripheral register to enable GPIO16 as an output */
-    gpio[GPIO_GPFSEL1] |= ( 1 << LED_GPFBIT );
+    gpio[LED_GPFSEL] |= ( 1 << LED_GPFBIT );
 
     /* Never exit as there is no OS to exit to! */
     while(1)

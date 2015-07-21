@@ -575,20 +575,12 @@ In armc-013-start.S:
         /* Flip the LED */
         if( lit )
         {
-    #if defined( RPIBPLUS ) || defined( RPI2 )
-            RPI_GetGpio()->GPSET1 = (1 << 15);
-    #else
-            RPI_GetGpio()->GPSET0 = (1 << 16);
-    #endif
+            LED_OFF();
             lit = 0;
         }
         else
         {
-    #if defined( RPIBPLUS ) || defined( RPI2 )
-            RPI_GetGpio()->GPCLR1 = (1 << 15);
-    #else
-            RPI_GetGpio()->GPCLR0 = (1 << 16);
-    #endif
+            LED_ON();
             lit = 1;
         }
     }
@@ -602,15 +594,9 @@ part-4/armc-013/armc-013.c:
     /** Main function - we'll never return from here */
     void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     {
-        int lit = 0;
-
         /* Write 1 to the LED init nibble in the Function Select GPIO
            peripheral register to enable LED pin as an output */
-    #if defined( RPIBPLUS ) || defined( RPI2 )
-        RPI_GetGpio()->GPFSEL4 |= ( 1 << 21 );
-    #else
-        RPI_GetGpio()->GPFSEL1 |= ( 1 << 28 );
-    #endif
+        RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
 
         /* Enable the timer interrupt IRQ */
         RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;

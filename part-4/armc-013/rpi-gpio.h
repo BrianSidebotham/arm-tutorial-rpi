@@ -36,6 +36,24 @@
 /** The base address of the GPIO peripheral (ARM Physical Address) */
 #define RPI_GPIO_BASE       ( PERIPHERAL_BASE + 0x200000UL )
 
+#if defined( RPIBPLUS ) || defined( RPI2 )
+    #define LED_GPFSEL      GPFSEL4
+    #define LED_GPFBIT      21
+    #define LED_GPSET       GPSET1
+    #define LED_GPCLR       GPCLR1
+    #define LED_GPIO_BIT    15
+    #define LED_ON()        do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+#else
+    #define LED_GPFSEL      GPFSEL1
+    #define LED_GPFBIT      18
+    #define LED_GPSET       GPSET0
+    #define LED_GPCLR       GPCLR0
+    #define LED_GPIO_BIT    16
+    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+#endif
+
 /***/
 #define RPI_GPIO_FSEL0_00_INPUT     ( 0 )
 #define RPI_GPIO_FSEL0_00_OUTPUT    ( 1 )
