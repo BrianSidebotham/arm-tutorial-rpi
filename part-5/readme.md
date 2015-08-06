@@ -93,7 +93,14 @@ We'll optimise in the ARM015 code later on in this tutorial.
 
 ## Getting a UART Text Console
 
-Read that title carefully, not getting a graphics Text Console but instead getting some text out of the code to help us debug. As the code becomes more complex we need better ways of debugging. A later tutorial will talk about using JTAG but for now we can have the basic UART based text debugging that gets us out of most holes!
+Read that title carefully, not getting a graphics Text Console but instead
+getting some text out of the code to help us debug. As the code becomes more
+complex we need better ways of debugging. A later tutorial will talk about
+using JTAG but for now we can have the basic UART based text debugging that
+gets us out of most holes!
+
+> **TODO:** Add FTDI connection diagram to this section + image of PuTTY
+console
 
 ### AUX peripheral
 
