@@ -54,6 +54,10 @@
 .equ    CPSR_FIQ_INHIBIT,       0x40
 .equ    CPSR_THUMB,             0x20
 
+.equ	SCTLR_ENABLE_DATA_CACHE,        0x4
+.equ	SCTLR_ENABLE_BRANCH_PREDICTION, 0x800
+.equ	SCTLR_ENABLE_INSTRUCTION_CACHE, 0x1000
+
 _start:
     ldr pc, _reset_h
     ldr pc, _undefined_instruction_vector_h
@@ -104,14 +108,16 @@ _reset_:
 
     // R0 = System Control Register
     mrc p15,0,r0,c1,c0,0
-    // Data Cache (Bit 2)
-    orr r0,#0x0004
-    // Branch Prediction (Bit 11)
-    orr r0,#0x0800
-    // Instruction Caches (Bit 12)
-    orr r0,#0x1000
+	
+    // Enable caches and branch prediction
+    orr r0,#SCTLR_ENABLE_BRANCH_PREDICTION
+    orr r0,#SCTLR_ENABLE_DATA_CACHE
+    orr r0,#SCTLR_ENABLE_INSTRUCTION_CACHE
+
+	
     // System Control Register = R0
     mcr p15,0,r0,c1,c0,0
+
 
     // Enable VFP ------------------------------------------------------------
 
