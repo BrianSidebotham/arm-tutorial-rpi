@@ -25,6 +25,8 @@ Have fun, and remember to experiment!
 
 [Step04 - Interrupts](http://www.valvers.com/open-software/raspberry-pi/step04-bare-metal-programming-in-c-pt4/)
 
+[Step05 - Graphics(Basic)](http://www.valvers.com/open-software/raspberry-pi/step05-bare-metal-programming-in-c-pt5/)
+
 ## Some interesting links:
 
 Original Cambridge Tutorial that inspired this tutorial series:

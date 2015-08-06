@@ -1,6 +1,6 @@
 
 #   Part of the Raspberry-Pi Bare Metal Tutorials
-#   Copyright (c) 2013, Brian Sidebotham
+#   Copyright (c) 2015, Brian Sidebotham
 #   All rights reserved.
 
 #   Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 cmake_minimum_required( VERSION 2.8 )
 
 # Set the tutorial number so it's easier to re-use the CMakeLists.txt
-set( TUT 013 )
+set( TUT 016 )
 
 # Mark the language as C so that CMake doesn't try to test the C++
 # cross-compiler's ability to compile a simple program because that will fail
@@ -40,7 +40,8 @@ project( armc-${TUT}-tutorial C ASM )
 
 # Add any C compiler flags here. The C flags concerned with processor tuning
 # are in the toolchain files toolchain-arm-none-eabi-bcm2835.cmake, etc.
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O4" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 
 # Set the linker flags so that we use our "custom" linker script
@@ -48,16 +49,22 @@ set( CMAKE_EXE_LINKER_FLAGS "-Wl,-T,${PROJECT_SOURCE_DIR}/rpi.x" )
 
 add_executable( armc-${TUT}
     armc-${TUT}.c
-    armc-${TUT}-cstartup.c
-    armc-${TUT}-cstubs.c
-    armc-${TUT}-start.S
+    armc-cstartup.c
+    armc-cstubs.c
+    armc-start.S
     rpi-armtimer.c
     rpi-armtimer.h
+    rpi-aux.c
+    rpi-aux.h
     rpi-base.h
     rpi-gpio.c
     rpi-gpio.h
     rpi-interrupts.c
     rpi-interrupts.h
+    rpi-mailbox.c
+    rpi-mailbox.h
+    rpi-mailbox-interface.c
+    rpi-mailbox-interface.h
     rpi-systimer.c
     rpi-systimer.h )
 
