@@ -12,15 +12,14 @@ manual - but that's the only way you learn!
 
 Some material that's useful (Generally for late night reading!):
 
-- [https://github.com/raspberrypi/firmware/wiki/Accessing-mailboxes](Raspberry
-  Pi Firmware Mailboxes information)
+- [Raspberry
+  Pi Firmware Mailboxes information](https://github.com/raspberrypi/firmware/wiki/Accessing-mailboxes)
 
 This information is less important for now, but worth noting:
 
-- [http://www.broadcom.com/docs/support/videocore/VideoCoreIV-AG100-R.pdf](VideoCoreIv-AG100
-  3D Architecture Reference)
-- [http://www.broadcom.com/docs/support/videocore/Brcm_Android_ICS_Graphics_Stack.tar.gz](Android
-  Graphics Driver Source Code for VideoCoreIV)
+- [VideoCoreIv-AG100
+  3D Architecture Reference](http://www.broadcom.com/docs/support/videocore/VideoCoreIV-AG100-R.pdf)
+- [Android Graphics Driver Source Code for VideoCoreIV](http://www.broadcom.com/docs/support/videocore/Brcm_Android_ICS_Graphics_Stack.tar.gz)
 
 ## The GPU (Videocore IV)
 
