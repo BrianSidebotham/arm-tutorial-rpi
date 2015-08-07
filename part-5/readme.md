@@ -98,8 +98,19 @@ complex we need better ways of debugging. A later tutorial will talk about
 using JTAG but for now we can have the basic UART based text debugging that
 gets us out of most holes!
 
-> **TODO:** Add FTDI connection diagram to this section + image of PuTTY
-console
+This requires some hardware. Namely a [TTL-232R-3V3](http://cpc.farnell.com/ftdi/ttl-232r-3v3/cable-usb-to-ttl-level-seri-converter/dp/SC10142)
+or equivalent is required. The mini uart described in the AUX peripheral below
+is available on the RPI IO expansion headers on pins 8 (GPIO14/TXD) and 10
+(GPIO15/RXD)
+
+Connecting the UART to a PC is pretty easy, a quick connection guide is
+available:
+
+![UART Connection](images/ftdi-ttl-232r-3v3-rpi-connection.png)
+
+Also, a quick photo of one connected up:
+
+![UART Connection](images/ftdi-ttl-232r-3v3-rpi-connection-photo.jpg)
 
 ### AUX peripheral
 
@@ -385,6 +396,11 @@ Originally this is what I did, and then when I used printf() to test function
 I kept getting a crash. In fact after some debugging with the OK LED in the
 processor exception handlers we introduced in the last tutorial I was able
 to determine it was an undefined instruction error.
+
+When you run this tutorials examples with PuTTY, you'll see output similar to
+this:
+
+![PuTTY RPi Connection](images/putty-rpi-connection.png)
 
 ### Enabling VFP Support
 
@@ -1144,20 +1160,20 @@ the cache to the `armc-start.S` startup file:
 #### Enabling Cache
 
 ```
-    .equ	SCTLR_ENABLE_DATA_CACHE	        0x4
-    .equ	SCTLR_ENABLE_BRANCH_PREDICTION	0x800
-    .equ	SCTLR_ENABLE_INSTRUCTION_CACHE	0x1000
+    .equ    SCTLR_ENABLE_DATA_CACHE         0x4
+    .equ    SCTLR_ENABLE_BRANCH_PREDICTION  0x800
+    .equ    SCTLR_ENABLE_INSTRUCTION_CACHE  0x1000
     
-	// Enable L1 Cache -------------------------------------------------------
+    // Enable L1 Cache -------------------------------------------------------
 
     // R0 = System Control Register
     mrc p15,0,r0,c1,c0,0
-	
+    
     // Enable caches and branch prediction
     orr r0,#SCTLR_ENABLE_BRANCH_PREDICTION
     orr r0,#SCTLR_ENABLE_DATA_CACHE
     orr r0,#SCTLR_ENABLE_INSTRUCTION_CACHE
-	
+    
     // System Control Register = R0
     mcr p15,0,r0,c1,c0,0
 ```
@@ -1176,56 +1192,56 @@ This register has some bits defined which are useful for us, namely:
 
 ```
     I, bit[12] Instruction cache enable bit.
-		
-		This is a global enable bit for instruction caches. The possible values
-		of this bit are:
+        
+        This is a global enable bit for instruction caches. The possible values
+        of this bit are:
 
-		0 Instruction caches disabled.
-		1 Instruction caches enabled.
-		
-		If the system does not implement any instruction caches that can be
-		accessed by the processor, at any level of the memory hierarchy, this
-		bit is RAZ/WI.
+        0 Instruction caches disabled.
+        1 Instruction caches enabled.
+        
+        If the system does not implement any instruction caches that can be
+        accessed by the processor, at any level of the memory hierarchy, this
+        bit is RAZ/WI.
 
-		If the system implements any instruction caches that can be accessed
-		by the processor then it must be possible to disable them by setting
-		this bit to 0.
-		
-		Cache enabling and disabling on page B2-1270 describes the effect of
-		enabling the caches.
+        If the system implements any instruction caches that can be accessed
+        by the processor then it must be possible to disable them by setting
+        this bit to 0.
+        
+        Cache enabling and disabling on page B2-1270 describes the effect of
+        enabling the caches.
 
-	Z, bit[11] Branch prediction enable bit.
-	
-		The possible values of this bit are:
-		
-		0 Program flow prediction disabled.
-		1 Program flow prediction enabled.
-		
-		Setting this bit to 1 enables branch prediction, also called program
-		flow prediction.
+    Z, bit[11] Branch prediction enable bit.
+    
+        The possible values of this bit are:
+        
+        0 Program flow prediction disabled.
+        1 Program flow prediction enabled.
+        
+        Setting this bit to 1 enables branch prediction, also called program
+        flow prediction.
 
-		If program flow prediction cannot be disabled, this bit is RAO/WI.
-		If the implementation does not support program flow prediction then
-		this bit is RAZ/WI.		
+        If program flow prediction cannot be disabled, this bit is RAO/WI.
+        If the implementation does not support program flow prediction then
+        this bit is RAZ/WI.     
 
-	C, bit[2] Cache enable bit.
-	
-		This is a global enable bit for data and unified caches. The possible
-		values of this bit are:
+    C, bit[2] Cache enable bit.
+    
+        This is a global enable bit for data and unified caches. The possible
+        values of this bit are:
 
-		0 Data and unified caches disabled.
-		1 Data and unified caches enabled.
+        0 Data and unified caches disabled.
+        1 Data and unified caches enabled.
 
-		If the system does not implement any data or unified caches that can
-		be accessed by the processor, at any level of the memory hierarchy,
-		this bit is RAZ/WI.
+        If the system does not implement any data or unified caches that can
+        be accessed by the processor, at any level of the memory hierarchy,
+        this bit is RAZ/WI.
 
-		If the system implements any data or unified caches that can be
-		accessed by the processor then it must be possible to disable them by
-		setting this bit to 0.
-		
-	For more information about the effect of this bit see Cache enabling and
-	disabling on page B2-1270.		
+        If the system implements any data or unified caches that can be
+        accessed by the processor then it must be possible to disable them by
+        setting this bit to 0.
+        
+    For more information about the effect of this bit see Cache enabling and
+    disabling on page B2-1270.      
 ```
 
 In the [ARMv6 Architecture Manual](https://silver.arm.com/download/ARM_Architecture/AR550-DA-70002-r0p0-00rel0/DDI%2001001.pdf)
@@ -1238,55 +1254,55 @@ This control register implements bits in the register we're interested in for
 enabling L1 cache:
 
 ```
-	I (bit[12])
-	
-		If separate L1 caches are used, this is the enable/disable bit for the L1
-		instruction cache:
-	
-		0 = L1 instruction cache disabled
-		1 = L1 instruction cache enabled.
-	
-		If an L1 unified cache is used or the L1 instruction cache is not
-		implemented, this bit read as 0 and ignores writes. If the L1 instruction
-		cache cannot be disabled, this bit reads as 1 and ignores writes.
-	
-		The state of this bit does not affect further levels of cache in the
-		system.
+    I (bit[12])
+    
+        If separate L1 caches are used, this is the enable/disable bit for the L1
+        instruction cache:
+    
+        0 = L1 instruction cache disabled
+        1 = L1 instruction cache enabled.
+    
+        If an L1 unified cache is used or the L1 instruction cache is not
+        implemented, this bit read as 0 and ignores writes. If the L1 instruction
+        cache cannot be disabled, this bit reads as 1 and ignores writes.
+    
+        The state of this bit does not affect further levels of cache in the
+        system.
 
-	
-	Z (bit[11])
-		
-		On ARM processors which support branch prediction, this is the
-		enable/disable bit for branch prediction:
+    
+    Z (bit[11])
+        
+        On ARM processors which support branch prediction, this is the
+        enable/disable bit for branch prediction:
 
-		0 = Program flow prediction disabled
-		1 = Program flow prediction enabled.
-	
-		If program flow prediction cannot be disabled, this bit reads as 1 and
-		ignores writes.
+        0 = Program flow prediction disabled
+        1 = Program flow prediction enabled.
+    
+        If program flow prediction cannot be disabled, this bit reads as 1 and
+        ignores writes.
 
-		Program flow prediction includes all possible forms of speculative change
-		of instruction stream prediction. Examples include static prediction,
-		dynamic prediction, and return stacks.
-	
-		On ARM processors that do not support branch prediction, this bit reads as
-		0 and ignores writes.
+        Program flow prediction includes all possible forms of speculative change
+        of instruction stream prediction. Examples include static prediction,
+        dynamic prediction, and return stacks.
+    
+        On ARM processors that do not support branch prediction, this bit reads as
+        0 and ignores writes.
 
-	
-	C (bit[2])
-	
-		If a L1 unified cache is used, this is the enable/disable bit for the
-		unified cache. If separate L1 caches are used, this is the enable/disable
-		bit for the data cache. In either case:
+    
+    C (bit[2])
+    
+        If a L1 unified cache is used, this is the enable/disable bit for the
+        unified cache. If separate L1 caches are used, this is the enable/disable
+        bit for the data cache. In either case:
 
-		0 = L1 unified/data cache disabled
-		1 = L1 unified/data cache enabled.
-	
-		If the L1 cache is not implemented, this bit reads as 0 and ignores
-		writes. If the L1 cache cannot be disabled, this bit reads as 1 and
-		ignores writes.
-	
-		The state of this bit does not affect other levels of cache in the system.
+        0 = L1 unified/data cache disabled
+        1 = L1 unified/data cache enabled.
+    
+        If the L1 cache is not implemented, this bit reads as 0 and ignores
+        writes. If the L1 cache cannot be disabled, this bit reads as 1 and
+        ignores writes.
+    
+        The state of this bit does not affect other levels of cache in the system.
 ```
 
 As can be seen, although the cache system has changed slightly - it is essentially
@@ -1295,7 +1311,7 @@ the same for us to use across both RPi1 and RPi2:
 Get the value of the System Control Register in R0
 
 ```
-	// Enable L1 Cache -------------------------------------------------------
+    // Enable L1 Cache -------------------------------------------------------
 
     // R0 = System Control Register
     mrc p15,0,r0,c1,c0,0
@@ -1304,7 +1320,7 @@ Get the value of the System Control Register in R0
 Enable the three cache bits we just identified in the architecture manuals
 above:
 
-```	
+``` 
     // Enable caches and branch prediction
     orr r0,#SCTLR_ENABLE_BRANCH_PREDICTION
     orr r0,#SCTLR_ENABLE_DATA_CACHE
@@ -1327,9 +1343,9 @@ can both ask the GPU for the ARMs maximum frequency and then set the ARM
 frequency to the maximum returned by the GPU:
 
 ```c
-	mp = RPI_PropertyGet( TAG_GET_MAX_CLOCK_RATE );
-	
-	RPI_PropertyInit();
+    mp = RPI_PropertyGet( TAG_GET_MAX_CLOCK_RATE );
+    
+    RPI_PropertyInit();
     RPI_PropertyAddTag( TAG_SET_CLOCK_RATE, TAG_CLOCK_ARM, mp->data.buffer_32[1] );
     RPI_PropertyProcess();
 ```
