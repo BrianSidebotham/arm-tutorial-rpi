@@ -625,4 +625,4 @@ part-4/armc-013/armc-013.c:
 
 We now have interrupts up and working and in the exceptions you can do different things with the LED to use them to debug any nasty situations. We'll get onto JTAG debug in a future tutorial, but the next tutorial has to be the mailbox and GPU to get something more interesting happening, and what's more interesting than graphics!?
 
-
+When you're ready [head over to Pt5...](http://www.valvers.com/open-software/raspberry-pi/step05-bare-metal-programming-in-c-pt5/)
