@@ -6,8 +6,7 @@ The C-Runtime (different to the C-Library!) is currently missing from our code. 
 
 This is why in our previous example, we were working without pre-initialised variables. Instead, we initialise the variable in the code at the start of main from a pre-processor define.
 
-> **Github**
-> The code for the tutorials is now on [Github](https://github.com/BrianSidebotham/arm-tutorial-rpi). You can either browse the code, checkout the code, fork, branch, or download [as a zip](https://github.com/BrianSidebotham/arm-tutorial-rpi/archive/master.zip) from GibHub.
+> **Github** The code for the tutorials is now on [Github](https://github.com/BrianSidebotham/arm-tutorial-rpi). You can either browse the code, checkout the code, fork, branch, or download [as a zip](https://github.com/BrianSidebotham/arm-tutorial-rpi/archive/master.zip) from GibHub.
 
 ## Understanding the C-Runtime Startup
 
@@ -390,14 +389,9 @@ C:\Users\Brian\Documents\GitHub\arm-tutorial-rpi\part-2\armc-05>arm-none-eabi-nm
 000100bc B tim
 ```
 
-If we go back to the original disassembled output above, we see that address 0x8c
-(0x1008c - (0x8000 * 2)) is the next available memory address after the constants data which is
-itself immediately after the code section.
+If we go back to the original disassembled output above, we see that address 0x8c (0x1008c - (0x8000 * 2)) is the next available memory address after the constants data which is itself immediately after the code section.
 
-I hope you're following this, we're really seeing a "bug" in the linker script. There's no need
-for us to have this offset. The offset load is correct because when we load this image in RAM the
-data is indeed going to be + 0x8000 because that's where the boot-loader is going to place the
-image, but something is spacing the data section away from the constants data.
+I hope you're following this, we're really seeing a "bug" in the linker script. There's no need for us to have this offset. The offset load is correct because when we load this image in RAM the data is indeed going to be + 0x8000 because that's where the boot-loader is going to place the image, but something is spacing the data section away from the constants data.
 
 Let's ask the linker what script it's using by passing it a verbose option: -Wl,-verbose:
 
@@ -423,41 +417,23 @@ using internal linker script:
 ==================================================
 ```
 
-LD is using an internal linker script. That means the linker script it's using is compiled into
-the ld executable. That means we can't edit the linker script. The linker can accept another
-linker script that we can provide. Grab a copy of the default linker script, I just grabbed it
-from the verbose output of LD that we just generated! You can name it something like rpi.x.
-Now we can point the linker to this script:
+LD is using an internal linker script. That means the linker script it's using is compiled into the ld executable. That means we can't edit the linker script. The linker can accept another linker script that we can provide. Grab a copy of the default linker script, I just grabbed it from the verbose output of LD that we just generated! You can name it something like rpi.x. Now we can point the linker to this script.
 
 ## part-2/armc-06.c
 
 The code is identical to armc-05.c
 
-However, we add `-Wl,-T,rpi.x` to the compilation command to instruct LD to use a different
-linker script to the one it was using. We've retained `-Wl,verbose` so we can see what happens.
+However, we add `-Wl,-T,rpi.x` to the compilation command to instruct LD to use a different linker script to the one it was using. We've retained `-Wl,verbose` so we can see what happens.
 
-When passing options to the linker using GCC to compile and link, check the [gcc documentation](http://gcc.gnu.org/onlinedocs/gcc/Link-Options.html)
-which details the options you can pass.
+When passing options to the linker using GCC to compile and link, check the [gcc documentation](http://gcc.gnu.org/onlinedocs/gcc/Link-Options.html) which details the options you can pass.
 
-Now we have control of the linker script. We can try to find out what's "wrong". I quote wrong,
-because technically this works, but we've got an annoying 0x8000 offset. It'll be a pain to debug
-one day, I know it. Let's find out what we need to do to fix it instead. You can also see how
-complicated a linker script can get when it needs to deal with C++ sections!
+Now we have control of the linker script. We can try to find out what's "wrong". I quote wrong, because technically this works, but we've got an annoying 0x8000 offset. It'll be a pain to debug one day, I know it. Let's find out what we need to do to fix it instead. You can also see how complicated a linker script can get when it needs to deal with C++ sections!
 
-I hope you're staying with me! I know this may seem far removed from C development on the
-Raspberry-Pi bare-metal, but in fact knowing how your tools work to construct the code is
-essential later on down the line - heck you wouldn't be getting it up and running on your own from
-scratch unless you knew at least some of this stuff!
+I hope you're staying with me! I know this may seem far removed from C development on the Raspberry-Pi bare-metal, but in fact knowing how your tools work to construct the code is essential later on down the line - heck you wouldn't be getting it up and running on your own from scratch unless you knew at least some of this stuff!
 
-Whilst I'm scan-reading the linker script I'm looking for things that stick out. Most of these
-sections are not used in our basic example so far, so whatever is messing with us must have a size
-set, and must be present only when we have something in the initialised variables section which
-we know from our investigations with nm is the __data_start section (it aligns with the gpio
-symbol which we initialised).
+Whilst I'm scan-reading the linker script I'm looking for things that stick out. Most of these sections are not used in our basic example so far, so whatever is messing with us must have a size set, and must be present only when we have something in the initialised variables section which we know from our investigations with nm is the __data_start section (it aligns with the gpio symbol which we initialised).
 
-The "problem" must be between the __data_start section and end of the text section (the symbol
-main indicated the start of the text section). After a little bit of hunting, I see a comment and
-an alignment pertaining to the data section on line 101:
+The "problem" must be between the __data_start section and end of the text section (the symbol main indicated the start of the text section). After a little bit of hunting, I see a comment and an alignment pertaining to the data section on line 101:
 
 ```
 /* Adjust the address for the data segment.  We want to adjust up to
@@ -465,9 +441,7 @@ an alignment pertaining to the data section on line 101:
   . = ALIGN(CONSTANT (MAXPAGESIZE)) + (. & (CONSTANT (MAXPAGESIZE) - 1));
 ```
 
-Interesting, we apparently "want" to adjust up to the next page. If I comment this out with a
-standard C-style comment as can be seen in the rest of the file, we get back down to a size of a
-few hundred bytes with initialised data. Check again with the output of:
+Interesting, we apparently "want" to adjust up to the next page. If I comment this out with a standard C-style comment as can be seen in the rest of the file, we get back down to a size of a few hundred bytes with initialised data. Check again with the output of:
 
 ```
 arm-none-eabi-objdump -D kernel.elf > kernel.elf.asm
@@ -535,27 +509,19 @@ Disassembly of section .bss:
     80bc:   00000000    andeq   r0, r0, r0
 ```
 
-Use the [ARM instruction set quick reference card](http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf)
-to decypher if you're not familiar with ARM assembler.
+Use the [ARM instruction set quick reference card](http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf) to decypher if you're not familiar with ARM assembler.
 
-By the way, as a quick note - the comment in the linker script is entirely useless as it only
-describes what the code is doing, the worst type of comment! There is no *WHY* in the comment.
-Why are we wanting to do this? What's the reason for forcing the alignment? Anyway this alignment
-was forcing the 0x8000 additional offset to our rodata (initialised data) section.
+By the way, as a quick note - the comment in the linker script is entirely useless as it only describes what the code is doing, the worst type of comment! There is no *WHY* in the comment. Why are we wanting to do this? What's the reason for forcing the alignment? Anyway this alignment was forcing the 0x8000 additional offset to our rodata (initialised data) section.
 
-Cool, now the initialised data is tagged immediately on the end of the data and the valueslook
-sane too! I'll leave you to decode the assembly.
+Cool, now the initialised data is tagged immediately on the end of the data and the valueslook sane too! I'll leave you to decode the assembly.
 
 ## part-2/armc-07
 
-The code here is the same as part-2/armc-05. Nothing has changed, we'll just modify our linker
-script. At this point, we can get rid of the annoying _start undefined symbol warning. At the
-top of the linker script, on line 5 you'll see a line that says `ENTRY(_start)`
+The code here is the same as part-2/armc-05. Nothing has changed, we'll just modify our linker script. At this point, we can get rid of the annoying _start undefined symbol warning. At the top of the linker script, on line 5 you'll see a line that says `ENTRY(_start)`
 
 In armc-07 we've changed this to read `ENTRY(main)`
 
-The warning will go away at last! But we'll soon learn why we need that _start section for the
-C-Runtime anyway!
+The warning will go away at last! But we'll soon learn why we need that _start section for the C-Runtime anyway!
 
 Have a quick check of the sections with nm again, now there's no Undefined sections!
 
@@ -578,13 +544,7 @@ Have a quick check of the sections with nm again, now there's no Undefined secti
 
 ## Sections and C Startup
 
-As we've found out, there are a lot of sections, some which you may not know the meaning of.
-The .bss section is used for data that is implicitly initialised to 0 at startup (This is
-mandated by the C Standard). This means that all variables that are statically declared
-are set to zero initially. Statically declared essentially means global, so local (automatic)
-variables in a function that are not marked as static do not get initialised to zero if you
-do not explicitly add an initial value. It's easier with an example, take for example the
-following C file:
+As we've found out, there are a lot of sections, some which you may not know the meaning of. The .bss section is used for data that is implicitly initialised to 0 at startup (This is mandated by the C Standard). This means that all variables that are statically declared are set to zero initially. Statically declared essentially means global, so local (automatic) variables in a function that are not marked as static do not get initialised to zero if you do not explicitly add an initial value. It's easier with an example, take for example the following C file:
 
 ```
     unsigned int var1;
@@ -601,40 +561,19 @@ following C file:
     }
 ```
 
-In the above example var1, var2 and funcvar2 are in the bss section, the rest are not. For
-more information on the bss section, see the [wikipedia page on it](http://en.wikipedia.org/wiki/.bss)
+In the above example var1, var2 and funcvar2 are in the bss section, the rest are not. For more information on the bss section, see the [wikipedia page on it](http://en.wikipedia.org/wiki/.bss)
 
-The linker organises the data and sorts it out into the different sections. In the above, var3
-for example goes into the data section. The code is compiled into machine code and then put in
-the .text section. See [here](http://en.wikipedia.org/wiki/Code_segment) for "a little!" more
-information about the text section. There can be many text sections and there can be many data
-sections too. These sections are wild-carded in the linker script to ensure different sections
-can be defined whilst still knowing whether they are code or data sections.
+The linker organises the data and sorts it out into the different sections. In the above, var3 for example goes into the data section. The code is compiled into machine code and then put in the .text section. See [here](http://en.wikipedia.org/wiki/Code_segment) for "a little!" more information about the text section. There can be many text sections and there can be many data sections too. These sections are wild-carded in the linker script to ensure different sections can be defined whilst still knowing whether they are code or data sections.
 
-In our current code (armc-07) the bss section is not valid because it is not being initialised.
-That's because the C-Startup is missing. This is the importance of the `_start` symbol! The
-`_start` section is run before the c main() entry point and one of it's jobs is to initialise the
-bss section. The linker provides us with a couple of symbols for the sections so we know where
-they start and end. In the startup code all we need to do is loop between the addresses defined by
-`bss_start` and `bss_end` and set all locations to zero. It's easy when you know what you're
-meant to do!
+In our current code (armc-07) the bss section is not valid because it is not being initialised. That's because the C-Startup is missing. This is the importance of the `_start` symbol! The `_start` section is run before the c main() entry point and one of it's jobs is to initialise the bss section. The linker provides us with a couple of symbols for the sections so we know where they start and end. In the startup code all we need to do is loop between the addresses defined by `bss_start` and `bss_end` and set all locations to zero. It's easy when you know what you're meant to do!
 
-The `_startup` code should also setup the stack pointer. We'll need a working stack to get
-anything useful up and working! The stack is temporary memory space available for functions
-to use. The compiler tries to use registers for local (automatic) function variables, but if the
-size of data required by the local variables exceeds the amount of registers available, the
-compiler uses the stack for the local variables.
+The `_startup` code should also setup the stack pointer. We'll need a working stack to get anything useful up and working! The stack is temporary memory space available for functions to use. The compiler tries to use registers for local (automatic) function variables, but if the size of data required by the local variables exceeds the amount of registers available, the compiler uses the stack for the local variables.
 
 So lets go ahead and setup the stack pointer to a sane value and initialise the bss section.
 
-Firstly, we'll set the linker script back to standard so the entry point is the `_start` symbol
-again, we'll have to generate this symbol and generally we'll need to do this is assembler.
-We need to setup the stack pointer before we enter the C code so that we're safe to write
-C which may attempt to use the stack straight away.
+Firstly, we'll set the linker script back to standard so the entry point is the `_start` symbol again, we'll have to generate this symbol and generally we'll need to do this is assembler. We need to setup the stack pointer before we enter the C code so that we're safe to write C which may attempt to use the stack straight away.
 
-Normally the complete startup is done in assembler, including zeroing the bss section, but it
-doesn't have to! I prefer to get into C as soon as possible, so let's see how little assembler
-we can get away with, and see what trips us up next! :
+Normally the complete startup is done in assembler, including zeroing the bss section, but it doesn't have to! I prefer to get into C as soon as possible, so let's see how little assembler we can get away with, and see what trips us up next! :
 
 ## armc-08-start.S
 
@@ -664,12 +603,9 @@ _get_stack_pointer:
     mov     pc, lr
 ```
 
-Not bad! There's not exactly a lot there to set up the stack pointer. The stack is placed at the
-start of our program and grows downwards through memory. You don't need a large amount of memory
-for the stack.
+Not bad! There's not exactly a lot there to set up the stack pointer. The stack is placed at the start of our program and grows downwards through memory. You don't need a large amount of memory for the stack.
 
-Some important information about the `.section declaration`. With the linker script, I can see in
-rpi.x that the following text sections are available:
+Some important information about the `.section declaration`. With the linker script, I can see in rpi.x that the following text sections are available:
 
 ```
 .text           :
@@ -685,11 +621,7 @@ rpi.x that the following text sections are available:
   } =0
 ```
 
-This is also the order in which the text section is linked together by the linker. The standard
-functions generally go in the standard .text section. Therefore, we can put our _startup function
-before the main `.text` section by putting it in the `.text.startup` section. Other than
-`.text.unlikely` and `text.exit` which we won't use, `_startup` will be the first thing to go
-into the text segment which is where execution will start at 0x8000
+This is also the order in which the text section is linked together by the linker. The standard functions generally go in the standard .text section. Therefore, we can put our _startup function before the main `.text` section by putting it in the `.text.startup` section. Other than `.text.unlikely` and `text.exit` which we won't use, `_startup` will be the first thing to go into the text segment which is where execution will start at 0x8000
 
 Then, we're in C for initialising the bss section:
 
@@ -730,11 +662,7 @@ void _cstartup( unsigned int r0, unsigned int r1, unsigned int r2 )
 }
 ```
 
-Again, not that bad and pretty reasonable. NOTE: We've now changed from main to kernel_main, and
-there's a reason for this - the bootloader is actually expecting a slightly different entry
-definition compared to the standard C main function. So as we're setting up our own C-Runtime
-anyway, we can define the correct entry format. The correct bootloader entry point defines a
-couple of values which we can check to know what system we're booting.
+Again, not that bad and pretty reasonable. NOTE: We've now changed from main to kernel_main, and there's a reason for this - the bootloader is actually expecting a slightly different entry definition compared to the standard C main function. So as we're setting up our own C-Runtime anyway, we can define the correct entry format. The correct bootloader entry point defines a couple of values which we can check to know what system we're booting.
 
 The actual C code hasn't really changed apart from the kernel_main difference:
 
@@ -800,23 +728,13 @@ We again confirm with nm that everything is ordered at least something like sens
 000080f4 B tim
 ```
 
-Yup, looks good - _start is at 0x8000 where execution will start. Stick it on the card and make
-sure the OK LED is blinking still. I appreciate that we're doing a lot of work where you can't
-see more interesting results - but it'll get better soon, I promise! For now we're getting a great
-foundation for developing in C for the bare metal Raspberry-Pi. Knowing what your tools are doing
-is pretty essential!
+Yup, looks good - _start is at 0x8000 where execution will start. Stick it on the card and make sure the OK LED is blinking still. I appreciate that we're doing a lot of work where you can't see more interesting results - but it'll get better soon, I promise! For now we're getting a great foundation for developing in C for the bare metal Raspberry-Pi. Knowing what your tools are doing is pretty essential!
 
 ## The C-Library stubs
 
-Now that we've got the C-Runtime pretty much setup, we can implement the C-Library again with our
-own C-Runtime startup and C-Library stubs. This is where we want to get to - easy compiling with
-the C-Library being linked in so that we can make use of the C-Library functions on the
-Raspberry-Pi without an operating system.
+Now that we've got the C-Runtime pretty much setup, we can implement the C-Library again with our own C-Runtime startup and C-Library stubs. This is where we want to get to - easy compiling with the C-Library being linked in so that we can make use of the C-Library functions on the Raspberry-Pi without an operating system.
 
-We are actually linking against the C-Library, but we're not using anything from within it.
-Therefore, the linker disregards the whole of the C-Library because there are no references to
-it within the code. Let's jump straight in and malloc some memory as I know that requires a stub.
-Compile armc-09 without the *-cstubs.c and you'll see the error:
+We are actually linking against the C-Library, but we're not using anything from within it. Therefore, the linker disregards the whole of the C-Library because there are no references to it within the code. Let's jump straight in and malloc some memory as I know that requires a stub. Compile armc-09 without the *-cstubs.c and you'll see the error:
 
 ```
 .../arm-none-eabi/lib/fpu\libg.a(lib_a-sbrkr.o): In function `_sbrk_r':
@@ -824,19 +742,15 @@ sbrkr.c:(.text._sbrk_r+0x18): undefined reference to `_sbrk'
 collect2.exe: error: ld returned 1 exit status
 ```
 
-So the malloc call is calling something in the c library called _sbrk_r which is a re-entrant
-safe (or multi-thread/interrupt safe) C library function all called _sbrk. This is the C-stub
-function that we must implement as it is operating-system dependant.
+So the malloc call is calling something in the c library called _sbrk_r which is a re-entrant safe (or multi-thread/interrupt safe) C library function all called _sbrk. This is the C-stub function that we must implement as it is operating-system dependant.
 
-It's worth looking at how other people have implemented these function calls. Look at them to
-see what they're doing. Generally you can look at other kernel code, or embedded system code:
+It's worth looking at how other people have implemented these function calls. Look at them to see what they're doing. Generally you can look at other kernel code, or embedded system code:
 
 [http://www.opensource.apple.com/source/Libc/Libc-763.12/emulated/brk.c](http://www.opensource.apple.com/source/Libc/Libc-763.12/emulated/brk.c)
 
 [http://linux.die.net/man/2/sbrk](http://linux.die.net/man/2/sbrk)
 
-However, the best place is if examples are in the C-Library you're using! Newlib is well
-documented and [includes example minimal systemc calls/stubs](https://sourceware.org/newlib/libc.html#Syscalls).
+However, the best place is if examples are in the C-Library you're using! Newlib is well documented and [includes example minimal systemc calls/stubs](https://sourceware.org/newlib/libc.html#Syscalls).
 
 We implement this in the next tutorial armc-09
 
@@ -977,18 +891,10 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 }
 ```
 
-Build the example and program, now the counter variable is from malloc'd memory - usually malloc
-is the most mysterious of the c library stubs, but as you can see from the example, you can
-implement it easily and also implement it in C easily too! Of course occasionally it's necessary
-to drop down to assembler to get certain register values or talk to some special hardware
-features. Keep the [cheat-sheet](http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf)
-close at hand while you're working with the C-Stubs.
+Build the example and program, now the counter variable is from malloc'd memory - usually malloc is the most mysterious of the c library stubs, but as you can see from the example, you can implement it easily and also implement it in C easily too! Of course occasionally it's necessary to drop down to assembler to get certain register values or talk to some special hardware features. Keep the [cheat-sheet](http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf) close at hand while you're working with the C-Stubs.
 
 ## Part 3
 
-In the next part of the bare metal tutorial, we'll add on a build system so that we're not using a
-silly single command-line, and we can harness the power of a full build system for our bare-metal
-environment. We'll then fall back to the Cambridge ASM tutorials and progress to using the timer
-for flashing the LED rather than the incrementing loop counter we've used so far.
+In the next part of the bare metal tutorial, we'll add on a build system so that we're not using a silly single command-line, and we can harness the power of a full build system for our bare-metal environment. We'll then fall back to the Cambridge ASM tutorials and progress to using the timer for flashing the LED rather than the incrementing loop counter we've used so far.
 
 So, what are you waiting for? Head off to [Part3](http://www.valvers.com/embedded-linux/raspberry-pi/step03-bare-metal-programming-in-c-pt3) now!
