@@ -6,8 +6,11 @@
 
 #include "rpi-base.h"
 
-#define RPI_SYSTIMER_BASE       0x20003000
-
+#ifdef RPI2
+	#define RPI_SYSTIMER_BASE       0x3f003000
+#else
+	#define RPI_SYSTIMER_BASE       0x20003000
+#endif
 
 typedef struct {
     volatile uint32_t control_status;
