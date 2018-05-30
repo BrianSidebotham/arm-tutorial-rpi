@@ -143,23 +143,29 @@ V1 or V2 boards, hence the different scripts for building:
 
 #### RPI1
 
-    arm-none-eabi-gcc -O2 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s arm-test.c
+```
+arm-none-eabi-gcc -O2 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s arm-test.c
+```
 
 #### RPI2
 
-    arm-none-eabi-gcc -O2 -mfpu=vfp -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 arm-test.c
+```
+arm-none-eabi-gcc -O2 -mfpu=vfp -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 arm-test.c
+```
 
 #### RPI3
 
-    Yet to be decided
+```
+arm-none-eabi-gcc -O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a53 arm-test.c
+```
 
 GCC does successfully compile the source code (there are no C errors in it), but the linker fails
 with the following message:
 
 ```
-    .../libg.a(lib_a-exit.o): In function `exit':
-    exit.c:(.text.exit+0x2c): undefined reference to `_exit'
-    collect2: error: ld returned 1 exit status
+.../libg.a(lib_a-exit.o): In function `exit':
+exit.c:(.text.exit+0x2c): undefined reference to `_exit'
+collect2: error: ld returned 1 exit status
 ```
 
 
@@ -198,21 +204,21 @@ linker. As it is never going to be used, all we need to do is shut the linker up
 resolve `_exit`. So now we can compile the next version of the code, `part-1/armc-01`
 
 ```c
-    int main(void)
+int main(void)
+{
+    while(1)
     {
-        while(1)
-        {
 
-        }
-
-        return 0;
     }
 
-    void exit(int code)
-    {
-        while(1)
-            ;
-    }
+    return 0;
+}
+
+void exit(int code)
+{
+    while(1)
+        ;
+}
 ```
 
 >**NOTE:** In case you're wondering, the C compiler prefixes an underscore to the generated symbols
@@ -392,7 +398,7 @@ In order to set GPIO16 as an output then we need to write a value of 1 in the re
 function select register. Here we can rely on the fact that this register is set to 0 after a reset
 and so all we need to do is set:
 
-```
+```c
 #if defined( RPIPLUS ) || defined ( RPI2 )
     *gpio_fs4 |= (1<<21);
 #else
@@ -414,7 +420,7 @@ So in order to light the LED we need to output a 0. We need to write a 1 to bit 
 register:
 
 ```c
-    *gpio_clear |= (1<<16);
+*gpio_clear |= (1<<16);
 ```
 
 Putting what we've learnt into the minimal example above gives us a program that compiles and links
@@ -585,22 +591,22 @@ You can see that a binary image is now in the folder and is a much more sane siz
 that does so little:
 
 ```
-    ~/part-1/armc-03 $ ll
-    total 60
-    drwxr-xr-x 5 brian brian  4096 Jan  4 22:33 ./
-    drwxr-xr-x 6 brian brian  4096 Jan  4 21:33 ../
-    -rw-r--r-- 1 brian brian  3851 Jan  4 21:33 armc-03.c
-    drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi/
-    drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi-2/
-    drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi-bplus/
-    -rw-r--r-- 1 brian brian   190 Jan  4 21:33 build.bat
-    -rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-2.bat
-    -rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-2.sh
-    -rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-bplus.bat
-    -rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-bplus.sh
-    -rwxr-xr-x 1 brian brian   575 Jan  4 22:33 build.sh*
-    -rwxr-xr-x 1 brian brian 35036 Jan  4 22:33 kernel.elf*
-    -rwxr-xr-x 1 brian brian   220 Jan  4 22:33 kernel.img*
+~/part-1/armc-03 $ ll
+total 60
+drwxr-xr-x 5 brian brian  4096 Jan  4 22:33 ./
+drwxr-xr-x 6 brian brian  4096 Jan  4 21:33 ../
+-rw-r--r-- 1 brian brian  3851 Jan  4 21:33 armc-03.c
+drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi/
+drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi-2/
+drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi-bplus/
+-rw-r--r-- 1 brian brian   190 Jan  4 21:33 build.bat
+-rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-2.bat
+-rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-2.sh
+-rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-bplus.bat
+-rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-bplus.sh
+-rwxr-xr-x 1 brian brian   575 Jan  4 22:33 build.sh*
+-rwxr-xr-x 1 brian brian 35036 Jan  4 22:33 kernel.elf*
+-rwxr-xr-x 1 brian brian   220 Jan  4 22:33 kernel.img*
 ```
 
 The simplest way to get started making your own cards is to being with something that already
