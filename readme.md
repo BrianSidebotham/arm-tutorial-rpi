@@ -6,12 +6,14 @@ code is at
 [valvers.com](http://www.valvers.com/open-software/raspberry-pi/step01-bare-metal-programming-in-cpt1/)
 
 You can build on linux, windows, or MAC - all you need is the
-[https://launchpad.net/gcc-arm-embedded](arm-none-eabi toolchain).
+[arm-none-eabi toolchain](https://launchpad.net/gcc-arm-embedded).
 
 For all platforms, you can get the required toolchain used in this tutorial
-from the [GCC-ARM-embedded](https://launchpad.net/gcc-arm-embedded) project - I
-recommend getting the 4.7 toolchain because I've had problems with the 4.9
-toolchain.
+from the [GCC-ARM-embedded](https://launchpad.net/gcc-arm-embedded) project - 
+Most OS distributions now have at least the 4.8 toolchain, however the 
+following will fix problems with using the 4.9 toolchain.
+
+[Adding options -lc -specs=nosys.specs allows arm-none-eabi-gcc v4.9 for compilation](https://github.com/BrianSidebotham/arm-tutorial-rpi/issues/8)
 
 Have fun, and remember to experiment!
 
