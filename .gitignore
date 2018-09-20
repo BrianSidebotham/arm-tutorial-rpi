@@ -13,4 +13,13 @@ part-1/**/*.img
 part-2/**/*.elf
 part-2/**/*.img
 
+part-3/**/*.elf
+part-3/**/*.img
+
+part-4/**/*.elf
+part-4/**/*.img
+
+part-5/**/*.elf
+part-5/**/*.img
+
 compiler/gcc-arm*
