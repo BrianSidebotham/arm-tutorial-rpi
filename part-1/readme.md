@@ -39,13 +39,13 @@ ARM have now taken over the arm-gcc-embedded project and are provided the releas
 the [ARM gcc downloads](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads)
 section and pick up a toolchain.
 
-I've just grabbed 7.2.1 from the download page and I've locally installed it on my Linux machine to
+I've just grabbed 7.3.1 from the download page and I've locally installed it on my Linux machine to
 use with this tutorial.
 
 This is what I get when I run this on my command line having decompressed the archive:
 
-    ~/valvers-new/arm-tutorial-rpi/gcc-arm-none-eabi-7-2017-q4-major/bin $ ./arm-none-eabi-gcc --version
-    arm-none-eabi-gcc (GNU Tools for Arm Embedded Processors 7-2017-q4-major) 7.2.1 20170904 (release) [ARM/embedded-7-branch revision 255204]
+    ~/arm-tutorial-rpi/compiler/gcc-arm-none-eabi-7-2018-q2-update/bin $ ./arm-none-eabi-gcc --version
+    arm-none-eabi-gcc (GNU Tools for Arm Embedded Processors 7-2018-q2-update) 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907]
     Copyright (C) 2017 Free Software Foundation, Inc.
     This is free software; see the source for copying conditions.  There is NO
     warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
