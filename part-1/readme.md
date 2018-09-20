@@ -16,6 +16,23 @@ excellent. If you want to learn a bit of assembler too, then definitely head off
 pages provide a similar experience, but with the additional of writing code in C and understanding
 the process behind that.
 
+## Compatibility
+
+There are quite a few versions of the RPi these days. This part of the tutorial supports the
+following models:
+
+- RPi Model A
+- RPi Model B
+- RPi Zero
+- RPi Zero W
+- RPi Model B+
+- RPi 2 Model B
+- RPi 3 Model B
+
+>**NOTE:** It is not an error that the RPI 3 Model B+ is not included in this list. The ACK LED is
+only available through the mailbox interface (available from part-4 of the tutorial) and so cannot
+be used directly by the GPIO peripheral which we'll be using in this part of the tutorial.
+
 ## Cross Compiling for the Raspberry Pi (BCM2835/6/7)
 
 ARM have now taken over the arm-gcc-embedded project and are provided the releases, so pop over to
@@ -34,6 +51,9 @@ This is what I get when I run this on my command line having decompressed the ar
     warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 Cool.
+
+You can use the `compiler/get_compiler.sh` script as a shortcut to get the compiler and the
+tutorial scripts will make use of it if you do.
 
 ### Compiler Version
 
@@ -65,8 +85,8 @@ for the Raspberry-Pi 2 we use a different set of compiler options:
 
     -O2 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7
 
-You can see from the [ARM specification of the Cortex A7](http://www.arm.com/products/processors/cortex-a/cortex-a7.php)
-that it contains a VFPV4 floating point processor and a NEON engine. The settings are gleaned from
+You can see from the [ARM specification of the Cortex A7](http://docs-api-peg.northeurope.cloudapp.azure.com/assets/ddi0464/f/DDI0464F_cortex_a7_mpcore_r0p5_trm.pdf)
+that it contains a VFPV4 (See section 1.2.1) floating point processor and a NEON engine. The settings are gleaned from
 the [GCC ARM options](https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html) page.
 
 #### RPI3 Compiler Flags
@@ -301,9 +321,13 @@ The first thing we will need to set up is the GPIO controller. There are no driv
 as there is no OS running, all the bootloader has done is boot the processor into a working state,
 ready to start loading the OS.
 
-You'll need to get the [Raspberry-Pi BCM2835 peripherals datahsheet](http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf)
-which gives us the information we require to control the IO peripherals of the BCM2835. I'll guide
-us through using the GPIO peripheral - there are as always some gotcha's:
+You'll need to get the [Raspberry-Pi BCM2835 peripherals datahsheet](http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf),
+and make sure you pay attention to the [errata](https://elinux.org/BCM2835_datasheet_errata) for
+that too as it's not perfect. This gives us the information we require to control the IO
+peripherals of the BCM2835. I'll guide us through using the GPIO peripheral - there are as always
+some gotcha's:
+
+The Raspberry-Pi 2 uses the BMC2837 and so you'll want to get the [Raspberry-Pi BCM2837 peripherals datahsheet](https://web.stanford.edu/class/cs140e/docs/BCM2837-ARM-Peripherals.pdf).
 
 We'll be using the GPIO peripheral, and it would therefore be natural to jump straight to that
 documentation and start writing code, but we need to first read some of the 'basic' information
@@ -327,7 +351,8 @@ core is running in kernel mode. Addresses on the bus are therefore accessed via 
 Address. We can see from the IO map that the VC CPU Address `0x7E000000` is mapped to ARM Physical
 Address `0x20000000` for the original Raspberry Pi. This is important!
 
-Although not documented anywhere, the Raspberry-Pi 2 has the ARM IO base set to `0x3F000000`
+If you read the two peripheral datasheets carefully you'll see a subtle difference in them, notably
+, the Raspberry-Pi 2 has the ARM IO base set to `0x3F000000`
 instead of the original `0x20000000` of the original Raspberry-Pi. Unfortunately for us software
 engineers the Raspberry-Pi foundation don't appear to be good a securing the documentation we need,
 in fact, their [attitude suggests](http://www.raspberrypi.org/forums/viewtopic.php?f=72&amp;t=98400)
@@ -372,6 +397,8 @@ an output. This is done by setting the function of GPIO16 (GPIO47 RPI+) to an ou
 Bits 18 to 20 in the 'GPIO Function Select 1' register control the GPIO16 pin.
 
 Bits 21 to 23 in the 'GPIO Function Select 4' register control the GPIO47 pin. (RPI B+)
+
+Bits 27 to 29 in the 'GPIO Function Select 2' register control the GPIO29 pin. (RPI3 B+)
 
 In C, we will generate a pointer to the register and use the pointer to write a value into the
 register. We will mark the register as volatile so that the compiler explicitly does what I tell it

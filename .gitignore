@@ -7,6 +7,13 @@ rpi-docs
 
 firmware/firmware
 
+part-1/armc-01/*.elf
+part-1/armc-01/*.img
+
+part-1/armc-02/*.elf
+part-1/armc-02/*.img
+
 part-1/armc-03/*.img
 part-1/armc-03/*.elf
+
 compiler/gcc-arm*
