@@ -593,19 +593,16 @@ arm-none-eabi-gcc -nostartfiles \
     -o kernel.armc-02.rpi3.elf
 ```
 
-/home/brian/apps/gcc-arm-none-eabi-7-2017-q4-major/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/bin/ld: warning: cannot find entry symbol _start; defaulting to 0000000000008000
-```
-
 The linker gives us a warning, which we'll sort out later, but importantly the linker has resolved
 the problem for us. This is the warning we'll see and ignore:
 
 ```
-...bin/ld: warning: cannot find entry symbol _start; defaulting to 0000000000008000
+.../arm-none-eabi/bin/ld: warning: cannot find entry symbol _start; defaulting to 0000000000008000
 ```
 
 As we can see from the compilation, the standard output is ELF format which is essentially an
-executable wrapped with information that an OS may need to know. We need a binary ARM executable
-that only includes machine code. We can extract this using the objcopy utility:
+executable wrapped with information that an OS binary loader may need to know. We need a binary
+ARM executable that only includes machine code. We can extract this using the objcopy utility:
 
 ```
 arm-none-eabi-objcopy kernel.elf -O binary kernel.img
@@ -635,9 +632,10 @@ just the compiled machine code in the `kernel.img` file ready for execution.
 
 ### Back to our example
 
-This gives us the kernel.img binary file which should only contain ARM machine code. It should be
-tens of bytes long. You'll notice that kernel.elf on the otherhand is ~34Kb. Rename the `kernel.img`
+This gives us the `kernel.img` binary file which should only contain ARM machine code. It should be
+tens of bytes long. You'll notice that `kernel.elf` on the otherhand is ~34Kb. Rename the `kernel.img`
 on your SD Card to something like old.kernel.img and save your new kernel.img to the SD Card.
+
 Booting from this SD Card should now leave the OK LED on permanently. The normal startup is for the
 OK LED to be on, then extinguish. If it remains extinguished something went wrong with building or
 linking your program. Otherwise if the LED remains lit, your program has executed successfully.
@@ -646,67 +644,103 @@ A blinking LED is probably more appropriate to make sure that our code is defini
 quickly change the code to crudely blink an LED and then we'll look at sorting out the C
 library issues we had earlier as the C library is far too useful to not have access to it.
 
-Compile the code in part-1/armc-03. The code listing is identical to part-1/armc-02 but the build
-scripts use objcopy to convert the ELF formatted binary to a raw binary ready to deploy on the SD
-card.
+Compile the code in `part-1/armc-03`. The code listing is identical to `part-1/armc-02` but the
+build scripts use objcopy to convert the ELF formatted binary to a raw binary ready to deploy on
+the SD card.
 
 You can see that a binary image is now in the folder and is a much more sane size for some code
 that does so little:
 
 ```
-~/part-1/armc-03 $ ll
-total 60
-drwxr-xr-x 5 brian brian  4096 Jan  4 22:33 ./
-drwxr-xr-x 6 brian brian  4096 Jan  4 21:33 ../
--rw-r--r-- 1 brian brian  3851 Jan  4 21:33 armc-03.c
-drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi/
-drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi-2/
-drwxr-xr-x 2 brian brian  4096 Jan  4 21:33 bin-rpi-bplus/
--rw-r--r-- 1 brian brian   190 Jan  4 21:33 build.bat
--rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-2.bat
--rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-2.sh
--rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-bplus.bat
--rw-r--r-- 1 brian brian   201 Jan  4 21:33 build-rpi-bplus.sh
--rwxr-xr-x 1 brian brian   575 Jan  4 22:33 build.sh*
--rwxr-xr-x 1 brian brian 35036 Jan  4 22:33 kernel.elf*
--rwxr-xr-x 1 brian brian   220 Jan  4 22:33 kernel.img*
+part-1/armc-03 $ ./build.sh rpi3bp
+    arm-none-eabi-gcc -g \
+        -nostartfiles \
+        -mfloat-abi=hard \
+        -O0 \
+        -DIOBPLUS \
+        -DRPI3 \
+        -mfpu=crypto-neon-fp-armv8 \
+        -march=armv8-a+crc \
+        -mcpu=cortex-a53 \
+        armc-03.c \
+        -o kernel.armc-03.rpi3bp.elf
+
+.../arm-none-eabi/bin/ld: warning: cannot find entry symbol _start; defaulting to 0000000000008000
+arm-none-eabi-objcopy kernel.armc-03.rpi3bp.elf -O binary kernel.img
 ```
 
-The simplest way to get started making your own cards is to being with something that already
-exists and has the boot partition on the SD Card already and simply copy the required boot and
-`kernel.img` files to it:
+The kernel.img file contains just the ARM machine code and so is just a few hundred bytes.
 
 ```
-$ cp ~/valvers-new/arm-tutorial-rpi/firmware/boot/* .
-brian@brian-PH67-UD3-B3 /media/brian/01DD-2F2D $ ll
-total 2848
-drwxr-xr-x  2 brian brian   16384 Jan  4 23:07 ./
-drwxr-x---+ 4 root  root     4096 Jan  4 23:06 ../
--rw-r--r--  1 brian brian   50248 Jan  4 23:07 bootcode.bin
--rw-r--r--  1 brian brian    6563 Jan  4 23:07 fixup.dat
--rw-r--r--  1 brian brian     220 Jan  4 22:38 kernel.img
--rw-r--r--  1 brian brian    1494 Jan  4 23:07 LICENCE.broadcom
--rw-r--r--  1 brian brian     199 Jan  4 22:38 readme.md
--rw-r--r--  1 brian brian 2819300 Jan  4 23:07 start.elf
-
-/media/brian/01DD-2F2D $ rm -rf *
-/media/brian/01DD-2F2D $ cp ~/part-1/armc-03/kernel.img .
-/media/brian/01DD-2F2D $ cp ~/firmware/boot/* .
-/media/brian/01DD-2F2D $ ll
-total 2848
-drwxr-xr-x  2 brian brian   16384 Jan  4 23:07 ./
-drwxr-x---+ 4 root  root     4096 Jan  4 23:06 ../
--rw-r--r--  1 brian brian   50248 Jan  4 23:07 bootcode.bin
--rw-r--r--  1 brian brian    6563 Jan  4 23:07 fixup.dat
--rw-r--r--  1 brian brian     220 Jan  4 22:38 kernel.img
--rw-r--r--  1 brian brian    1494 Jan  4 23:07 LICENCE.broadcom
--rw-r--r--  1 brian brian     199 Jan  4 22:38 readme.md
--rw-r--r--  1 brian brian 2819300 Jan  4 23:07 start.elf
+part-1/armc-03 $ ll
+total 28
+drwxr-xr-x 2 brian brian  4096 Sep 21 01:05 ./
+drwxr-xr-x 6 brian brian  4096 Sep 21 00:19 ../
+-rw-r--r-- 1 brian brian  3894 Sep 21 00:19 armc-03.c
+-rwxr-xr-x 1 brian brian  2805 Sep 21 01:05 build.sh*
+-rwxr-xr-x 1 brian brian 35208 Sep 21 01:05 kernel.armc-03.rpi3bp.elf*
+-rwxr-xr-x 1 brian brian   268 Sep 21 01:05 kernel.img*
 ```
 
-Eject the media and insert into the RPi, and then apply power to the RPi
+## Generating SD Cards
 
-...and see the OK LED Blink! :D
+The next step is how to get this `kernel.img` file onto an SD Card so we can boot the card and run
+our newly compiled code.
+
+Previously the advice here was to get a card that has Raspbian or something on and simply replace
+the kernel.img file on that card with the one we've compiled. However, as there are now so many RPI
+options and there are many more boot files on those SD Cards it's better to create our own.
+
+I've written a script to generate an SD Card img file. You can simply run the `./make_card.sh`
+script to generate an img file that can be written directly to an SD card to then boot an RPi
+and run your fresh code.
+
+The script that generates the card image must be run as root. Not much option there I'm afraid, it
+needs to do that to be able to use the device-mapper kernel interface to generate a loop device for
+the img.
+
+Run the `./make_card.sh` script to generate a card image:
+
+```
+part-1/armc-03 $ ./make_card.sh rpi3bp
+all_loops: /dev/loop0: [2049]:3177416 (/home/brian/valvers-new/arm-tutorial-rpi/part-1/armc-03/card.armc-03.rpi3bp.img)
+Using /dev/loop0 as the target
+mkfs.fat 3.0.28 (2015-05-16)
+unable to get drive geometry, using default 255/63
+'card/../firmware/firmware/boot/bootcode.bin' -> '/tmp/tmp.Aybb0IDwyh/bootcode.bin'
+'card/../firmware/firmware/boot/fixup.dat' -> '/tmp/tmp.Aybb0IDwyh/fixup.dat'
+'card/../firmware/firmware/boot/start.elf' -> '/tmp/tmp.Aybb0IDwyh/start.elf'
+'part-1/armc-03/kernel.armc-03.rpi3bp.img' -> '/tmp/tmp.Aybb0IDwyh/kernel.img'
+```
+
+We end up a card image that can now be written to an SD Card. The card image is around 4MiB or so:
+
+```
+part-1/armc-03 $ ls -lh
+total 4.1M
+-rw-r--r-- 1 brian brian 3.9K Sep 21 00:19 armc-03.c
+-rwxr-xr-x 1 brian brian 2.8K Sep 21 01:20 build.sh
+-rw-r--r-- 1 root  root  4.0M Sep 21 01:22 card.armc-03.rpi3bp.img
+-rwxr-xr-x 1 brian brian  35K Sep 21 01:20 kernel.armc-03.rpi3bp.elf
+-rwxr-xr-x 1 brian brian  268 Sep 21 01:20 kernel.armc-03.rpi3bp.img
+-rwxr-xr-x 1 brian brian  268 Sep 21 01:05 kernel.img
+-rwxr-xr-x 1 brian brian  925 Sep 21 01:21 make_card.sh
+```
+
+Writing the image to the card can be done using `cat` so long as you know what the SD Card device
+is.
+
+If you'd rather, you can use the `write_card.sh` script in the `card` directory which you can use
+interactively to select the SD Card.
+
+If you prefer to do things manually you can insert the SD Card and then run `dmesg | tail` to view
+messages which will show you which device reference was used for the SD Card.
+
+**DON'T GET THE SD CARD DEVICE WRONG OR YOU'LL COMPLETELY WIPE OUT ANOTHER DISK!**
+
+When you know what disk to use, you can simply cat the image to the disk using `cat kernel.armc-03.rpibp.img > /dev/sdg` for example
+
+## Provided Binaries
 
 As this is the first example where code should run and give you a visible output on your RPi, I've
 included the kernel binaries for each Raspberry-Pi board so that you can load the pre-built binary
