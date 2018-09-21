@@ -82,7 +82,7 @@ start_file=start.elf
 fixup_file=fixup.dat
 EOF
 
-must_run cp -v ${kernel_file} ${mount_point}
+must_run cp -v ${kernel_file} ${mount_point}/kernel.img
 
 must_run sync
 must_run umount ${disk}p1
