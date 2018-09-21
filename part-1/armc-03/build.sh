@@ -81,7 +81,7 @@ case "${model}" in
 esac
 
 kernel_elf="${scriptdir}/kernel.${tutorial}.${model}.elf"
-kernel_img="${scriptdir}/kernel.img"
+kernel_img="${scriptdir}/kernel.${tutorial}.${model}.img"
 
 printf "%s\n" "${toolchain}gcc ${cflags} ${scriptdir}/*.c -o ${kernel_elf}"
 ${toolchain}gcc ${cflags} ${scriptdir}/*.c -o ${kernel_elf}
@@ -94,4 +94,4 @@ fi
 printf "%s\n" "${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}"
 ${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}
 
-must_run ${base}/card/create_card_image.sh ${kernel_img} ${disk_name}
+#must_run ${base}/card/create_card_image.sh ${kernel_img} ${disk_name}

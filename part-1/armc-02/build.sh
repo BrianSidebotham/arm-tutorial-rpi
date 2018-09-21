@@ -32,10 +32,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # Common CFLAGS
-ccflags="-g"
-ccflags="${ccflags} -nostartfiles"
+ccflags="-nostartfiles"
 ccflags="${ccflags} -mfloat-abi=hard"
-ccflags="${ccflags} -O0"
 
 # Whatever specific flags we use should also include the common c flags
 cflags="${ccflags}"
@@ -46,31 +44,24 @@ cflags="${ccflags}"
 # different IO arrangement on the 3B+ units compared to the original 3B. We need to be able to
 # be able to adjust the code for whichever model we're targetting
 case "${model}" in
-    *bp) cflags="${cflags} -DIOBPLUS" ;;
-esac
-
-case "${model}" in
     rpi0*)
-        cflags="${cflags} -DRPI0"
         cflags="${cflags} -mfpu=vfp"
         cflags="${cflags} -march=armv6zk"
         cflags="${cflags} -mtune=arm1176jzf-s"
         ;;
     rpi1*)
-        cflags="${cflags} -DRPI1"
         cflags="${cflags} -mfpu=vfp"
         cflags="${cflags} -march=armv6zk"
         cflags="${cflags} -mtune=arm1176jzf-s"
         ;;
 
     rpi2*)
-        cflags="${cflags} -DRPI2"
         cflags="${cflags} -mfpu=neon-vfpv4"
         cflags="${cflags} -march=armv7-a"
         cflags="${cflags} -mtune=cortex-a7"
         ;;
 
-    rpi3*) cflags="${cflags} -DRPI3"
+    rpi3*)
         cflags="${cflags} -mfpu=crypto-neon-fp-armv8"
         cflags="${cflags} -march=armv8-a+crc"
         cflags="${cflags} -mcpu=cortex-a53"
@@ -90,6 +81,3 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Failed to compile!" >&2
     exit 1
 fi
-
-printf "%s\n" "${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}"
-${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}
