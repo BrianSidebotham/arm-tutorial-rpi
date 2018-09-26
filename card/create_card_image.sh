@@ -77,7 +77,7 @@ must_run rm -f ${mount_point}/kernel.img
 must_run rm -f ${mount_point}/kernel7.img
 
 # If we need to do anything with configuration files - do it in the heredoc
-sudo cat << EOF > /mnt/rpicard/config.txt
+sudo cat << EOF > ${mount_point}/config.txt
 start_file=start.elf
 fixup_file=fixup.dat
 EOF
