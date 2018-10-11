@@ -50,10 +50,32 @@ int main(void)
 }
 ```
 
-Compile it (using the build*.bat, or build*.sh file) and we notice a few things:
+Compile it (using the build.sh script):
 
-* The size of the binary image is now 33k, but the previous version of this code was only a hundred bytes or so!
-* The code, when written to the SDCARD still works - this isn't really expected without a working C-Runtime in place to initialise the variable gpio before calling main!?
+```bash
+part-2/armc-04 $ ./build.sh rpi0
+arm-none-eabi-gcc -g -nostartfiles -mfloat-abi=hard -O0 -DRPI0 -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s /.../part-2/armc-04/*.c -o /.../part-2/armc-04/kernel.armc-04.rpi0.elf
+/.../gcc-arm-none-eabi-7-2017-q4-major/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/bin/ld: warning: cannot find entry symbol _start; defaulting to 0000000000008000
+arm-none-eabi-objcopy /.../part-2/armc-04/kernel.armc-04.rpi0.elf -O binary /.../part-2/armc-04/kernel.armc-04.rpi0.img
+```
+
+ and we notice a few things:
+
+- The size of the binary image is now 33k, but the previous version of this code was only a hundred bytes or so!
+- The code, when written to the SDCARD still works - this isn't really expected without a working C-Runtime in place to initialise the variable gpio before calling main!?
+
+```bash
+part-2/armc-04 $ ls -lah
+total 40K
+drwxr-xr-x 2 brian brian 4.0K Oct 11 21:07 .
+drwxr-xr-x 8 brian brian 4.0K Jan  4  2018 ..
+-rw-r--r-- 1 brian brian 1.2K Sep 21 00:19 armc-04.c
+-rwxr-xr-x 1 brian brian 2.7K Oct 11 21:07 build.sh
+-rwxr-xr-x 1 brian brian  108 Sep 21 00:19 disassemble.sh
+-rwxr-xr-x 1 brian brian  35K Oct 11 21:07 kernel.armc-04.rpi0.elf
+-rwxr-xr-x 1 brian brian  65K Oct 11 21:07 kernel.armc-04.rpi0.img
+-rw-r--r-- 1 brian brian 1.7K Sep 21 00:19 rpi-gpio.h
+```
 
 In fact, this embedded system is different to a lot because we're loading an entire binary image into RAM and then executing from RAM. The majority of systems have a non-volatile memory section (Flash/ROM) where the executable code resides, and a volatile memory section (RAM) where the variable data resides. Variables exist in RAM, everything has a position in RAM.
 
@@ -63,103 +85,286 @@ This is one of the jobs of the C-Runtime code (CRT). This is a code object that 
 
 Normally of course, this happens without you knowing. In general, you'll select your processor or embedded system on the command line and the appropriate linker script and C-Runtime is chosen for you and linked in.
 
-I urge you to go and look at your arm-none-gcc-eabi install now to see some of these files. Look under the arm-none-eabi sub-directory and then under the lib sub-directory. The C-Runtime code is a binary object file and is called crt0.o, the C Library for info is an archive of object files called libc.a (there may be several versions with different names), and then you'll have some .ld files. Under the ldscripts subdirectory you'll find the standard linker scripts. It's just worth a look to know they're there. GCC uses a thing called specs files too, which allow specifying system settings so that you can create a machine specification that allows you to target a machine easily. You can select a custom specs file with a command line option for GCC, otherwise gcc uses it's built-in specs.
+I urge you to go and look at your `arm-none-gcc-eabi` install now to see some of these files. Look under the `arm-none-eabi` sub-directory and then under the lib sub-directory. The C-Runtime code is a binary object file and is called crt0.o, the C Library for info is an archive of object files called libc.a (there may be several versions with different names), and then you'll have some .ld files. Under the ldscripts subdirectory you'll find the standard linker scripts. It's just worth a look to know they're there. GCC uses a thing called specs files too, which allow specifying system settings so that you can create a machine specification that allows you to target a machine easily. You can select a custom specs file with a command line option for GCC, otherwise gcc uses it's built-in specs.
 
 specs files are considered an advanced subject in the world of the GNU tool-chain, but they provide an excellent way of supplying machine-specific compilation settings. For the embedded engineer they're worth knowing about! :D
 
-So, now we've got two questions, why does our code work - because the initialisation isn't present in the C-Runtime? and, why has our code size jumped from a 100 bytes or so to 33k?
+So, now we've got two questions, why does our code work - because the initialisation isn't present in the C-Runtime? and, why has our code size jumped from a 100 bytes or so to 64k?
 
 The code works without any initialisation because the variables exist in the same memory space as the code. The bootloading process results in the raspberry-pi kernel being loaded into RAM in order to be executed, the GPU bootloader runs before the ARM processor we're targeting runs, and loads the kernel.img file from disk. Because of this, the variables position within the binary image becomes their variable memory location. The image is loaded by the boot-loader at address 0x8000 and then executed. So the bootloader has essentially done a taskt that the C-Runtime would normally do, copy the initial values of initialised variables from non-volatile memory to volatile memory. Cool.
 
-Look at the code produced closer with a disassembler. You've already got a disassembler! It comes with the toolchain; Weclome to the world of objdump (or in our case arm-non-eabi-objdump). We diassemble the elf file because then objdump knows what processor the binary was built for. It also then has knowledge of the different code sections too. There's a disassemble.bat and disassemble.sh script so go ahead and disassemble the code to see what the compiler generated. You'll get a kernel.asm file that looks similar to if not the same as the following (RPI2) code:
+Look at the code produced closer with a disassembler. You've already got a disassembler!
+It comes with the toolchain; Welcome to the world of objdump (or in our case `arm-non-eabi-objdump`).
+We disassemble the elf file because then objdump knows what processor the binary was built for.
+It also then has knowledge of the different code sections too. There's a `disassemble.sh` script
+so go ahead and disassemble the code to see what the compiler generated. You'll get a `kernel*.asm`
+file that looks similar to if not the same as the following (RPI0) code:
 
 ```
 Disassembly of section .text:
 
 00008000 <main>:
-    8000:   e59f2078    ldr r2, [pc, #120]  ; 8080 <main+0x80>
-    8004:   e59f3078    ldr r3, [pc, #120]  ; 8084 <main+0x84>
-    8008:   e5920000    ldr r0, [r2]
-    800c:   e59f2074    ldr r2, [pc, #116]  ; 8088 <main+0x88>
-    8010:   e5901004    ldr r1, [r0, #4]
-    8014:   e3a0e000    mov lr, #0
-    8018:   e3811701    orr r1, r1, #262144 ; 0x40000
-    801c:   e5801004    str r1, [r0, #4]
-    8020:   e3a0c801    mov ip, #65536  ; 0x10000
-    8024:   e583e000    str lr, [r3]
-    8028:   e5931000    ldr r1, [r3]
-    802c:   e1510002    cmp r1, r2
-    8030:   8a000005    bhi 804c <main+0x4c>
-    8034:   e5931000    ldr r1, [r3]
-    8038:   e2811001    add r1, r1, #1
-    803c:   e5831000    str r1, [r3]
-    8040:   e5931000    ldr r1, [r3]
-    8044:   e1510002    cmp r1, r2
-    8048:   9afffff9    bls 8034 <main+0x34>
-    804c:   e580c028    str ip, [r0, #40]   ; 0x28
-    8050:   e583e000    str lr, [r3]
-    8054:   e5931000    ldr r1, [r3]
-    8058:   e1510002    cmp r1, r2
-    805c:   8a000005    bhi 8078 <main+0x78>
-    8060:   e5931000    ldr r1, [r3]
-    8064:   e2811001    add r1, r1, #1
-    8068:   e5831000    str r1, [r3]
-    806c:   e5931000    ldr r1, [r3]
-    8070:   e1510002    cmp r1, r2
-    8074:   9afffff9    bls 8060 <main+0x60>
-    8078:   e580c01c    str ip, [r0, #28]
-    807c:   eaffffe8    b   8024 <main+0x24>
-    8080:   0001008c    andeq   r0, r1, ip, lsl #1
-    8084:   00010090    muleq   r1, r0, r0
-    8088:   0007a11f    andeq   sl, r7, pc, lsl r1
+    8000:    e59f30b8     ldr    r3, [pc, #184]    ; 80c0 <main+0xc0>
+    8004:    e5933000     ldr    r3, [r3]
+    8008:    e2833004     add    r3, r3, #4
+    800c:    e5932000     ldr    r2, [r3]
+    8010:    e59f30a8     ldr    r3, [pc, #168]    ; 80c0 <main+0xc0>
+    8014:    e5933000     ldr    r3, [r3]
+    8018:    e2833004     add    r3, r3, #4
+    801c:    e3822701     orr    r2, r2, #262144    ; 0x40000
+    8020:    e5832000     str    r2, [r3]
+    8024:    e59f3098     ldr    r3, [pc, #152]    ; 80c4 <main+0xc4>
+    8028:    e3a02000     mov    r2, #0
+    802c:    e5832000     str    r2, [r3]
+    8030:    ea000004     b    8048 <main+0x48>
+    8034:    e59f3088     ldr    r3, [pc, #136]    ; 80c4 <main+0xc4>
+    8038:    e5933000     ldr    r3, [r3]
+    803c:    e2833001     add    r3, r3, #1
+    8040:    e59f207c     ldr    r2, [pc, #124]    ; 80c4 <main+0xc4>
+    8044:    e5823000     str    r3, [r2]
+    8048:    e59f3074     ldr    r3, [pc, #116]    ; 80c4 <main+0xc4>
+    804c:    e5933000     ldr    r3, [r3]
+    8050:    e59f2070     ldr    r2, [pc, #112]    ; 80c8 <main+0xc8>
+    8054:    e1530002     cmp    r3, r2
+    8058:    9afffff5     bls    8034 <main+0x34>
+    805c:    e59f305c     ldr    r3, [pc, #92]    ; 80c0 <main+0xc0>
+    8060:    e5933000     ldr    r3, [r3]
+    8064:    e2833028     add    r3, r3, #40    ; 0x28
+    8068:    e3a02801     mov    r2, #65536    ; 0x10000
+    806c:    e5832000     str    r2, [r3]
+    8070:    e59f304c     ldr    r3, [pc, #76]    ; 80c4 <main+0xc4>
+    8074:    e3a02000     mov    r2, #0
+    8078:    e5832000     str    r2, [r3]
+    807c:    ea000004     b    8094 <main+0x94>
+    8080:    e59f303c     ldr    r3, [pc, #60]    ; 80c4 <main+0xc4>
+    8084:    e5933000     ldr    r3, [r3]
+    8088:    e2833001     add    r3, r3, #1
+    808c:    e59f2030     ldr    r2, [pc, #48]    ; 80c4 <main+0xc4>
+    8090:    e5823000     str    r3, [r2]
+    8094:    e59f3028     ldr    r3, [pc, #40]    ; 80c4 <main+0xc4>
+    8098:    e5933000     ldr    r3, [r3]
+    809c:    e59f2024     ldr    r2, [pc, #36]    ; 80c8 <main+0xc8>
+    80a0:    e1530002     cmp    r3, r2
+    80a4:    9afffff5     bls    8080 <main+0x80>
+    80a8:    e59f3010     ldr    r3, [pc, #16]    ; 80c0 <main+0xc0>
+    80ac:    e5933000     ldr    r3, [r3]
+    80b0:    e283301c     add    r3, r3, #28
+    80b4:    e3a02801     mov    r2, #65536    ; 0x10000
+    80b8:    e5832000     str    r2, [r3]
+    80bc:    eaffffd8     b    8024 <main+0x24    >
+    80c0:    000180cc     andeq    r8, r1, ip, asr #1
+    80c4:    000180d0     ldrdeq    r8, [r1], -r0
+    80c8:    0007a11f     andeq    sl, r7, pc, lsl r1
 
 Disassembly of section .data:
 
-0001008c <__data_start>:
-   1008c:   20200000    eorcs   r0, r0, r0
+000180cc <gpio>:
+   180cc:    20200000     eorcs    r0, r0, r0
+
+Disassembly of section .bss:
+
+000180d0 <tim>:
+   180d0:    00000000     andeq    r0, r0, r0
 ```
 
-The first line loads r2 with the value at the *address* contained at the Program Counter
-(PC) + 120. At this address, there's the value 0x1008c. Remember that this file is loaded at
-0x8000 by the boot-loader. Virtually all ARM devices are the same in this respect, so the
-linker is expecting this to happen. At the base address 0x8000 + an offset of 0x808c (which
-is therefore 0x1008c) is the value 0x20200000 which is the value we want the variable gpio
-initialised to (for the RPI1, for the RPI2 this will be 0x3F200000. So this is why the code
-works without any explicit loading or initialisation, but let's look at exactly what's going on
-and find out why it works like this.
+>**NOTE:** Unless we're using the exact same compiler, your mileage may vary here. So assume the
+assembly code above is what's come out of the compiler and follow the text below which goes
+through it in detail.
 
-The value at the end of our executable image can be viewed by using hex editor:
-
-![Hex Editor View](http://www.valvers.com/wp-content/uploads/2013/12/armc-04-kernel-img-hex-editor.jpg)
-
-The next line however loads r3 with the value at the *address* contained at the PC + 120. At this
-address, there's the value 0x10090. This is outside of our binary image size. This variable value
-is going to be undefined. This is the tim variable, which is indeed not initialised with anything
-until we start using it in a for loop on line 73. (If you know the C-Standard, then you'll know
-this is actually incorrect behaviour, but we'll get to that in a bit!)
-
-Let's do a sanity check and make sure we're right:
+Let's take it line by line. The toolchain's linker has decided that the entry point for the code
+should be at memory address `0x8000`. We see from the disassembled listing that this is where the
+machine code starts. Let's look at what it does.
 
 ```
-\arm-tutorial-rpi\part-2\armc-04>arm-none-eabi-nm kernel.elf
+00008000 <main>:
+    8000:	e59f30b8 	ldr	r3, [pc, #184]	; 80c0 <main+0xc0>
+```
 
-00010094 A __bss_end__
-00010090 A __bss_start
-00010090 A __bss_start__
-0001008c D __data_start
-00010094 A __end__
-00010094 A _bss_end__
-00010090 A _edata
-00010094 A _end
+This first line loads r3 with the value at the *address* contained at the Program Counter
+(PC) + 184. In this assembler, `[]` is kind of an equivalent to dereferencing a pointer in C. So
+instead of loading r3 with the value `80c0` it will instead load r3 with the 32-bit value at
+memory location `0x80c0`
+
+But wait a minute - if you do the maths of `0x8000 + 184` you get `0x80b8`. How come the
+disassembler is suggesting the data comes from 0x80c0?
+
+Well PC relative addressing works slightly different to what you may expect and really there's a issue with it, the value of PC is different depending on whether the instruction set is currently ARM or Thumb. Further information is available on the [ARM website](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0473e/Cacdbfji.html). The important thing to note here is:
+
+> In ARM state, the value of the PC is the address of the current instruction plus 8 bytes.
+>
+> In Thumb state:
+>
+> - For B, BL, CBNZ, and CBZ instructions, the value of the PC is the address of the current
+> instruction plus 4 bytes.
+>
+> - For all other instructions that use labels, the value of the PC is the address of the current
+> instruction plus 4 bytes, with bit[1] of the result cleared to 0 to make it word-aligned.
+
+We're in ARM instruction mode here. If you're not sure about ARM and Thumb instruction sets you can
+do some googling. Thumb (there's more than one Thumb mode!) are smaller width instructions to allow
+for more compact code which is very useful in heavily embedded systems.
+
+So actually the maths here sound be: `0x8000 + 0x8 + 0xb8 = 0x80c0` to get us to a memory address.
+At `0x80c0` there's the value `0x180cc`:
+
+```
+    80c0:	000180cc 	andeq	r8, r1, ip, asr #1
+```
+
+You can ignore the disassembled version of this value as it's not machine code, instead it's merely
+a data value.
+
+The next line of the code loads r3 with the 32-bit value that's in memory at the address currently
+contained in r3. In c, this would look a bit horrid, but so you get the idea of what I've just
+explained, imagine something like this:
+
+```c
+uint32_t r3 = 0x180cc;
+r3 = *(uint32_t*)r3;
+```
+
+At the address 0x180cc in our disassembled version there's the 32-bit value `0x20200000` which is
+the value we want the variable gpio initialised to (for the RPI1, for the RPI2 this will be
+`0x3F200000`. So this is why the code works without any explicit loading or initialisation, but
+let's look at exactly what's going on and find out why it works like this.
+
+The value at the end of our executable image can be viewed by dumping the hex and having a look at
+the plain machine code that's in the binary file. The disassemble script does this for you with a
+tool called `hexdump` and puts the result into a `kernel*.img.hexdump` file. It's a plain text file -
+you can go ahead and crack it open in a text editor or `cat` it.
+
+```
+0000000 30b8 e59f 3000 e593 3004 e283 2000 e593
+0000010 30a8 e59f 3000 e593 3004 e283 2701 e382
+0000020 2000 e583 3098 e59f 2000 e3a0 2000 e583
+0000030 0004 ea00 3088 e59f 3000 e593 3001 e283
+0000040 207c e59f 3000 e582 3074 e59f 3000 e593
+0000050 2070 e59f 0002 e153 fff5 9aff 305c e59f
+0000060 3000 e593 3028 e283 2801 e3a0 2000 e583
+0000070 304c e59f 2000 e3a0 2000 e583 0004 ea00
+0000080 303c e59f 3000 e593 3001 e283 2030 e59f
+0000090 3000 e582 3028 e59f 3000 e593 2024 e59f
+00000a0 0002 e153 fff5 9aff 3010 e59f 3000 e593
+00000b0 301c e283 2801 e3a0 2000 e583 ffd8 eaff
+00000c0 80cc 0001 80d0 0001 a11f 0007 0000 0000
+00000d0 0000 0000 0000 0000 0000 0000 0000 0000
+*
+00100c0 0000 0000 0000 0000 0000 0000 0000 2020
+00100d0
+```
+
+The binary is in little-endian format because the processor is little endian. Adjust the
+`GPIO_BASE` value, recompile and disassemble again so you can see the value change. Sure the
+code won't work properly, but you can prove to yourself you're looking (and making sense of) the
+right thing.
+
+The thing to note here is that our binary image ends at `0x100cf`. After the bootloader has placed
+this binary image in memory at `0x8000` the last memory location we touch is `0x180cf`.
+
+Let's have a quick look at what happens next:
+
+```
+8008:	e2833004 	add	r3, r3, #4
+```
+
+Increase the value in r3 from `0x20200000` to `0x20200004` and store it in r3. This is part of
+the C line:
+
+```c
+gpio[LED_GPFSEL] |= (1 << LED_GPFBIT);
+```
+
+LED_GPFSEL for this compilation for the RPI Zero is set by:
+
+```c
+#define LED_GPFSEL      GPIO_GPFSEL1
+#define GPIO_GPFSEL1    1
+```
+
+From the definition of `gpio` as `volatile unsigned int*` each item pointed to is an unsigned int
+which is 32-bit wide. That's 4 bytes, so we increase the pointer into gpio by 4 bytes to get the
+register address we require in r3.
+
+```
+800c:	e5932000 	ldr	r2, [r3]
+```
+
+Load the value of `gpio[LED_GPFSEL]` into r2. This is common for read-modify-write operations
+such as the `|=` operator we're using in this example. We need to do exactly that, read the
+value, modify the value and then write the new value.
+
+```
+8010:	e59f30a8 	ldr	r3, [pc, #168]	; 80c0 <main+0xc0>
+8014:	e5933000 	ldr	r3, [r3]
+8018:	e2833004 	add	r3, r3, #4
+```
+
+The compiler being rather inefficient here. It's preparing r3 again to be the memory write
+destination which is exactly the same read memory location. Any sort of compiler optimisations
+should be able to get rid of the above three lines. They're really not required, but we
+understand what's going on still.
+
+```
+801c:	e3822701 	orr	r2, r2, #262144	; 0x40000
+```
+The modify part of `|=`. In this case `(1 << LED_GPFBIT)` has been reduced to a constant.
+The original `gpio[LED_GPFSEL]` value is still in r2. We OR that value with the constant to
+set the bit and store the new value in r2. The ARM architecture cannot modify a register value
+and store it to a memory location in a single instruction BTW in case you're thinking that
+would serve us better.
+
+```
+8020:	e5832000 	str	r2, [r3]
+```
+
+Finally, the write part of the read-modify-write operation is to write the new value back to
+the destination `gpio[LED_GPFSEL]`
+
+```
+8024:	e59f3098 	ldr	r3, [pc, #152]	; 80c4 <main+0xc4>
+...
+80c4:	000180d0 	ldrdeq	r8, [r1], -r0
+```
+
+Loads the value `0x180d0` into r3.
+
+This value is a problem! It is outside our binary image space. If we were to use this value it
+would be a random value that isn't within our control. How come?
+
+This memory location relates to the C variable `tim` in our program. This variable is determined
+by the C standard to have automatic storage duration and according to the C standard should
+therefore have a initialised value of 0, but we know here that this is not the case, instead
+we'll have a random value.
+
+Actually what happens in the code next is the `for` loop starts by setting the `tim` variable to `0`.
+
+```
+8028:	e3a02000 	mov	r2, #0
+802c:	e5832000 	str	r2, [r3]
+```
+
+Let's do a sanity check and make sure we're right by assuming that this is the `tim` variable:
+
+```
+000180d4 B __bss_end__
+000180d4 B _bss_end__
+000180d0 B __bss_start
+000180d0 B __bss_start__
+000180cc D __data_start
+000180d0 D _edata
+000180d4 B _end
+000180d4 B __end__
+000180cc D gpio
+00008000 T main
 00080000 N _stack
          U _start
-0001008c D gpio
-00008000 T main
-00010090 B tim
+000180d0 B tim
 ```
 
 Yep! We're talking the same as [nm](https://sourceware.org/binutils/docs/binutils/nm.html).
 That's good at least!
+
+# TODO: Finish this part off...
 
 ## Simulation
 

@@ -93,5 +93,3 @@ fi
 
 printf "%s\n" "${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}"
 ${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}
-
-#must_run ${base}/card/create_card_image.sh ${kernel_img} ${disk_name}
