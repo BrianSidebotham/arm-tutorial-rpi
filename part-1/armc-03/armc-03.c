@@ -78,7 +78,7 @@
 #define GPIO_GPFEN0     22
 #define GPIO_GPFEN1     23
 
-#define GPIO_GPHEN0     25GPIO16
+#define GPIO_GPHEN0     25
 #define GPIO_GPHEN1     26
 
 #define GPIO_GPLEN0     28
