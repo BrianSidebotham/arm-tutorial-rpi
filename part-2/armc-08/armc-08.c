@@ -39,6 +39,5 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
         /* Set the LED GPIO pin high ( Turn OK LED off for original Pi, and on
            for plus models )*/
         gpio[LED_GPSET] = (1 << LED_GPIO_BIT);
-
     }
 }

@@ -9,7 +9,6 @@
 .section ".text.startup"
 
 .global _start
-.global _get_stack_pointer
 
 _start:
     // Set the stack pointer, which progresses downwards through memory
