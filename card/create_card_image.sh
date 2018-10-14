@@ -16,7 +16,7 @@ fi
 
 # Create a Bootable RPi SD Card image that can be directly written to an SD Card
 # The card image size in MiB
-image_size=4
+image_size=16
 
 # The place to mount the loop in order to write files to the disk image
 mount_point=$(mktemp -d)
@@ -73,15 +73,13 @@ must_run cp -rv "${base}/firmware/firmware/boot/bootcode.bin" ${mount_point}/
 must_run cp -rv "${base}/firmware/firmware/boot/fixup.dat" ${mount_point}/
 must_run cp -rv "${base}/firmware/firmware/boot/start.elf" ${mount_point}/
 
-must_run rm -f ${mount_point}/kernel.img
-must_run rm -f ${mount_point}/kernel7.img
-
 # If we need to do anything with configuration files - do it in the heredoc
 sudo cat << EOF > ${mount_point}/config.txt
 start_file=start.elf
 fixup_file=fixup.dat
 EOF
 
+printf "%s\n" "Copying ${kernel_file} to kernel.img on the card image"
 must_run cp -v ${kernel_file} ${mount_point}/kernel.img
 
 must_run sync
