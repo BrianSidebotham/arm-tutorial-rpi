@@ -1,30 +1,10 @@
 /*
-
     Part of the Raspberry-Pi Bare Metal Tutorials
-    Copyright (c) 2013, Brian Sidebotham
-    All rights reserved.
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions are met:
-
-    1. Redistributions of source code must retain the above copyright notice,
-        this list of conditions and the following disclaimer.
-
-    2. Redistributions in binary form must reproduce the above copyright notice,
-        this list of conditions and the following disclaimer in the
-        documentation and/or other materials provided with the distribution.
-
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
 
 */
 
@@ -61,6 +41,9 @@ extern int errno;
 
 /* Required include for times() */
 #include <sys/times.h>
+
+/* When we trap an error - it's a good idea to stick the LED on to use for debugging */
+#include "rpi-gpio.h"
 
 /* A pointer to a list of environment variables and their values. For a minimal
    environment, this empty list is adequate: */
@@ -184,24 +167,26 @@ int read( int file, char *ptr, int len )
 caddr_t _sbrk( int incr )
 {
     extern char _end;
-    static char* heap_end;
+    static char* heap_end = (char*)0;
     char* prev_heap_end;
 
     if( heap_end == 0 )
         heap_end = &_end;
 
-     prev_heap_end = heap_end;
-
-     if( ( heap_end + incr) > _get_stack_pointer() )
-     {
+    /* If we exceed the limit of our memory with allocations, stick the LED on and trap here */
+    if( ( heap_end + incr ) > (caddr_t)(128L * 1024L * 1024L) )
+    {
+        LED_ON();
         while(1)
         {
             /* TRAP HERE! */
         }
-     }
+    }
 
-     heap_end += incr;
-     return (caddr_t)prev_heap_end;
+    prev_heap_end = heap_end;
+    heap_end += incr;
+
+    return (caddr_t)prev_heap_end;
 }
 
 

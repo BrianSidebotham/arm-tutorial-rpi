@@ -2,6 +2,8 @@
 
 If you really don't want to know anything about the [CMake](http://www.cmake.org/) build system, just skip this section of the tutorial. There's no ARM bare metal in it - just compiling the same armc-09 tutorial with a build system! However, to continue with the tutorials, you'll need CMake installed to configure + build the tutorials.
 
+The one move we do make in this part of the turotial is move from delay loops to using the system timer peripheral. So the code does change a bit if you want to follow along.
+
 CMake is an excellent build system, I much prefer it to autotools and certainly prefer it in comparison to hand-crafting Makefile's! [CMake's documentation](http://www.cmake.org/cmake/help/v2.8.10/cmake.html) is great, so feel free to peruse it whilst reading this tutorial. The tutorial isn't going to cover CMake, other than showing how it can help and some rudimentary stuff which shows how CMake can be setup to do exactly what we were doing in our simple command-line build.
 
 CMake generally detects the host information, that is the computer you're compiling on and will assume that the target is the same as the host. However, it's very easy to tell CMake not to use that assumption and instead use a system that we're describing or hinting at. We can hint for example that the target is MinGW when the host is Linux and CMake will setup a lot of settings, knowing that they are useful for targetting Windows. On embedded systems we're describing the system ourself. It's very easy to describe to CMake because it doesn't need to know much. It needs to know what the toolchain filename's are and where they're located. Let's look at the toolchain-arm-none-eabi-rpi.cmake that I've added to the arm010 folder:
@@ -9,6 +11,13 @@ CMake generally detects the host information, that is the computer you're compil
 ## toolchain-arm-none-eabi-rpi.cmake
 
 ```cmake
+#   Part of the Raspberry-Pi Bare Metal Tutorials
+#   https://www.valvers.com/rpi/bare-metal/
+#   Copyright (c) 2013, Brian Sidebotham
+
+#   This software is licensed under the MIT License.
+#   Please see the LICENSE file included with this software.
+
 # A CMake toolchain file so we can cross-compile for the Rapsberry-Pi bare-metal
 
 include(CMakeForceCompiler)
@@ -31,7 +40,8 @@ set( CROSS_COMPILE arm-none-eabi- )
 # specify the cross compiler. We force the compiler so that CMake doesn't
 # attempt to build a simple test program as this will fail without us using
 # the -nostartfiles option on the command line
-CMAKE_FORCE_C_COMPILER( ${TC_PATH}${CROSS_COMPILE}gcc GNU )
+CMAKE_FORCE_C_COMPILER( "${TC_PATH}${CROSS_COMPILE}gcc" GNU )
+SET( CMAKE_ASM_COMPILER "${TC_PATH}${CROSS_COMPILE}gcc" )
 
 # We must set the OBJCOPY setting into cache so that it's available to the
 # whole project. Otherwise, this does not get set into the CACHE and therefore
@@ -39,32 +49,45 @@ CMAKE_FORCE_C_COMPILER( ${TC_PATH}${CROSS_COMPILE}gcc GNU )
 set( CMAKE_OBJCOPY      ${TC_PATH}${CROSS_COMPILE}objcopy
     CACHE FILEPATH "The toolchain objcopy command " FORCE )
 
+set( CMAKE_OBJDUMP      ${TC_PATH}${CROSS_COMPILE}objdump
+CACHE FILEPATH "The toolchain objdump command " FORCE )
+
+# Set the common build flags
+
 # Set the CMAKE C flags (which should also be used by the assembler!
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv6zk" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-T,${CMAKE_SOURCE_DIR}/rpi.x")
+
+if( "${BOARD}" STREQUAL "rpi0" )
+    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRPI0" )
+    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp" )
+    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv6zk" )
+    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
+endif()
+
 
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 set( CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
-
 ```
 
 If you've not used CMake before, some things may look a bit strange - but it's only syntatical. I think you can read CMake files relatively easily even when you've never seen it before.
 
 The toolchain file describes our toolchain. The CMAKE_SYSTEM_NAME is essential, and Generic is used by CMake to essentially set the system type to something CMake doesn't yet know about.
 
-The CMAKE_SYSTEM_PROCESSOR is just a string describing the processor type, CMake doesn't use this setting on a system it doesn't know.
+The `CMAKE_SYSTEM_PROCESSOR` is just a string describing the processor type, CMake doesn't use this setting on a system it doesn't know.
 
-The TC_PATH (toolchain path) is blank because the toolchain is expected to be in the path. If it's not, then set TC_PATH to something sensible. If you do have to set this - make sure you add a trailing path separator!
+The `TC_PATH` (toolchain path) is blank because the toolchain is expected to be in the path. If it's not, then set TC_PATH to something sensible. If you do have to set this - make sure you add a trailing path separator!
 
-The CROSS_COMPILE settings is simply the toolchain executable prefix.
+The `CROSS_COMPILE` settings is simply the toolchain executable prefix.
 
-The CMAKE_FORCE_C_COMPILER setting is the executable name of the c compiler and it's type (GNU), it's mainly built up of variables that we set earlier. We use the FORCE c compiler variable to tell CMake that it shouldn't try to use the compiler before we tell it to. Normally CMake trys to build a blank test program with the compiler to make sure it's working correctly. However, we need the `-nostartfiles` flag in order to build something that succeeds and so CMake's test would fail and it would not it would think the compiler was broken.
+The `CMAKE_FORCE_C_COMPILER` setting is the executable name of the c compiler and it's type (GNU), it's mainly built up of variables that we set earlier. We use the FORCE c compiler variable to tell CMake that it shouldn't try to use the compiler before we tell it to. Normally CMake trys to build a blank test program with the compiler to make sure it's working correctly. However, we need the `-nostartfiles` flag in order to build something that succeeds and so CMake's test would fail and it would not it would think the compiler was broken.
 
-The CMAKE_OBJCOPY setting looks a bit fancier doesn't it!? CMake knows that CMAKE_C_COMPILER needs to be accessible by the entire project, so it adds it automatically to the CACHE. The CACHE is available to all of the CMake files in the build system. If we set a variable in this toolchain file it only has local scope (meaning only this file can see the value we set to this variable). Therefore we force CMake to add this to the cache. The cache requires a "type" for the variable so CMake knows how to use it. In fact most things in CMake are strings. See the documentation for further information on these settings (Look at commands->set->CACHE in the documentation).
+The `CMAKE_OBJCOPY` setting looks a bit fancier doesn't it!? CMake knows that `CMAKE_C_COMPILER` needs to be accessible by the entire project, so it adds it automatically to the CACHE. The CACHE is available to all of the CMake files in the build system. If we set a variable in this toolchain file it only has local scope (meaning only this file can see the value we set to this variable). Therefore we force CMake to add this to the cache. The cache requires a "type" for the variable so CMake knows how to use it. In fact most things in CMake are strings. See the documentation for further information on these settings (Look at `commands->set->CACHE` in the documentation).
 
-The CMAKE_C_FLAGS settings creates a list of flags that are passed to the compiler when compiling a c source file. Here, we just use the processor-specific flags and again as with OBJCOPY we want to put the CMAKE_C_FLAGS setting from here in the CACHE so that the entire project has this variable. We can add more generic flags like optimisation level to the c flags later on because they're not specific to a particular processor. So, notice that we also have `toolchain-arm-none-eabi-rpibplus` and `toolchain-arm-none-eabi-rpi2` for the other board types
+The `CMAKE_C_FLAGS` settings creates a list of flags that are passed to the compiler when compiling a c source file. Here, we just use the processor-specific flags and again as with OBJCOPY we want to put the `CMAKE_C_FLAGS` setting from here in the CACHE so that the entire project has this variable. We can add more generic flags like optimisation level to the c flags later on because they're not specific to a particular processor. So, notice that we also have `toolchain-arm-none-eabi-rpibplus` and `toolchain-arm-none-eabi-rpi2` for the other board types
 
 As with autotools, CMake uses a configuration step which works out what should be built and how. The result of the configuration step, if successful, is a Makefile which we can use with make (On Windows you must use mingw32-make) to build our project.
 
@@ -73,6 +96,17 @@ CMake uses a file in each directory that needs building called CMakeLists.txt. I
 ### CMakeLists.txt
 
 ```cmake
+#   Part of the Raspberry-Pi Bare Metal Tutorials
+#   https://www.valvers.com/rpi/bare-metal/
+#   Copyright (c) 2013, Brian Sidebotham
+
+#   This software is licensed under the MIT License.
+#   Please see the LICENSE file included with this software.
+
+# CMake build environment for the Valvers Raspberry-Pi bare metal tutorials
+
+# CMake 2.8.10 Documentation: http://www.cmake.org/cmake/help/v2.8.10/cmake.html
+
 cmake_minimum_required( VERSION 2.8 )
 
 # Mark the language as C so that CMake doesn't try to test the C++
@@ -86,15 +120,16 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 
-add_executable( armc-010
+add_executable( armc-010-${BOARD}
     armc-010.c
     armc-010-cstartup.c
     armc-010-cstubs.c
     armc-010-start.S )
 
 add_custom_command(
-    TARGET armc-010 POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} ./armc-010${CMAKE_EXECUTABLE_SUFFIX} -O binary ./kernel.img
+    TARGET armc-010-${BOARD} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} ./armc-010-${BOARD}${CMAKE_EXECUTABLE_SUFFIX} -O binary ./kernel-${BOARD}.img
+    COMMAND ${CMAKE_OBJDUMP} -l -S -D ./armc-010-${BOARD}${CMAKE_EXECUTABLE_SUFFIX} > ./kernel-${BOARD}.img.asm
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Convert the ELF output file to a binary image" )
 ```

@@ -1,7 +1,7 @@
 /*
     Part of the Raspberry-Pi Bare Metal Tutorials
     https://www.valvers.com/rpi/bare-metal/
-    Copyright (c) 2013, Brian Sidebotham
+    Copyright (c) 2013-2018, Brian Sidebotham
 
     This software is licensed under the MIT License.
     Please see the LICENSE file included with this software.
@@ -41,6 +41,9 @@ extern int errno;
 
 /* Required include for times() */
 #include <sys/times.h>
+
+/* When we trap an error - it's a good idea to stick the LED on to use for debugging */
+#include "rpi-gpio.h"
 
 /* A pointer to a list of environment variables and their values. For a minimal
    environment, this empty list is adequate: */
@@ -164,24 +167,26 @@ int read( int file, char *ptr, int len )
 caddr_t _sbrk( int incr )
 {
     extern char _end;
-    static char* heap_end;
+    static char* heap_end = (char*)0;
     char* prev_heap_end;
 
     if( heap_end == 0 )
         heap_end = &_end;
 
-     prev_heap_end = heap_end;
-
-     if( ( heap_end + incr) > _get_stack_pointer() )
-     {
+    /* If we exceed the limit of our memory with allocations, stick the LED on and trap here */
+    if( ( heap_end + incr ) > (caddr_t)(128L * 1024L * 1024L) )
+    {
+        LED_ON();
         while(1)
         {
             /* TRAP HERE! */
         }
-     }
+    }
 
-     heap_end += incr;
-     return (caddr_t)prev_heap_end;
+    prev_heap_end = heap_end;
+    heap_end += incr;
+
+    return (caddr_t)prev_heap_end;
 }
 
 

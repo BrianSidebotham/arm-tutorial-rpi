@@ -44,8 +44,6 @@ volatile unsigned int* gpio = (unsigned int*)GPIO_BASE;
 /** Main function - we'll never return from here */
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
-    int loop;
-
     /* Write 1 to the GPIO init nibble in the Function Select GPIO peripheral register to enable
        the LED pin an output */
     gpio[LED_GPFSEL] |= ( 1 << LED_GPFBIT );
@@ -53,17 +51,12 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     /* Never exit as there is no OS to exit to! */
     while(1)
     {
-
-        /* Set the GPIO16 output high ( Turn OK LED off )*/
+        /* Wait half a second */
+        RPI_WaitMicroSeconds( 500000 );
         LED_OFF();
 
         /* Wait half a second */
         RPI_WaitMicroSeconds( 500000 );
-
-        /* Set the GPIO16 output low ( Turn OK LED on )*/
         LED_ON();
-
-        /* Wait half a second */
-        RPI_WaitMicroSeconds( 500000 );
     }
 }
