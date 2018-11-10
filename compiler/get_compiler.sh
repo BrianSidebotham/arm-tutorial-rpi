@@ -29,6 +29,7 @@ must_run ${scriptdir}/${compiler}/bin/arm-none-eabi-gcc --version
 # Create a compiler configuration file
 cat << EOF > "${scriptdir}/.compiler_config"
 #!/bin/sh
+tcpath=${scriptdir}/${compiler}/bin
 toolchain=${scriptdir}/${compiler}/bin/arm-none-eabi-
 EOF
 
