@@ -2,9 +2,7 @@
 
 scriptdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
-image_name=boot.img
-
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
     removable_devices=$(lsblk --ascii --output KNAME,SIZE,RM,TYPE | grep -E '^[a-zA-Z0-9]+[ ]+[0-9MGK\.]+[ ]+1 disk[ ]?$')
 
     device_options=""
@@ -39,20 +37,20 @@ ${device_options}"
     done
     disk="/dev/$(echo "${value}" | awk '{print $1}')"
 else
-    disk=${1}
+    disk=${2}
 fi
 
-card=${1}
+image_name=${1}
 
 if [ ! -f ${image_name} ]; then
     echo "Cannot find ${image_name}" >&2
     exit 1
 fi
 
-printf "%s\n" "Writing ${image_name} to ${card}"
+printf "%s\n" "Writing ${image_name} to ${disk}"
 
 # cat is generally quicker than dd
-cat ${image_name} > ${card}
+cat ${image_name} > ${disk}
 
 # Make sure all writing is complete
-sync &&  eject ${card}
+sync && eject ${disk}
