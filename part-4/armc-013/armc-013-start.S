@@ -102,7 +102,7 @@ _reset_:
     // what the GPU/CPU memory split, 64MB is available to the CPU
     // Keep it within the limits and also keep it aligned to a 32-bit
     // boundary!
-    mov     sp, #(64 * 1024 * 1024)
+    ldr     sp, =0x8000
 
     // The c-startup function which we never return from. This function will
     // initialise the ro data section (most things that have the const

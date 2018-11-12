@@ -1,30 +1,10 @@
 /*
-
     Part of the Raspberry-Pi Bare Metal Tutorials
-    Copyright (c) 2013, Brian Sidebotham
-    All rights reserved.
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions are met:
-
-    1. Redistributions of source code must retain the above copyright notice,
-        this list of conditions and the following disclaimer.
-
-    2. Redistributions in binary form must reproduce the above copyright notice,
-        this list of conditions and the following disclaimer in the
-        documentation and/or other materials provided with the distribution.
-
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
 
 */
 
@@ -36,15 +16,13 @@
 /** The base address of the GPIO peripheral (ARM Physical Address) */
 #define RPI_GPIO_BASE       ( PERIPHERAL_BASE + 0x200000UL )
 
-#if defined( RPIBPLUS ) || defined( RPI2 )
-    #define LED_GPFSEL      GPFSEL4
-    #define LED_GPFBIT      21
-    #define LED_GPSET       GPSET1
-    #define LED_GPCLR       GPCLR1
-    #define LED_GPIO_BIT    15
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
-#else
+/* Different Raspberry pi models have the ACT LED on different GPIO pins. The RPI3 doesn't have
+   access to the ACT LED through a GPIO pin can so can't be used in this tutorial, but the RPI3B+
+   does have the ACT LED on a GPIO pin again and so can be used with this tutorial! */
+
+#if defined( RPI1 ) && !defined( IOBPLUS )
+
+    /* Very early models of the RPi including the Model A or B had ACT LED available on GPIO */
     #define LED_GPFSEL      GPFSEL1
     #define LED_GPFBIT      18
     #define LED_GPSET       GPSET0
@@ -52,6 +30,32 @@
     #define LED_GPIO_BIT    16
     #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
     #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+
+#elif (defined( RPI1 ) && defined( IOBPLUS )) || defined( RPI2 ) || defined( RPI0 )
+
+    /* The RPI1B+ and RPI2 and RPI0 (Pi Zero and ZeroW) use GPIO47 for the ACT LED */
+    #define LED_GPFSEL      GPFSEL4
+    #define LED_GPFBIT      21
+    #define LED_GPSET       GPSET1
+    #define LED_GPCLR       GPCLR1
+    #define LED_GPIO_BIT    15
+    #define LED_ON()        do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+
+#elif defined( RPI3 ) && defined( IOBPLUS )
+
+    /* The RPi3B+ again made the ACT LED available on a GPIO pin (of course on yet another pin!) */
+    #define LED_GPFSEL      GPFSEL2
+    #define LED_GPFBIT      27
+    #define LED_GPSET       GPSET0
+    #define LED_GPCLR       GPCLR0
+    #define LED_GPIO_BIT    29
+    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+
+#elif defined( RPI3 )
+
+    #error The RPI3 has an ioexpander between the ACT LED and the GPU and so cannot be used in this tutorial
 #endif
 
 /***/

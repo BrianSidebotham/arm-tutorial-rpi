@@ -1,6 +1,6 @@
 
 #   Part of the Raspberry-Pi Bare Metal Tutorials
-#   Copyright (c) 2013, Brian Sidebotham
+#   Copyright (c) 2013-2015, Brian Sidebotham
 #   All rights reserved.
 
 #   Redistribution and use in source and binary forms, with or without
@@ -38,31 +38,27 @@ set( TUT 013 )
 # cross-compiler's ability to compile a simple program because that will fail
 project( armc-${TUT}-tutorial C ASM )
 
-# Add any C compiler flags here. The C flags concerned with processor tuning
-# are in the toolchain files toolchain-arm-none-eabi-bcm2835.cmake, etc.
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1" )
+# We had to adjust the CMAKE_C_FLAGS variable in the toolchain file to make sure
+# the compiler would work with CMake's simple program compilation test. So unset
+# it explicitly before re-setting it correctly for our system
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 
-# Set the linker flags so that we use our "custom" linker script
-set( CMAKE_EXE_LINKER_FLAGS "-Wl,-T,${PROJECT_SOURCE_DIR}/rpi.x" )
-
-add_executable( armc-${TUT}
+add_executable( armc-${TUT}-${BOARD}
     armc-${TUT}.c
     armc-${TUT}-cstartup.c
     armc-${TUT}-cstubs.c
     armc-${TUT}-start.S
-    rpi-armtimer.c
-    rpi-armtimer.h
-    rpi-base.h
-    rpi-gpio.c
-    rpi-gpio.h
-    rpi-interrupts.c
-    rpi-interrupts.h
-    rpi-systimer.c
-    rpi-systimer.h )
+    rpi-armtimer.c rpi-armtimer.h
+    rpi-gpio.c rpi-gpio.c
+    rpi-interrupts.c rpi-interrupts.h
+    rpi-systimer.c rpi-systimer.h
+    rpi-base.h )
 
 add_custom_command(
-    TARGET armc-${TUT} POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} ./armc-${TUT} -O binary ./kernel.img
+    TARGET armc-${TUT}-${BOARD} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} ./armc-${TUT}-${BOARD}${CMAKE_EXECUTABLE_SUFFIX} -O binary ./kernel-${BOARD}.img
+    COMMAND ${CMAKE_OBJDUMP} -l -S -D ./armc-${TUT}-${BOARD}${CMAKE_EXECUTABLE_SUFFIX} > ./kernel-${BOARD}.img.asm
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Convert the ELF output file to a binary image" )
