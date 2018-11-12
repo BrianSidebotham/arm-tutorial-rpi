@@ -44,10 +44,7 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 
-# Set the linker flags so that we use our "custom" linker script
-set( CMAKE_EXE_LINKER_FLAGS "-Wl,-T,${PROJECT_SOURCE_DIR}/rpi.x" )
-
-add_executable( armc-${TUT}
+add_executable( armc-${TUT}-${BOARD}
     armc-${TUT}.c
     armc-cstartup.c
     armc-cstubs.c
@@ -69,7 +66,8 @@ add_executable( armc-${TUT}
     rpi-systimer.h )
 
 add_custom_command(
-    TARGET armc-${TUT} POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} ./armc-${TUT} -O binary ./kernel.img
+    TARGET armc-${TUT}-${BOARD} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} ./armc-${TUT}-${BOARD}${CMAKE_EXECUTABLE_SUFFIX} -O binary ./kernel-${BOARD}.img
+    COMMAND ${CMAKE_OBJDUMP} -l -S -D ./armc-${TUT}-${BOARD}${CMAKE_EXECUTABLE_SUFFIX} > ./kernel-${BOARD}.img.asm
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Convert the ELF output file to a binary image" )
