@@ -350,7 +350,7 @@ that too as it's not perfect. This gives us the information we require to contro
 peripherals of the BCM2835. I'll guide us through using the GPIO peripheral - there are as always
 some gotcha's:
 
-The Raspberry-Pi 2 uses the BMC2837 and so you'll want to get the [Raspberry-Pi BCM2837 peripherals datahsheet](https://web.stanford.edu/class/cs140e/docs/BCM2837-ARM-Peripherals.pdf).
+The Raspberry-Pi 2B 1.2 uses the BMC2837 and so you'll want to get the [Raspberry-Pi BCM2837 peripherals datahsheet](https://web.stanford.edu/class/cs140e/docs/BCM2837-ARM-Peripherals.pdf).
 
 We'll be using the GPIO peripheral, and it would therefore be natural to jump straight to that
 documentation and start writing code, but we need to first read some of the 'basic' information
@@ -377,7 +377,7 @@ Address `0x20000000` for the original Raspberry Pi. This is important!
 If you read the two peripheral datasheets carefully you'll see a subtle difference in them, notably
 , the Raspberry-Pi 2 has the ARM IO base set to `0x3F000000`
 instead of the original `0x20000000` of the original Raspberry-Pi. Unfortunately for us software
-engineers the Raspberry-Pi foundation don't appear to be good a securing the documentation we need,
+engineers the Raspberry-Pi foundation don't appear to be good at securing the documentation we need,
 in fact, their [attitude suggests](http://www.raspberrypi.org/forums/viewtopic.php?f=72&amp;t=98400)
 they think we're magicians and don't actually need any. What a shame! Please if you're a member of
 the forum, campaign for more documentation. As engineers, especially in industry we wouldn't accept
