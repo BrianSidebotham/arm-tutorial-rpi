@@ -4,9 +4,10 @@ Although the Raspberry-Pi comes with a good Linux distribution, the Pi is about 
 development, and sometimes we want a real-time system without an operating system. I decided it'd
 be great to do a tutorial outside of Linux to get to the resources of this great piece of hardware
 in a similar vein to the [Cambridge University Tutorials](http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/)
-which are excellently written. However, they don't create an OS as purported and they stick with
-assembler rather than migrating to C. I will simply start with nothing but assembler to get us
-going, but switch to C as soon as possible.
+which are excellently written.
+
+However, they don't create an OS as purported and they stick with assembler rather than migrating to C. I will simply
+start with nothing but assembler to get us going, but switch to C as soon as possible.
 
 **The C compiler simply converts C syntax to assembler and then assembles this into executable code
 for us anyway.**
@@ -28,12 +29,13 @@ following models:
 - RPi Model B+
 - RPi 2 Model B
 - RPi 3 Model B
+- RPi 4 Model B
 
 >**NOTE:** It is not an error that the RPI 3 Model B+ is not included in this list. The ACK LED is
 only available through the mailbox interface (available from part-4 of the tutorial) and so cannot
 be used directly by the GPIO peripheral which we'll be using in this part of the tutorial.
 
-## Cross Compiling for the Raspberry Pi (BCM2835/6/7)
+## Cross Compiling for the Raspberry Pi (BCM2835/6/7/BCM23711)
 
 ARM have now taken over the arm-gcc-embedded project and are provided the releases, so pop over to
 the [ARM gcc downloads](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads)
@@ -94,6 +96,15 @@ the [GCC ARM options](https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html) page.
 Like this:
 
     -O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a53
+
+#### RPI4 Compiler Flags
+
+From the Raspberry Pi Foundation page for the RPi4 we can glean some information from the [technical specifications](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/specifications/)
+regarding what we need to do in order to compile code for the RPi4.
+
+All four processors are `A72`. From the ARM documentation we can see that these implement the `armv8-a` architecture. This is the same as the `A53`'s found in the RPi3 so we can go ahead and use the same crypto-neon-fp-armv8 floating point unit option for the RPI4. This is detailed in the [V8 architecture programmers guide](https://static.docs.arm.com/den0024/a/DEN0024A_v8_architecture_PG.pdf)
+
+    -O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a72
 
 ## Getting to know the Compiler and Linker
 

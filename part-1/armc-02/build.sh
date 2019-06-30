@@ -13,7 +13,7 @@ tutorial=${scriptdir##*/}
 
 if [ $# -ne 1 ]; then
     echo "usage: build.sh <pi-model>" >&2
-    echo "       pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpibp" >&2
+    echo "       pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpi4, rpibp" >&2
     exit 1
 fi
 
@@ -65,6 +65,12 @@ case "${model}" in
         cflags="${cflags} -mfpu=crypto-neon-fp-armv8"
         cflags="${cflags} -march=armv8-a+crc"
         cflags="${cflags} -mcpu=cortex-a53"
+        ;;
+
+    rpi4*)
+        cflags="${cflags} -mfpu=crypto-neon-fp-armv8"
+        cflags="${cflags} -march=armv8-a+crc"
+        cflags="${cflags} -mcpu=cortex-a72"
         ;;
 
     *) echo "Unknown model type ${model}" >&2 && exit 1

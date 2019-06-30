@@ -13,7 +13,7 @@ tutorial=${scriptdir##*/}
 
 if [ $# -ne 1 ]; then
     echo "usage: make_card.sh <pi-model>" >&2
-    echo "       pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpibp" >&2
+    echo "       pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpi4, rpibp" >&2
     exit 1
 fi
 
