@@ -16,6 +16,10 @@
     #define GPIO_BASE       0x20200000UL
 #elif defined( RPI2 ) || defined( RPI3 )
     #define GPIO_BASE       0x3F200000UL
+#elif defined( RPI4 )
+    /* This comes from the linux source code:
+       https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838.dtsi */
+    #define GPIO_BASE       0x7E000000UL
 #else
     #error Unknown RPI Model!
 #endif
