@@ -1,11 +1,11 @@
 #!/bin/sh
 
 scriptdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-base=${scriptdir}/../..
+basedir=${scriptdir}/../..
 
 # Get the compiler to use, etc.
-. ${base}/shell/common_build.sh
-. ${base}/shell/common_functions.sh
+. ${basedir}/shell/common_build.sh
+. ${basedir}/shell/common_functions.sh
 
 
 # Get the tutorial name from the script directory
@@ -101,3 +101,11 @@ fi
 
 printf "%s\n" "${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}"
 ${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}
+
+# Generate a new card image
+${basedir}/card/make_card.sh ${model} ${tutorial}
+
+if [ $? -ne 0 ]; then
+    printf "%s\n" "ERROR: Failed to generate the SD Card image correctly" >&2
+    exit 1
+fi

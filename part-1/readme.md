@@ -17,6 +17,11 @@ excellent. If you want to learn a bit of assembler too, then definitely head off
 pages provide a similar experience, but with the additional of writing code in C and understanding
 the process behind that.
 
+## TODO
+
+- Why is a card 16MiB when we're not using anywhere near that?
+-
+
 ## Compatibility
 
 There are quite a few versions of the RPi these days. This part of the tutorial supports the
@@ -102,10 +107,21 @@ Like this:
 From the Raspberry Pi Foundation page for the RPi4 we can glean some information from the [technical specifications](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/specifications/)
 regarding what we need to do in order to compile code for the RPi4.
 
-All four processors are `A72`. From the ARM documentation we can see that these implement the `armv8-a` architecture. This is the same as the `A53`'s found in the RPi3 so we can go ahead and use the same crypto-neon-fp-armv8 floating point unit option for the RPI4. This is detailed in the [V8 architecture programmers guide](https://static.docs.arm.com/den0024/a/DEN0024A_v8_architecture_PG.pdf)
+All four processors are `A72`. From the ARM documentation we can see that these implement the `armv8-a` architecture.
+This is the same as the `A53`'s found in the RPi3 so we can go ahead and use the same `crypto-neon-fp-armv8` floating
+point unit option for the RPI4. This is detailed in the
+[v8 architecture programmers guide](https://static.docs.arm.com/den0024/a/DEN0024A_v8_architecture_PG.pdf)
 
     -O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a72
 
+The [schematics](https://www.raspberrypi.org/documentation/hardware/raspberrypi/schematics/rpi_SCH_4b_4p0_reduced.pdf)
+you would think would be the place to get the ACT LED GPIO port number, but alas, they're so sparse they may as well
+not have bothered releasing them. _Seriously - what they've released is a joke_.
+
+Instead we get it from some of the
+[device tree source code for the RPi4](https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838-rpi-4-b.dts).
+
+Also make sure you've got the latest firmware, [fixes are always being introduced!](https://github.com/raspberrypi/firmware/issues/1175)
 ## Getting to know the Compiler and Linker
 
 In order to use a C compiler, we need to understand what the compiler does and what the linker does
@@ -144,7 +160,14 @@ have all the code to compile and modify as you work through the tutorials.
 
 > `git clone https://github.com/BrianSidebotham/arm-tutorial-rpi`
 
-Let's have a look at compiling one of the simplest programs that we can. Lets compile and link the
+If you're on Windows - these day's I'll say, just get with the program and get yourself a Linux install. If you're
+entering the world of Raspberry Pi and/or embedded devices Linux is going to be your friend and will give you
+everything you need. This tutorial used to support both Linux and Windows, but I have no Windows installs left and
+so can't cover off Windows. If someone else takes that on, I'd fully support them in updating the tutorial - it's
+all on [Github](https://github.com/BrianSidebotham/arm-tutorial-rpi).
+
+
+Let's have a look at compiling one of the simplest programs that we can. Let's compile and link the
 following program (`part-1/armc-00`):
 
 ## part-1/armc-00
@@ -169,7 +192,7 @@ arguments this script will just show you what it expects in order to run.
 
     arm-tutorial-rpi/part-1/armc-00 $ ./build.sh
     usage: build.sh <pi-model>
-           pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpibp
+           pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpi3bp, rpi4
 
 As there are different compiler flags for the various RPI models, it's necessary to tell the script
 what RPI you have in order to use the correct flags to compile with.
@@ -295,6 +318,7 @@ total 16K
 -rw-r--r-- 1 brian brian  366 Sep 21 00:19 armc-01.c
 -rwxr-xr-x 1 brian brian 2.3K Sep 21 00:45 build.sh
 -rwxr-xr-x 1 brian brian  36K Sep 21 00:45 kernel.armc-01.rpi3.elf
+
 ```
 
 It's important to have an infinite loop in the exit function. In the C library, which is not
@@ -402,6 +426,9 @@ BCM2836 so we can search for that and u-boot and we come along a
 Further on in the manual we come across the GPIO peripheral section of the manual (Chapter 6, page
 89).
 
+RPi4 has the peripheral base mapped to `0xFE000000`. The peripheral address space looks to be laid out the same as
+the previous pis.
+
 ## Visual Output and Running Code
 
 Finally, let's get on and see some of our code running on the Raspberry-Pi. We'll continue with
@@ -410,8 +437,8 @@ board.
 
 The GPIO peripheral has a base address in the BCM2835 manual at `0x7E200000`. We know from getting
 to know our processor that this translates to an ARM Physical Address of `0x20200000` (`0x3F200000`
-for RPI2). This is the first register in the GPIO peripheral register set, the 'GPIO Function
-Select 0' register.
+for RPI2 and RPI3, and `0xFE200000` for RPI4). This is the first register in the GPIO peripheral register set, the
+'GPIO Function Select 0' register.
 
 In order to use an IO pin, we need to configure the GPIO peripheral. From the
 [Raspberry-Pi schematic diagrams](http://www.raspberrypi.org/wp-content/uploads/2012/10/Raspberry-Pi-R2.0-Schematics-Issue2.2_027.pdf)
@@ -433,6 +460,7 @@ Bits 18 to 20 in the 'GPIO Function Select 1' register control the GPIO16 pin.
 Bits 21 to 23 in the 'GPIO Function Select 4' register control the GPIO47 pin. (RPI B+)
 
 Bits 27 to 29 in the 'GPIO Function Select 2' register control the GPIO29 pin. (RPI3 B+)
+GPIO42 pin. (RPI4)
 
 In C, we will generate a pointer to the register and use the pointer to write a value into the
 register. We will mark the register as volatile so that the compiler explicitly does what I tell it
@@ -447,28 +475,29 @@ granted on this variable and to simply do as I say with it:
 We will use pre-processor definitions to change the base address of the GPIO peripheral depending on
 what RPI model is being targetted.
 
-```c
-#ifdef RPI2
-    #define GPIO_BASE 0x3F200000UL
+``` c
+#if defined( RPI0 ) || defined( RPI1 )
+    #define GPIO_BASE       0x20200000UL
+#elif defined( RPI2 ) || defined( RPI3 )
+    #define GPIO_BASE       0x3F200000UL
+#elif defined( RPI4 )
+    #define GPIO_BASE       0xFE200000UL
 #else
-    #define GPIO_BASE 0x20200000UL
+    #error Unknown RPI Model!
 #endif
-
-volatile unsigned int* gpio_fs1 = (unsigned int*)(GPIO_BASE+0x04);
-volatile unsigned int* gpio_fs4 = (unsigned int*)(GPIO_BASE+0x10);
 ```
 
 In order to set GPIO16 as an output then we need to write a value of 1 in the relevant bits of the
 function select register. Here we can rely on the fact that this register is set to 0 after a reset
 and so all we need to do is set:
 
-```c
-#if defined( RPIPLUS ) || defined ( RPI2 )
-    *gpio_fs4 |= (1<<21);
-#else
-    *gpio_fs1 |= (1<<18);
-#endif
+
+``` c
+    /* Assign the address of the GPIO peripheral (Using ARM Physical Address) */
+    gpio = (unsigned int*)GPIO_BASE;
+    gpio[LED_GPFSEL] |= (1 << LED_GPFBIT);
 ```
+
 
 This code looks a bit messy, but we will tidy up and optimise later on. For now we just want to get
 to the point where we can light an LED and understand why it is lit!
@@ -705,12 +734,6 @@ options and there are many more boot files on those SD Cards it's better to crea
 I've written a script to generate an SD Card img file. You can simply run the `./make_card.sh`
 script to generate an img file that can be written directly to an SD card to then boot an RPi
 and run your fresh code.
-
-The script that generates the card image must be run as root. Not much option there I'm afraid, it
-needs to do that to be able to use the device-mapper kernel interface to generate a loop device for
-the img.
-
-Run the `./make_card.sh` script to generate a card image:
 
 ```
 part-1/armc-03 $ ./make_card.sh rpi3bp

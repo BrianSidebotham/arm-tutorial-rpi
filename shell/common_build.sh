@@ -8,7 +8,7 @@ fi
 __valvers_arm_rpi_common_build="included"
 
 # Which compiler are we going to use
-compiler_config_file=${scriptdir}/../compiler/.compiler_config
+compiler_config_file=${scriptdir}/../../compiler/.compiler_config
 if [ -f ${compiler_config_file} ]; then
     . ${compiler_config_file}
 else

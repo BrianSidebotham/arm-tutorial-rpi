@@ -16,17 +16,26 @@
 #elif defined( RPI4 )
     /* This comes from the linux source code:
        https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838.dtsi */
-    #define GPIO_BASE       0x7E000000UL
+    #define GPIO_BASE       0xFE200000UL
 #else
     #error Unknown RPI Model!
 #endif
 
+/* TODO: Expand this to RPi4 as necessary */
 #if defined( RPIBPLUS ) || defined( RPI2 )
     #define LED_GPFSEL      GPIO_GPFSEL4
     #define LED_GPFBIT      21
     #define LED_GPSET       GPIO_GPSET1
     #define LED_GPCLR       GPIO_GPCLR1
     #define LED_GPIO_BIT    15
+#elif defined( RPI4 )
+    /* The RPi4 model has the ACT LED attached to GPIO 42
+       https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838-rpi-4-b.dts */
+    #define LED_GPFSEL      GPIO_GPFSEL4
+    #define LED_GPFBIT      6
+    #define LED_GPSET       GPIO_GPSET1
+    #define LED_GPCLR       GPIO_GPCLR1
+    #define LED_GPIO_BIT    10
 #else
     #define LED_GPFSEL      GPIO_GPFSEL1
     #define LED_GPFBIT      18
