@@ -205,17 +205,42 @@ Let's have a look at what the compiler command lines look like for the various R
 
 Let's just concerntrate on the RPI-specific options rather than including all the options here.
 
+
 #### RPI0 (PiZero) and RPI1
 
-    arm-none-eabi-gcc -mfloat-abi=hard -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s main.c -o main.elf
+    arm-none-eabi-gcc \
+        -mfloat-abi=hard \
+        -mfpu=vfp \
+        -march=armv6zk \
+        -mtune=arm1176jzf-s \
+        main.c -o main.elf
 
 #### RPI2
 
-    arm-none-eabi-gcc -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a -mtune=cortex-a7 main.c -o main.elf
+    arm-none-eabi-gcc \
+        -mfloat-abi=hard \
+        -mfpu=neon-vfpv4 \
+        -march=armv7-a \
+        -mtune=cortex-a7 \
+        main.c -o main.elf
 
 #### RPI3
 
-    arm-none-eabi-gcc -mfloat-abi=hard -mfpu=crypto-neon-fp-armv8 -march=armv8-a+crc -mcpu=cortex-a53 main.c -o main.elf
+    arm-none-eabi-gcc \
+        -mfloat-abi=hard \
+        -mfpu=crypto-neon-fp-armv8 \
+        -march=armv8-a+crc \
+        -mcpu=cortex-a53 \
+        main.c -o main.elf
+
+#### RPI4
+
+    arm-none-eabi-gcc \
+        -mfloat-abi=hard \
+        -mfpu=crypto-neon-fp-armv8 \
+        -march=armv8-a+crc \
+        -mcpu=cortex-a72 \
+        main.c -o main.elf
 
 Using the build script, let's compile the basic source code using the RPI specific options. Here,
 we compile for the RPI3. (I've shortened the output so it's easier to read on-screen)
