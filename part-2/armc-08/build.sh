@@ -1,11 +1,11 @@
 #!/bin/sh
 
 scriptdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-base=${scriptdir}/../..
+basedir=${scriptdir}/../..
 
 # Get the compiler to use, etc.
-. ${base}/shell/common_build.sh
-. ${base}/shell/common_functions.sh
+. ${basedir}/shell/common_build.sh
+. ${basedir}/shell/common_functions.sh
 
 
 # Get the tutorial name from the script directory
@@ -13,7 +13,7 @@ tutorial=${scriptdir##*/}
 
 if [ $# -ne 1 ]; then
     echo "usage: build.sh <pi-model>" >&2
-    echo "       pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpibp" >&2
+    echo "       pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpi4, rpibp" >&2
     exit 1
 fi
 
@@ -70,10 +70,18 @@ case "${model}" in
         cflags="${cflags} -mtune=cortex-a7"
         ;;
 
-    rpi3*) cflags="${cflags} -DRPI3"
+    rpi3*)
+        cflags="${cflags} -DRPI3"
         cflags="${cflags} -mfpu=crypto-neon-fp-armv8"
         cflags="${cflags} -march=armv8-a+crc"
         cflags="${cflags} -mcpu=cortex-a53"
+        ;;
+
+    rpi4*)
+        cflags="${cflags} -DRPI4"
+        cflags="${cflags} -mfpu=crypto-neon-fp-armv8"
+        cflags="${cflags} -march=armv8-a+crc"
+        cflags="${cflags} -mcpu=cortex-a72"
         ;;
 
     *) echo "Unknown model type ${model}" >&2 && exit 1
@@ -87,7 +95,7 @@ lflags="${lflags} -Wl,-T,${scriptdir}/rpi.x"
 kernel_elf="${scriptdir}/kernel.${tutorial}.${model}.elf"
 kernel_img="${scriptdir}/kernel.${tutorial}.${model}.img"
 
-printf "%s\n" "${toolchain}gcc ${cflags} ${scriptdir}/*.S ${scriptdir}/*.c -o ${kernel_elf}"
+printf "%s\n" "${toolchain}gcc ${cflags} ${lflags} ${scriptdir}/*.S ${scriptdir}/*.c -o ${kernel_elf}"
 ${toolchain}gcc ${cflags} ${lflags} ${scriptdir}/*.S ${scriptdir}/*.c -o ${kernel_elf}
 
 if [ $? -ne 0 ]; then
@@ -97,3 +105,11 @@ fi
 
 printf "%s\n" "${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}"
 ${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}
+
+# Generate a new card image
+${basedir}/card/make_card.sh ${model} ${tutorial}
+
+if [ $? -ne 0 ]; then
+    printf "%s\n" "ERROR: Failed to generate the SD Card image correctly" >&2
+    exit 1
+fi
