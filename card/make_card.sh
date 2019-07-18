@@ -6,7 +6,7 @@
 scriptdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 if [ $# -lt 1 ]; then
-    echo "usage: make_card.sh <pi-model>" >&2
+    echo "usage: make_card.sh <pi-model> [model] [kernel_file]" >&2
     echo "       pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpi4, rpibp" >&2
     exit 1
 fi
@@ -17,6 +17,11 @@ model="${1}"
 tutorial="none"
 if [ $# -gt 1 ]; then
     tutorial="${2}"
+fi
+
+kernel_file=kernel.${tutorial}.${model}.img
+if [ $# -gt 2 ]; then
+    kernel_file=${3}
 fi
 
 diskspace=16
@@ -30,7 +35,7 @@ for required in ${requires}; do
     fi
 done
 
-kernel_file=kernel.${tutorial}.${model}.img
+
 disk_image=card.${tutorial}.${model}.img
 
 tmpcardimg=$(mktemp)
