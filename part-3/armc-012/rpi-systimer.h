@@ -1,3 +1,12 @@
+/*
+    Part of the Raspberry-Pi Bare Metal Tutorials
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
+
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
+
+*/
 
 #ifndef RPI_SYSTIMER_H
 #define RPI_SYSTIMER_H
@@ -6,11 +15,7 @@
 
 #include "rpi-base.h"
 
-#ifdef RPI2
-	#define RPI_SYSTIMER_BASE       0x3f003000
-#else
-	#define RPI_SYSTIMER_BASE       0x20003000
-#endif
+#define RPI_SYSTIMER_BASE       (PER_BASE + 0x3000UL)
 
 typedef struct {
     volatile uint32_t control_status;
