@@ -24,10 +24,10 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 
 add_executable( kernel.${TUTORIAL}.${BOARD}
-    armc-010.c
-    armc-010-cstartup.c
-    armc-010-cstubs.c
-    armc-010-start.S )
+    ${TUTORIAL}.c
+    ${TUTORIAL}-cstartup.c
+    ${TUTORIAL}-cstubs.c
+    ${TUTORIAL}-start.S )
 
 add_custom_command(
     TARGET kernel.${TUTORIAL}.${BOARD} POST_BUILD

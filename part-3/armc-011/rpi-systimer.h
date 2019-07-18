@@ -15,14 +15,7 @@
 
 #include "rpi-base.h"
 
-#if defined( RPI0 ) || defined( RPI1 )
-    #define RPI_SYSTIMER_BASE       0x20003000UL
-#elif defined( RPI2 ) || defined( RPI3 )
-    #define RPI_SYSTIMER_BASE       0x3f003000UL
-#else
-    #error Unknown RPI Model!
-#endif
-
+#define RPI_SYSTIMER_BASE       (PER_BASE + 0x3000UL)
 
 typedef struct {
     volatile uint32_t control_status;

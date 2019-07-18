@@ -36,6 +36,6 @@ if [ $? -ne 0 ]; then
 fi
 
 # Generate a new card image
-${basedir}/card/make_card.sh ${model} ${tutorial} ${scriptdir}/build/kernel-${tutorial}.${model}.img
+${basedir}/card/make_card.sh ${model} ${tutorial} ${scriptdir}/build/kernel.${tutorial}.${model}.img
 
 exit 0

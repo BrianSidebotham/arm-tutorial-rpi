@@ -11,19 +11,13 @@
 #ifndef RPI_GPIO_H
 #define RPI_GPIO_H
 
-extern volatile unsigned int* gpio;
-
 /* The base address of the GPIO peripheral (ARM Physical Address) This is defined in the
    Peripherals manual provided by Broadcom and it differs between the different Raspberry Pi
    models */
 
-#if defined( RPI0 ) || defined( RPI1 )
-    #define GPIO_BASE       0x20200000UL
-#elif defined( RPI2 ) || defined( RPI3 )
-    #define GPIO_BASE       0x3F200000UL
-#else
-    #error Unknown RPI Model!
-#endif
+#include "rpi-base.h"
+
+#define GPIO_BASE       (PER_BASE + 0x200000UL)
 
 /* Different Raspberry pi models have the ACT LED on different GPIO pins. The RPI3 doesn't have
    access to the ACT LED through a GPIO pin can so can't be used in this tutorial, but the RPI3B+
@@ -37,9 +31,6 @@ extern volatile unsigned int* gpio;
     #define LED_GPSET       GPIO_GPSET0
     #define LED_GPCLR       GPIO_GPCLR0
     #define LED_GPIO_BIT    16
-    #define LED_ON()        do { gpio[LED_GPSET] = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { gpio[LED_GPCLR] = ( 1 << LED_GPIO_BIT ); } while( 0 )
-
 #elif (defined( RPI1 ) && defined( IOBPLUS )) || defined( RPI2 ) || defined( RPI0 )
 
     /* The RPI1B+ and RPI2 and RPI0 (Pi Zero and ZeroW) use GPIO47 for the ACT LED */
@@ -48,10 +39,7 @@ extern volatile unsigned int* gpio;
     #define LED_GPSET       GPIO_GPSET1
     #define LED_GPCLR       GPIO_GPCLR1
     #define LED_GPIO_BIT    15
-    #define LED_ON()        do { gpio[LED_GPCLR] = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { gpio[LED_GPSET] = ( 1 << LED_GPIO_BIT ); } while( 0 )
-
-#elif defined( RPI3 ) && defined( IOBPLUS )
+#elif ( defined( RPI3 ) && defined( IOBPLUS ) )
 
     /* The RPi3B+ again made the ACT LED available on a GPIO pin (of course on yet another pin!) */
     #define LED_GPFSEL      GPIO_GPFSEL2
@@ -59,12 +47,27 @@ extern volatile unsigned int* gpio;
     #define LED_GPSET       GPIO_GPSET0
     #define LED_GPCLR       GPIO_GPCLR0
     #define LED_GPIO_BIT    29
-    #define LED_ON()        do { gpio[LED_GPSET] = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { gpio[LED_GPCLR] = ( 1 << LED_GPIO_BIT ); } while( 0 )
 
 #elif defined( RPI3 )
 
     #error The RPI3 has an ioexpander between the ACT LED and the GPU and so cannot be used in this tutorial
+
+#elif defined( RPI4 )
+    /* The RPi4 model has the ACT LED attached to GPIO 42
+       https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838-rpi-4-b.dts */
+    #define LED_GPFSEL      GPIO_GPFSEL4
+    #define LED_GPFBIT      6
+    #define LED_GPSET       GPIO_GPSET1
+    #define LED_GPCLR       GPIO_GPCLR1
+    #define LED_GPIO_BIT    10
+#endif
+
+#if defined(RPI0) || defined(RPI1)
+    #define LED_ON()        do { gpio[LED_GPSET] = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { gpio[LED_GPCLR] = ( 1 << LED_GPIO_BIT ); } while( 0 )
+#else
+    #define LED_ON()        do { gpio[LED_GPCLR] = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { gpio[LED_GPSET] = ( 1 << LED_GPIO_BIT ); } while( 0 )
 #endif
 
 #define GPIO_GPFSEL0    0

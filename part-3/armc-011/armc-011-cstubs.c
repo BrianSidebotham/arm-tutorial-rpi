@@ -176,7 +176,6 @@ caddr_t _sbrk( int incr )
     /* If we exceed the limit of our memory with allocations, stick the LED on and trap here */
     if( ( heap_end + incr ) > (caddr_t)(128L * 1024L * 1024L) )
     {
-        LED_ON();
         while(1)
         {
             /* TRAP HERE! */
