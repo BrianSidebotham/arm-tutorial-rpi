@@ -1,6 +1,7 @@
 .*
 !.gitignore
 !.gitattributes
+!.travis.yml
 
 # Don't include personal docs
 rpi-docs
