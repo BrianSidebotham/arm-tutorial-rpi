@@ -2,3 +2,8 @@ language: bash
 
 script:
     - bash compiler/get_compiler.sh
+    - bash part-1/armc-03/build.sh rpi0
+    - bash part-1/armc-03/build.sh rpi1
+    - bash part-1/armc-03/build.sh rpi2
+    - bash part-1/armc-03/build.sh rpi3bp
+    - bash part-1/armc-03/build.sh rpi4
