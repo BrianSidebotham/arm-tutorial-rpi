@@ -1,5 +1,7 @@
 # Raspberry-Pi Bare Metal Tutorial
 
+![Build Status](https://travis-ci.org/BrianSidebotham/arm-tutorial-rpi.svg?branch=master)
+
 This repository contains the code for the Raspberry-Pi bare-metal programming
 in C series. The home of the tutorial and all of the articles relating to the
 code is at
@@ -9,8 +11,8 @@ You can build on linux, windows, or MAC - all you need is the
 [arm-none-eabi toolchain](https://launchpad.net/gcc-arm-embedded).
 
 For all platforms, you can get the required toolchain used in this tutorial
-from the [GCC-ARM-embedded](https://launchpad.net/gcc-arm-embedded) project - 
-Most OS distributions now have at least the 4.8 toolchain, however the 
+from the [GCC-ARM-embedded](https://launchpad.net/gcc-arm-embedded) project -
+Most OS distributions now have at least the 4.8 toolchain, however the
 following will fix problems with using the 4.9 toolchain.
 
 [Adding options -lc -specs=nosys.specs allows arm-none-eabi-gcc v4.9 for compilation](https://github.com/BrianSidebotham/arm-tutorial-rpi/issues/8)
