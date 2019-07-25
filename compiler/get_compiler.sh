@@ -24,7 +24,7 @@ cat << EOF > ${scriptdir}/.compiler.md5
 EOF
 
 must_run md5sum -c ${scriptdir}/.compiler.md5
-must_run tar -C ${scriptdir} -xvf  ${scriptdir}/${archive}
+must_run tar -C ${scriptdir} -xf ${scriptdir}/${archive}
 
 # Remove the archive after we're finished with it
 rm -rf ${scriptdir}/${archive} > /dev/null 2>&1
