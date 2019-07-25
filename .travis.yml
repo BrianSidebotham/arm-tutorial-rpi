@@ -1,5 +1,11 @@
 language: bash
 
+addons:
+  apt:
+    update: true
+    packages:
+    - mtools
+
 script:
     - bash compiler/get_compiler.sh
     - bash part-1/armc-03/build.sh rpi0
