@@ -16,7 +16,7 @@ include(CMakeForceCompiler)
 # The Generic system name is used for embedded targets (targets without OS) in
 # CMake
 set( CMAKE_SYSTEM_NAME          Generic )
-set( CMAKE_SYSTEM_PROCESSOR     BCM2835 )
+set( CMAKE_SYSTEM_PROCESSOR     BCM2836 )
 
 # Set a toolchain path. You only need to set this if the toolchain isn't in
 # your system path. Don't forget a trailing path separator!
@@ -37,13 +37,13 @@ set( CMAKE_OBJCOPY      ${TC_PATH}${CROSS_COMPILE}objcopy
     CACHE FILEPATH "The toolchain objcopy command " FORCE )
 
 # Set the CMAKE C flags (which should also be used by the assembler!
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=crypto-neon-fp-armv8" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv6zk" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a+crc" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=cortex-a53" )
 
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 set( CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 
-# Just add the BPLUS definition for conditional compiling
-add_definitions( -DRPIBPLUS=1 )
+# Add the raspberry-pi 2 definition so conditional compilation works
+add_definitions( -DRPI3=1 )

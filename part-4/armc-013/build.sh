@@ -1,11 +1,11 @@
 #!/bin/sh
 
 scriptdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-base=${scriptdir}/../..
+basedir=${scriptdir}/../..
 
 # Get the compiler to use, etc.
-. ${base}/shell/common_build.sh
-. ${base}/shell/common_functions.sh
+. ${basedir}/shell/common_build.sh
+. ${basedir}/shell/common_functions.sh
 
 
 # Get the tutorial name from the script directory
@@ -20,10 +20,8 @@ fi
 # The raspberry pi model we're targetting
 model="${1}"
 
-disk_name=disk-${model}.img
-
 mkdir -p ${scriptdir}/build && cd ${scriptdir}/build
-cmake -G "CodeBlocks - Unix Makefiles" -DBOARD="rpi0" -DTC_PATH="${tcpath}/" -DCMAKE_TOOLCHAIN_FILE=${scriptdir}/toolchain-arm-none-eabi-rpi.cmake ${scriptdir}
+cmake -G "CodeBlocks - Unix Makefiles" -DTUTORIAL="${tutorial}" -DBOARD="${model}" -DTC_PATH="${tcpath}/" -DCMAKE_TOOLCHAIN_FILE=${scriptdir}/toolchain-arm-none-eabi-${model}.cmake ${scriptdir}
 
 if [ $? -ne 0 ]; then
     echo "Failed to configure!" >&2
@@ -36,5 +34,8 @@ if [ $? -ne 0 ]; then
     echo "Failed to build!" >&2
     exit 1
 fi
+
+# Generate a new card image
+${basedir}/card/make_card.sh ${model} ${tutorial} ${scriptdir}/build/kernel.${tutorial}.${model}.img
 
 exit 0

@@ -17,6 +17,8 @@
     #define PERIPHERAL_BASE       0x20000000UL
 #elif defined( RPI2 ) || defined( RPI3 )
     #define PERIPHERAL_BASE       0x3F000000UL
+#elif defined( RPI4 )
+    #define PERIPHERAL_BASE       0xFE000000UL
 #else
     #error Unknown RPI Model!
 #endif

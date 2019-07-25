@@ -28,8 +28,6 @@
     #define LED_GPSET       GPSET0
     #define LED_GPCLR       GPCLR0
     #define LED_GPIO_BIT    16
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
 
 #elif (defined( RPI1 ) && defined( IOBPLUS )) || defined( RPI2 ) || defined( RPI0 )
 
@@ -39,8 +37,6 @@
     #define LED_GPSET       GPSET1
     #define LED_GPCLR       GPCLR1
     #define LED_GPIO_BIT    15
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
 
 #elif defined( RPI3 ) && defined( IOBPLUS )
 
@@ -50,12 +46,27 @@
     #define LED_GPSET       GPSET0
     #define LED_GPCLR       GPCLR0
     #define LED_GPIO_BIT    29
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
 
 #elif defined( RPI3 )
 
     #error The RPI3 has an ioexpander between the ACT LED and the GPU and so cannot be used in this tutorial
+
+#elif defined( RPI4 )
+    /* The RPi4 model has the ACT LED attached to GPIO 42
+       https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838-rpi-4-b.dts */
+    #define LED_GPFSEL      GPFSEL4
+    #define LED_GPFBIT      6
+    #define LED_GPSET       GPSET1
+    #define LED_GPCLR       GPCLR1
+    #define LED_GPIO_BIT    10
+#endif
+
+#if defined(RPI0) || defined(RPI1)
+    #define LED_ON()        do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+#else
+    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
 #endif
 
 /***/
