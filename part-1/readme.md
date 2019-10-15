@@ -419,7 +419,7 @@ BCM2835 peripherals page we see an IO map for the processor. Again, as embedded 
 have the IO map to know how to address peripherals on the processor and in some cases how to
 arrange our linker scripts when there are multiple address spaces.
 
-![ARM Virtual addresses](http://www.valvers.com/wp-content/uploads/2013/01/arm-c-virtual-addresses.jpg)
+![ARM Virtual addresses](/images/arm-c-virtual-addresses.jpg)
 
 The VC CPU Bus addresses relate to the Broadcom Video Core CPU. Although the Video Core CPU is what
 bootloads from the SD Card, execution is handed over to the ARM core by the time our `kernel.img`
