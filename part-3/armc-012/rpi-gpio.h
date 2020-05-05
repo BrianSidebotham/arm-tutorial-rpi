@@ -42,11 +42,20 @@
 #elif ( defined( RPI3 ) && defined( IOBPLUS ) )
 
     /* The RPi3B+ again made the ACT LED available on a GPIO pin (of course on yet another pin!) */
+    /*
     #define LED_GPFSEL      GPIO_GPFSEL2
     #define LED_GPFBIT      27
     #define LED_GPSET       GPIO_GPSET0
     #define LED_GPCLR       GPIO_GPCLR0
     #define LED_GPIO_BIT    29
+    */
+
+    #define LED_GPFSEL      GPIO_GPFSEL1
+    #define LED_GPFBIT      21
+    #define LED_GPSET       GPIO_GPSET0
+    #define LED_GPCLR       GPIO_GPCLR0
+    #define LED_GPIO_BIT    17
+
 
 #elif defined( RPI3 )
 

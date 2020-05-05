@@ -41,9 +41,6 @@ set( CMAKE_OBJDUMP      ${TC_PATH}${CROSS_COMPILE}objdump
 CACHE FILEPATH "The toolchain objdump command " FORCE )
 
 # Set the common build flags
-
-# Set the CMAKE C flags (which should also be used by the assembler!
-
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv6zk" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
@@ -51,6 +48,6 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 set( CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 
-# Add the raspberry-pi 0 definition so conditional compilation works
-add_definitions( -DRPI0=1 )
-set( BOARD rpi0 )
+add_definitions( -DRPI1=1 )
+add_definitions( -DIOBPLUS=1 )
+set( BOARD rpi1bp )

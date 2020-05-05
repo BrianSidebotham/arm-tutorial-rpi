@@ -40,6 +40,7 @@ project( valvers-${TUTORIAL} C ASM )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard" )
 
 add_executable( kernel.${TUTORIAL}.${BOARD}
     ${TUTORIAL}.c
