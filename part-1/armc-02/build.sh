@@ -45,29 +45,34 @@ cflags="${ccflags}"
 # be able to adjust the code for whichever model we're targetting
 case "${model}" in
     rpi0*)
+        cflags="${cflags} -DRPI0"
         cflags="${cflags} -mfpu=vfp"
         cflags="${cflags} -march=armv6zk"
         cflags="${cflags} -mtune=arm1176jzf-s"
         ;;
     rpi1*)
+        cflags="${cflags} -DRPI1"
         cflags="${cflags} -mfpu=vfp"
         cflags="${cflags} -march=armv6zk"
         cflags="${cflags} -mtune=arm1176jzf-s"
         ;;
 
     rpi2*)
+        cflags="${cflags} -DRPI2"
         cflags="${cflags} -mfpu=neon-vfpv4"
         cflags="${cflags} -march=armv7-a"
         cflags="${cflags} -mtune=cortex-a7"
         ;;
 
     rpi3*)
+        cflags="${cflags} -DRPI3"
         cflags="${cflags} -mfpu=crypto-neon-fp-armv8"
         cflags="${cflags} -march=armv8-a+crc"
         cflags="${cflags} -mcpu=cortex-a53"
         ;;
 
     rpi4*)
+        cflags="${cflags} -DRPI1"
         cflags="${cflags} -mfpu=crypto-neon-fp-armv8"
         cflags="${cflags} -march=armv8-a+crc"
         cflags="${cflags} -mcpu=cortex-a72"
