@@ -660,7 +660,6 @@ int main(void)
         gpio[LED_GPSET] = (1 << LED_GPIO_BIT);
     }
 }
-
 ```
 
 We now compile with the no start files option too:
@@ -758,12 +757,13 @@ The kernel.img file contains just the ARM machine code and so is just a few hund
 ```
 part-1/armc-03 $ ll
 total 28
-drwxr-xr-x 2 brian brian  4096 Sep 21 01:05 ./
-drwxr-xr-x 6 brian brian  4096 Sep 21 00:19 ../
--rw-r--r-- 1 brian brian  3894 Sep 21 00:19 armc-03.c
--rwxr-xr-x 1 brian brian  2805 Sep 21 01:05 build.sh*
--rwxr-xr-x 1 brian brian 35208 Sep 21 01:05 kernel.armc-03.rpi3bp.elf*
--rwxr-xr-x 1 brian brian   268 Sep 21 01:05 kernel.img*
+drwxr-xr-x 2 brian brian     4096 Sep 21 01:05 ./
+drwxr-xr-x 6 brian brian     4096 Sep 21 00:19 ../
+-rw-r--r-- 1 brian brian     3894 Sep 21 00:19 armc-03.c
+-rwxr-xr-x 1 brian brian     2805 Sep 21 01:05 build.sh*
+-rwxr-xr-x 1 brian brian 16777216 Sep 21 01:05 card.armc-03.rpi3bp.img
+-rwxr-xr-x 1 brian brian    35208 Sep 21 01:05 kernel.armc-03.rpi3bp.elf*
+-rwxr-xr-x 1 brian brian      268 Sep 21 01:05 kernel.armc-03.rpi3bp.img*
 ```
 
 ## Generating SD Cards
@@ -771,39 +771,13 @@ drwxr-xr-x 6 brian brian  4096 Sep 21 00:19 ../
 The next step is how to get this `kernel.img` file onto an SD Card so we can boot the card and run
 our newly compiled code.
 
-Previously the advice here was to get a card that has Raspbian or something on and simply replace
-the kernel.img file on that card with the one we've compiled. However, as there are now so many RPI
-options and there are many more boot files on those SD Cards it's better to create our own.
+A script, called `make_card.sh` was run during the `build.sh` script run. Have a look in the `build.sh`
+script to see the call near the end of the script. It does the work of generating an SD Card image
+that can be written directly to an SD card.
 
-I've written a script to generate an SD Card img file. You can simply run the `./make_card.sh`
-script to generate an img file that can be written directly to an SD card to then boot an RPi
-and run your fresh code.
-
-```
-part-1/armc-03 $ ./make_card.sh rpi3bp
-all_loops: /dev/loop0: [2049]:3177416 (/home/brian/valvers-new/arm-tutorial-rpi/part-1/armc-03/card.armc-03.rpi3bp.img)
-Using /dev/loop0 as the target
-mkfs.fat 3.0.28 (2015-05-16)
-unable to get drive geometry, using default 255/63
-'card/../firmware/firmware/boot/bootcode.bin' -> '/tmp/tmp.Aybb0IDwyh/bootcode.bin'
-'card/../firmware/firmware/boot/fixup.dat' -> '/tmp/tmp.Aybb0IDwyh/fixup.dat'
-'card/../firmware/firmware/boot/start.elf' -> '/tmp/tmp.Aybb0IDwyh/start.elf'
-'part-1/armc-03/kernel.armc-03.rpi3bp.img' -> '/tmp/tmp.Aybb0IDwyh/kernel.img'
-```
-
-We end up a card image that can now be written to an SD Card. The card image is around 4MiB or so:
-
-```
-part-1/armc-03 $ ls -lh
-total 4.1M
--rw-r--r-- 1 brian brian 3.9K Sep 21 00:19 armc-03.c
--rwxr-xr-x 1 brian brian 2.8K Sep 21 01:20 build.sh
--rw-r--r-- 1 root  root  4.0M Sep 21 01:22 card.armc-03.rpi3bp.img
--rwxr-xr-x 1 brian brian  35K Sep 21 01:20 kernel.armc-03.rpi3bp.elf
--rwxr-xr-x 1 brian brian  268 Sep 21 01:20 kernel.armc-03.rpi3bp.img
--rwxr-xr-x 1 brian brian  268 Sep 21 01:05 kernel.img
--rwxr-xr-x 1 brian brian  925 Sep 21 01:21 make_card.sh
-```
+The `/card/make_card.sh` script is worth a look. It can generate a card image without the need to
+user super user priveleges. It always uses the latest firmware available from the
+[RPi Foundation GitHub repository](https://github.com/raspberrypi/firmware)
 
 Writing the image to the card can be done using `cat` so long as you know what the SD Card device
 is.
@@ -812,7 +786,8 @@ If you'd rather, you can use the `write_card.sh` script in the `card` directory 
 interactively to select the SD Card.
 
 If you prefer to do things manually you can insert the SD Card and then run `dmesg | tail` to view
-messages which will show you which device reference was used for the SD Card.
+messages which will show you which device reference was used for the SD Card or else use `lsblk` to
+list all of the block devices available.
 
 **DON'T GET THE SD CARD DEVICE WRONG OR YOU'LL COMPLETELY WIPE OUT ANOTHER DISK!**
 
