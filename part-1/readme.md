@@ -36,9 +36,11 @@ following models:
 - RPi 3 Model B
 - RPi 4 Model B
 
->**NOTE:** It is not an error that the RPI 3 Model B+ is not included in this list. The ACK LED is
-only available through the mailbox interface (available from part-4 of the tutorial) and so cannot
-be used directly by the GPIO peripheral which we'll be using in this part of the tutorial.
+!!! note
+    It is not an error that the RPI 3 Model B+ is not included in this list. The
+    ACK LED is only available through the mailbox interface (available from
+    part-4 of the tutorial) and so cannot be used directly by the GPIO peripheral
+    which we'll be using in this part of the tutorial.
 
 ## Cross Compiling for the Raspberry Pi (BCM2835/6/7/BCM23711)
 
