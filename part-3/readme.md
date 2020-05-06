@@ -207,7 +207,7 @@ void RPI_WaitMicroSeconds( uint32_t us )
 
     while( ( rpiSystemTimer->counter_lo - ts ) < us )
     {
-        /* BLANK */
+        // BLANK
     }
 }
 ```
@@ -254,26 +254,100 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 }
 ```
 
-Now we have a slightly slower blinking LED where the time is known - 0.5 seconds before toggling the LED. The system timer can be extremely useful. This is definitely the easiest way to get using a timer on the Raspberry-Pi!
+Now we have a slightly slower blinking LED where the time is known - 0.5 seconds
+before toggling the LED. The system timer can be extremely useful. This is
+definitely the easiest way to get using a timer on the Raspberry-Pi!
 
-Don't forget to build armc-011 tutorial you need CMake installed. Then you can build with:
-
-```bash
-cd arm011\scripts
-configure.bat
-mingw32-make
-```
-
-or on Linux
+Don't forget to build armc-011 tutorial you need CMake installed. Then you can
+build with:
 
 ```bash
-cd arm011/scripts
-./configure.sh
-make
+cd part-3/armc-011/
+./build.sh [RPI MODEL]
 ```
 
-I think in the next tutorial part we'll introduce interrupts. The code in this tutorial is far from ideal. Function calls that wait half a second before returning are not what we want. Interrupts can help keep our system more responsive so in that 0.5s we can get on and do other stuff and just let the processor interrupt the code when the 0.5s is up.
+### armc-012.c
 
-I've also included a more fancy use of the timer functions to allow some PWM dimming of the LED so you can check out armc-012 yourself. It's at least a little bit more interesting compared to a normal flashing LED!
+In this example, we can introduce something a bit more fun. Instead of simply pulsing
+the LED on and off we can go ahead and do some software PWM of the LED brightness.
 
-When you're ready, [head over to Pt4...](http://www.valvers.com/embedded-linux/raspberry-pi/step04-bare-metal-programming-in-c-pt4)
+```c
+#include <string.h>
+#include <stdlib.h>
+
+#include "rpi-gpio.h"
+#include "rpi-systimer.h"
+
+/** GPIO Register set */
+volatile unsigned int* gpio = (unsigned int*)GPIO_BASE;
+
+/** Main function - we'll never return from here */
+void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
+{
+    int brightness = 255;
+    int speed = 16;
+    int up = 0;
+
+    /* Write 1 to the GPIO init nibble in the Function Select GPIO peripheral register to enable
+       the LED pin an output */
+    gpio[LED_GPFSEL] |= ( 1 << LED_GPFBIT );
+
+    /* Never exit as there is no OS to exit to! */
+    while(1)
+    {
+        if( brightness > 0 )
+        {
+            /* Set the GPIO16 output high ( Turn OK LED off )*/
+            LED_OFF();
+
+            /* Wait half a second */
+            RPI_WaitMicroSeconds( brightness );
+        }
+
+        if( ( 255 - brightness ) >= 0 )
+        {
+            /* Set the GPIO16 output low ( Turn OK LED on )*/
+            LED_ON();
+
+            /* Wait half a second */
+            RPI_WaitMicroSeconds( 255 - brightness );
+        }
+
+        speed--;
+        if( speed == 0 )
+        {
+            speed = 16;
+
+            if( up )
+            {
+                if( brightness < 255 )
+                    brightness++;
+
+                if( brightness == 255 )
+                    up = 0;
+            }
+            else
+            {
+                if( brightness )
+                    brightness--;
+
+                if( brightness == 0 )
+                    up = 1;
+            }
+        }
+    }
+}
+```
+
+The output is quite nifty as we get a fading ACK LED. Here is an example of it
+running on a pi-zero:
+
+![](/images/part-3-pizero-running-example.gif)
+
+I think in the next tutorial part we'll introduce interrupts. The code in this
+tutorial is far from ideal. Function calls that wait half a second before
+returning are not what we want. Interrupts can help keep our system more responsive
+so in that 0.5s we can get on and do other stuff and just let the processor
+interrupt the code when the 0.5s is up.
+
+When you're ready, [head over to Pt4...](https://www.valvers.com/embedded-linux/raspberry-pi/step04-bare-metal-programming-in-c-pt4)
