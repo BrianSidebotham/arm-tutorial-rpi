@@ -29,15 +29,15 @@ Have fun, and remember to experiment!
 
 ## Tutorial links (online)
 
-[Step01 - Getting Started](http://www.valvers.com/open-software/raspberry-pi/step01-bare-metal-programming-in-cpt1/)
+[Step01 - Getting Started](https://www.valvers.com/open-software/raspberry-pi/step01-bare-metal-programming-in-cpt1/)
 
-[Step02 - C Runtime](http://www.valvers.com/open-software/raspberry-pi/step02-bare-metal-programming-in-c-pt2/)
+[Step02 - C Runtime](https://www.valvers.com/open-software/raspberry-pi/step02-bare-metal-programming-in-c-pt2/)
 
-[Step03 - Introducing CMake](http://www.valvers.com/open-software/raspberry-pi/step03-bare-metal-programming-in-c-pt3/)
+[Step03 - Introducing CMake](https://www.valvers.com/open-software/raspberry-pi/step03-bare-metal-programming-in-c-pt3/)
 
-[Step04 - Interrupts](http://www.valvers.com/open-software/raspberry-pi/step04-bare-metal-programming-in-c-pt4/)
+[Step04 - Interrupts](https://www.valvers.com/open-software/raspberry-pi/step04-bare-metal-programming-in-c-pt4/)
 
-[Step05 - Graphics(Basic)](http://www.valvers.com/open-software/raspberry-pi/step05-bare-metal-programming-in-c-pt5/)
+[Step05 - Graphics(Basic)](https://www.valvers.com/open-software/raspberry-pi/step05-bare-metal-programming-in-c-pt5/)
 
 ## Some interesting links:
 
