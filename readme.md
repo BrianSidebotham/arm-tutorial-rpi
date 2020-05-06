@@ -7,15 +7,23 @@ in C series. The home of the tutorial and all of the articles relating to the
 code is at
 [valvers.com](http://www.valvers.com/open-software/raspberry-pi/step01-bare-metal-programming-in-cpt1/)
 
-You can build on linux, windows, or MAC - all you need is the
-[arm-none-eabi toolchain](https://launchpad.net/gcc-arm-embedded).
+You can build on linux - because if you're going to develop, you may as well get yourself the ability to use Linux
+whether as a VM on your Windows desktop or as your main desktop.
 
-For all platforms, you can get the required toolchain used in this tutorial
-from the [GCC-ARM-embedded](https://launchpad.net/gcc-arm-embedded) project -
-Most OS distributions now have at least the 4.8 toolchain, however the
-following will fix problems with using the 4.9 toolchain.
+> **NOTE**: This tutorial also used to be tested on Windows, but as I don't have any Windows installs available any
+more, or indeed the time available to test everything under Windows it's dropped off the list.
 
-[Adding options -lc -specs=nosys.specs allows arm-none-eabi-gcc v4.9 for compilation](https://github.com/BrianSidebotham/arm-tutorial-rpi/issues/8)
+## Getting Started
+
+Clone this repository and get the toolchain and firmware.
+
+The toolchain used for the tutorial can be fetched by the `compiler/get_compiler.sh` script which will download the
+compiler locally so you don't need to install any specific packages from your Linux distro.
+
+Similarly, the required Raspberry Pi firmware is also stored locally and can be fetched by using the
+`firmware/get_firmware_repo.sh` script.
+
+Get reading the tutorial.
 
 Have fun, and remember to experiment!
 
@@ -33,14 +41,11 @@ Have fun, and remember to experiment!
 
 ## Some interesting links:
 
-Original Cambridge Tutorial that inspired this tutorial series:
-http://www.cl.cam.ac.uk/projects/raspberrypi/tutorials/os/index.html
+Original [Cambridge Tutorial](http://www.cl.cam.ac.uk/projects/raspberrypi/tutorials/os/index.html) that
+inspired this tutorial series.
 
-ARM Instruction Reference:
-http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf
+[ARM Instruction Reference](http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf)
 
-GNU ARM Embedded Toolchain:
-https://launchpad.net/gcc-arm-embedded
+[Circle C++ Bare Metal Environment for RPI](https://github.com/rsta2/circle)
 
-Newlib C-Library documentation:
-https://sourceware.org/newlib/libc.html
+[Newlib C-Library documentation](https://sourceware.org/newlib/libc.html)
