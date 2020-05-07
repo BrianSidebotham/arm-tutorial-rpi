@@ -1,4 +1,4 @@
-# Part 1 - Getting Started
+# BMC Part 1 - Getting Started
 
 Although the Raspberry-Pi comes with a good Linux distribution, the Pi is about software
 development, and sometimes we want a real-time system without an operating system. I decided it'd

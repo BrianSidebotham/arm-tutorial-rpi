@@ -1,4 +1,4 @@
-# Card Scripts
+# BMC Card Scripts
 
 The scripts in this directory support generating card images. These images can then be written
 straight to an SD card, ready to boot a raspberry pi.

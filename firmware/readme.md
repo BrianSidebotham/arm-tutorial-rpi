@@ -1,4 +1,4 @@
-# Firmware
+# BMC Firmware
 
 Use the `get_latest_firmware.sh` script to get the latest firmware from the official raspberry pi
 firmware repository.

@@ -1,4 +1,4 @@
-# Introducing CMake
+# BMC Part 3 - CMake Build System
 
 If you really don't want to know anything about the [CMake](http://www.cmake.org/) build system, just skip this section of the tutorial. There's no ARM bare metal in it - just compiling the same armc-09 tutorial with a build system! However, to continue with the tutorials, you'll need CMake installed to configure + build the tutorials.
 

@@ -1,4 +1,4 @@
-# Part 2 - The C Runtime
+# BMC Part 2 - The C Runtime
 
 In this part of the tutorial we'll look deeper into the linker and the C-Library so that we end
 up with a working C-Library link. Exciting stuff, huh?! Let's look further into what the compiler
