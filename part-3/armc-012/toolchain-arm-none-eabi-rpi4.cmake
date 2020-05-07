@@ -16,7 +16,7 @@ include(CMakeForceCompiler)
 # The Generic system name is used for embedded targets (targets without OS) in
 # CMake
 set( CMAKE_SYSTEM_NAME          Generic )
-set( CMAKE_SYSTEM_PROCESSOR     BCM2837 )
+set( CMAKE_SYSTEM_PROCESSOR     BCM2838 )
 
 # Set a toolchain path. You only need to set this if the toolchain isn't in
 # your system path. Don't forget a trailing path separator!
