@@ -5,13 +5,15 @@
 This repository contains the code for the Raspberry-Pi bare-metal programming
 in C series. The home of the tutorial and all of the articles relating to the
 code is at
-[valvers.com](http://www.valvers.com/open-software/raspberry-pi/step01-bare-metal-programming-in-cpt1/)
+[valvers.com](https://www.valvers.com/open-software/raspberry-pi/bare-metal-programming-in-c)
+and [github](https://github.com/BrianSidebotham/arm-tutorial-rpi)
 
 You can build on linux - because if you're going to develop, you may as well get yourself the ability to use Linux
 whether as a VM on your Windows desktop or as your main desktop.
 
-> **NOTE**: This tutorial also used to be tested on Windows, but as I don't have any Windows installs available any
-more, or indeed the time available to test everything under Windows it's dropped off the list.
+> **NOTE**: This tutorial also used to be tested on Windows, but as I don't have any Windows
+installs available any more, or indeed the time available to test everything under Windows it's
+dropped off the list.
 
 ## Getting Started
 
@@ -29,15 +31,15 @@ Have fun, and remember to experiment!
 
 ## Tutorial links (online)
 
-[Step01 - Getting Started](https://www.valvers.com/open-software/raspberry-pi/step01-bare-metal-programming-in-cpt1/)
+[Step01 - Getting Started](/part-1/readme.md)
 
-[Step02 - C Runtime](https://www.valvers.com/open-software/raspberry-pi/step02-bare-metal-programming-in-c-pt2/)
+[Step02 - C Runtime](/part-2/readme.md)
 
-[Step03 - Introducing CMake](https://www.valvers.com/open-software/raspberry-pi/step03-bare-metal-programming-in-c-pt3/)
+[Step03 - Introducing CMake](/part-3/readme.md)
 
-[Step04 - Interrupts](https://www.valvers.com/open-software/raspberry-pi/step04-bare-metal-programming-in-c-pt4/)
+[Step04 - Interrupts](/part-4/readme.md)
 
-[Step05 - Graphics(Basic)](https://www.valvers.com/open-software/raspberry-pi/step05-bare-metal-programming-in-c-pt5/)
+[Step05 - Graphics(Basic)](/part-5/readme.md)
 
 ## Some interesting links:
 
