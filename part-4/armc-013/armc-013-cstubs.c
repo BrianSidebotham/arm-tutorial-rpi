@@ -1,7 +1,7 @@
 /*
     Part of the Raspberry-Pi Bare Metal Tutorials
     https://www.valvers.com/rpi/bare-metal/
-    Copyright (c) 2013-2018, Brian Sidebotham
+    Copyright (c) 2013-2020, Brian Sidebotham
 
     This software is licensed under the MIT License.
     Please see the LICENSE file included with this software.
@@ -163,22 +163,17 @@ int read( int file, char *ptr, int len )
    GNU linker. */
 caddr_t _sbrk( int incr )
 {
-    extern char _end;
-    static char* heap_end;
-    char* prev_heap_end;
+   extern char _end;
+   static char* heap_end = 0;
+   char* prev_heap_end;
 
-    if( heap_end == 0 )
-        heap_end = &_end;
+   if( heap_end == 0 )
+       heap_end = &_end;
 
-     prev_heap_end = heap_end;
+    prev_heap_end = heap_end;
+    heap_end += incr;
 
-     if( ( heap_end + incr ) > _get_stack_pointer() )
-     {
-        while( 1 ) { /* TRAP HERE! */ }
-     }
-
-     heap_end += incr;
-     return (caddr_t)prev_heap_end;
+    return (caddr_t)prev_heap_end;
 }
 
 

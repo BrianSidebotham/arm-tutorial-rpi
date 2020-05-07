@@ -19,6 +19,19 @@
     #define PERIPHERAL_BASE       0x3F000000UL
 #elif defined( RPI4 )
     #define PERIPHERAL_BASE       0xFE000000UL
+    #define GIC400_BASE           (0xFF840000UL)
+#else
+    #error Unknown RPI Model!
+#endif
+
+/* System Frequencies From:
+   https://www.raspberrypi.org/documentation/configuration/config-txt/overclocking.md */
+#if defined( RPI0 ) || defined( RPI3 )
+#define SYSFREQ 400000000UL
+#elif defined( RPI1 ) || defined ( RPI2 )
+#define SYSFREQ 250000000UL
+#elif defined( RPI4 )
+#define SYSFREQ 500000000UL
 #else
     #error Unknown RPI Model!
 #endif

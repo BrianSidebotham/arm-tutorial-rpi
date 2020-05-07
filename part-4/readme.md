@@ -1,4 +1,4 @@
-# Part 4 - Interrupts
+ Part 4 - Interrupts
 
 In this tutorial, we're going to look at using interrupts to generate the LED flash. Interrupts are an essential ingredient in embedded programming. We're going to investigate the BCM2835/6 interrupt process and implement an interrupt for the ARM Timer peripheral to blink the LED. I appreciate that blinking an LED is probably starting to get boring, but small steps are the way to learn a big system, and learning how to handle interrupts will be enough of a learning curve without having to change what we're doing at the same time. In the next tutorial we'll move away from blinking an LED.
 
@@ -66,7 +66,7 @@ There is basically a mode per exception. As was mentioned previously we start at
 
 The next section of the Architecture Reference Manual describes the registers available. This is again, another important section. Look at Figure A2-1 (Register Organization) and you'll see something interesting...
 
-![ARMv5 Figure A2-1](https://github.com/BrianSidebotham/arm-tutorial-rpi/raw/master/part-4/armc-013/images/armv5-figure-a2-1-register-organization.png)
+![ARMv5 Figure A2-1](/images/part-4-armv5-figure-a2-1-register-organization.png)
 
 As seen by the small icon and note at the bottom of the table, some of the registers are mode-specific. This can be useful, for example in the Fast Interrupt exception a lot of registers have been replaced by mode-specific registers. This means that we can use these registers without fear of altering the behaviour of code that was operating in User or Supervisor mode before the Fast Interrupt Exception occurred.
 
@@ -530,6 +530,7 @@ In armc-013-start.S:
         mrs     r0, cpsr
         bic     r0, r0, #0x80
         msr     cpsr_c, r0
+        cpsie   i
 
         mov     pc, lr
 ```
@@ -540,7 +541,11 @@ In armc-013-start.S:
 
  Section A2.5.6 describes the interrupt disable bits, and that gets us the last bit of information we need.
 
+![](/images/part-4-cpsr-armv7a-v7r.png)
+
  Section A4.1.38 MRS describes the Move Program Status Register to general purpose register instruction which is the special instruction referred to in Section A1.1.3 of the manual.
+
+![](/images/part-4-msr-instruction.png)
 
  So, we copy the contents of the Current Program Status Register into R0.
 
@@ -555,74 +560,204 @@ In armc-013-start.S:
  The interrupt handler is in rpi-interrupts.c:
 
 ```c
-    /**
-        @brief The IRQ Interrupt handler
+void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
+{
+    static int lit = 0;
 
-        This handler is run every time an interrupt source is triggered. It's
-        up to the handler to determine the source of the interrupt and most
-        importantly clear the interrupt flag so that the interrupt won't
-        immediately put us back into the start of the handler again.
-    */
-    void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
-    {
-        static int lit = 0;
-
+    if( RPI_GetArmTimer()->MaskedIRQ ) {
         /* Clear the ARM Timer interrupt - it's the only interrupt we have
            enabled, so we want don't have to work out which interrupt source
            caused us to interrupt */
         RPI_GetArmTimer()->IRQClear = 1;
-
         /* Flip the LED */
         if( lit )
         {
-            LED_OFF();
+            RPI_SetGpioHi( LED_GPIO );
             lit = 0;
         }
         else
         {
-            LED_ON();
+            RPI_SetGpioLo( LED_GPIO );
             lit = 1;
         }
     }
+}
 ```
 
 Simples! Our main code now has no code in the main while(1) {} loop because everything is being done in the interrupt handler.
 
-part-4/armc-013/armc-013.c:
+**part-4/armc-013/armc-013.c:**
 
 ```c
-    /** Main function - we'll never return from here */
-    void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
+void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
+{
+    /* Write 1 to the LED init nibble in the Function Select GPIO
+       peripheral register to enable LED pin as an output */
+    RPI_SetGpioPinFunction( LED_GPIO, FS_OUTPUT );
+    RPI_SetGpioHi( LED_GPIO );
+
+#ifdef RPI4
+    gic400_init(0xFF840000UL);
+#endif
+
+    RPI_EnableARMTimerInterrupt();
+
+    /* Setup the system timer interrupt
+       Timer frequency = Clk/256 * 0x400
+
+       NOTE: If the system decides to alter the clock, the frequency of these
+             interrupts will also change. The system timer remains consistent.
+    */
+#if defined ( RPI4 )
+    RPI_GetArmTimer()->Load = 0x4000;
+#else
+    RPI_GetArmTimer()->Load = 0x400;
+#endif
+
+    /* Setup the ARM Timer */
+    RPI_GetArmTimer()->Control =
+            RPI_ARMTIMER_CTRL_23BIT |
+            RPI_ARMTIMER_CTRL_ENABLE |
+            RPI_ARMTIMER_CTRL_INT_ENABLE |
+            RPI_ARMTIMER_CTRL_PRESCALE_256;
+
+    /* Enable interrupts! */
+    _enable_interrupts();
+
+    /* Never exit as there is no OS to exit to! */
+
+    while(1)
     {
-        /* Write 1 to the LED init nibble in the Function Select GPIO
-           peripheral register to enable LED pin as an output */
-        RPI_GetGpio()->LED_GPFSEL |= ( 1 << LED_GPFBIT);
 
-        /* Enable the timer interrupt IRQ */
-        RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
-
-        /* Setup the system timer interrupt */
-        /* Timer frequency = Clk/256 * 0x400 */
-        RPI_GetArmTimer()->Load = 0x400;
-
-        /* Setup the ARM Timer */
-        RPI_GetArmTimer()->Control =
-                RPI_ARMTIMER_CTRL_23BIT |
-                RPI_ARMTIMER_CTRL_ENABLE |
-                RPI_ARMTIMER_CTRL_INT_ENABLE |
-                RPI_ARMTIMER_CTRL_PRESCALE_256;
-
-        /* Enable interrupts! */
-        _enable_interrupts();
-
-        /* Never exit as there is no OS to exit to! */
-        while(1)
-        {
-
-        }
     }
+}
+
 ```
 
 We now have interrupts up and working and in the exceptions you can do different things with the LED to use them to debug any nasty situations. We'll get onto JTAG debug in a future tutorial, but the next tutorial has to be the mailbox and GPU to get something more interesting happening, and what's more interesting than graphics!?
 
-When you're ready [head over to Pt5...](http://www.valvers.com/open-software/raspberry-pi/step05-bare-metal-programming-in-c-pt5/)
+## RPI 4 Interrupts
+
+The Raspberry pi 4 was another shift in architecture. It features a common General Interrupt
+Controller (GIC) which is a v2 GIC-400 peripheral. This was added to considerably improve the
+performance of virtualisation. Running Containers on a RPI4 is much more efficient compared to
+earlier models. Thankfully, the RPI foundation have said this will be the last revision of the
+same RPI format. It's a nightmare trying to support all of these model differences in a basic
+tutorial!
+
+The same interrupt controller as the rest of the Broadcom BCM SoCs is still in place and is
+configured in the same way, except the interrupt line from that controller is fed into the GIC.
+
+At reset this means the interrupt signal will not be routed to the CPU running code in order to
+be able to respond to the interrupt. We will have to add RPI4-specific code which allows us to
+configure the GIC peripheral to pass the interrupt signal on to one of the CPU cores. As we're not
+doing any multi-core work at the moment we can configure the GIC to route all interrupt signals to
+`CPU0` which has our interrupt service routines.
+
+To find where the peripheral is located in memory - we turn to the linux source code:
+
+Knowing that the RPI4 uses the BCM2838 processor, in keeping with the RPI series helps:
+
+https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838.dtsi
+
+An excerpt from the device tree for the BCM2838 shows the GIC, along with the other interrupt
+controller:
+
+```
+soc {
+  ranges = <0x7e000000  0x0 0xfe000000  0x01800000>,
+           <0x7c000000  0x0 0xfc000000  0x02000000>,
+           <0x40000000  0x0 0xff800000  0x00800000>;
+  /* Emulate a contiguous 30-bit address range for DMA */
+  dma-ranges = <0xc0000000  0x0 0x00000000  0x3c000000>;
+
+  /delete-node/ interrupt-controller@7e00f300;
+  /delete-node/ v3d@7ec00000;
+
+  local_intc: local_intc@40000000 {
+      compatible = "brcm,bcm2836-l1-intc";
+      reg = <0x40000000 0x100>;
+  };
+
+  gicv2: gic400@40041000 {
+      interrupt-controller;
+      #interrupt-cells = <3>;
+      compatible = "arm,gic-400";
+      reg =	<0x40041000 0x1000>,
+            <0x40042000 0x2000>,
+            <0x40044000 0x2000>,
+            <0x40046000 0x2000>;
+      interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(4) |
+                               IRQ_TYPE_LEVEL_HIGH)>;
+  };
+```
+
+The physical address is `0x40041000` - but we can see from the device tree configuration just
+above that the physical address `0x40000000` is mapped to `0xFF800000` so the GIC400 is available
+to us at `0xFF841000` - it has four sets of registers define by the `reg` tag.
+
+In order for `CPU0` to receive any interrupt signals, we're going to have to go ahead and
+configure this peripheral.
+
+In keeping with this tutorial series, let's not get bogged down with trying to over-complicate a
+driver. All we want to do is configure this peripheral from it's reset state to send all
+interrupts to `CPU0`.
+
+### Documetation
+
+There is GIC-400 documentation available from ARM:
+
+https://static.docs.arm.com/ddi0471/a/DDI0471A_gic400_r0p0_trm.pdf
+
+There is also the ARM GIC Architecture documentation to consider too:
+
+https://developer.arm.com/docs/ihi0048/b/arm-generic-interrupt-controller-architecture-version-20-architecture-specification
+
+There's a lot of information around secure and non-secure access to the GIC. For now, we don't
+need to delve too deep. Our task is simple - get interrupts routed to `CPU0`.
+
+### Register Map
+
+The GIC-400 register map is available under the `Programmer's Model` section of the
+[CoreLink-400 Generic Interrupt Controller documentation](https://static.docs.arm.com/ddi0471/a/DDI0471A_gic400_r0p0_trm.pdf).
+
+The Register Map is divided up into function blocks. The functional blocks are defined in section 3.2 as:
+
+- **GICD_** Distributor
+- **GICC_** CPU Interfaces
+- **GICH_** Virtual Interface control blocks
+- **GICV_** Virtual CPU Interfaces
+
+We're not interested in the Virtual blocks, but we are of course interested in the other blocks.
+
+The functional block offsets are shown in the table and align with the device tree reg tags above.
+
+| Offset            | Block    |
+|-------------------|----------|
+| `0x0000 - 0x0FFF` | Reserved |
+| `0x1000 - 0x1FFF` | Distributor (**GICD_**) |
+| `0x2000 - 0x2FFF` | CPU Interfaces (**GICC_**) |
+| `0x4000 - 0x4FFF` | Virtual interface control block for process that is performing the access |
+| `0x5000 - 0x5FFF` | Virtual interface control block for the processor selected by address bits 11:9 |
+
+Later on in the same section is breakdown of all registers in those blocks. It's this information
+that can be put into code. Then, in order to do a simple enablement of the peripheral, we will
+configure all available interrupts to be enabled and routed to `CPU0`.
+
+We have a function that initialises this peripheral in the new `gic-400.c` file.  This file is not rpi-specific because gic-400 interrupt controllers are used by a lot of different SoCs.
+
+This function is conditionally called immediately before configuring the ARM Timer peripheral and the global enabling of interrupts.
+
+```c
+...
+#ifdef RPI4
+    gic400_init(0xFF840000UL);
+#endif
+
+    RPI_EnableARMTimerInterrupt();
+...
+```
+
+We should obviously make this code better, but for now we just know that we need to initialise this controller to get any interrupts working.
+
+When you're ready head over to Pt5...

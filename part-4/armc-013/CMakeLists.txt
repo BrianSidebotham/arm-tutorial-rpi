@@ -40,15 +40,18 @@ project( valvers-${TUTORIAL} C ASM )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard" )
 
 add_executable( kernel.${TUTORIAL}.${BOARD}
     ${TUTORIAL}.c
     ${TUTORIAL}-cstartup.c
     ${TUTORIAL}-cstubs.c
     ${TUTORIAL}-start.S
+    gic-400.c gic-400.h
     rpi-armtimer.c rpi-armtimer.h
     rpi-base.h
     rpi-gpio.c rpi-gpio.h
+    rpi-interrupts-controller.c
     rpi-interrupts.c rpi-interrupts.h
     rpi-systimer.c rpi-systimer.h )
 

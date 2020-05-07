@@ -15,8 +15,7 @@
 
 #include "rpi-base.h"
 
-#define RPI_SYSTIMER_BASE       ( PERIPHERAL_BASE + 0x3000 )
-
+#define RPI_SYSTIMER_BASE       ( PERIPHERAL_BASE + 0x3000UL )
 
 typedef struct {
     volatile uint32_t control_status;

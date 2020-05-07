@@ -9,26 +9,11 @@
 */
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "rpi-armtimer.h"
 #include "rpi-base.h"
 #include "rpi-gpio.h"
 #include "rpi-interrupts.h"
-
-/** @brief The BCM2835 Interupt controller peripheral at it's base address */
-static rpi_irq_controller_t* rpiIRQController =
-        (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
-
-
-/**
-    @brief Return the IRQ Controller register set
-*/
-rpi_irq_controller_t* RPI_GetIrqController( void )
-{
-    return rpiIRQController;
-}
-
 
 /**
     @brief The Reset vector interrupt handler
@@ -108,21 +93,22 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 {
     static int lit = 0;
 
-    /* Clear the ARM Timer interrupt - it's the only interrupt we have
-       enabled, so we want don't have to work out which interrupt source
-       caused us to interrupt */
-    RPI_GetArmTimer()->IRQClear = 1;
-
-    /* Flip the LED */
-    if( lit )
-    {
-        LED_OFF();
-        lit = 0;
-    }
-    else
-    {
-        LED_ON();
-        lit = 1;
+    if( RPI_GetArmTimer()->MaskedIRQ ) {
+        /* Clear the ARM Timer interrupt - it's the only interrupt we have
+           enabled, so we want don't have to work out which interrupt source
+           caused us to interrupt */
+        RPI_GetArmTimer()->IRQClear = 1;
+        /* Flip the LED */
+        if( lit )
+        {
+            RPI_SetGpioHi( LED_GPIO );
+            lit = 0;
+        }
+        else
+        {
+            RPI_SetGpioLo( LED_GPIO );
+            lit = 1;
+        }
     }
 }
 
