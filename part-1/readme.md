@@ -414,6 +414,10 @@ some gotcha's:
 
 The Raspberry-Pi 2B 1.2 uses the BMC2837 and so you'll want to get the [Raspberry-Pi BCM2837 peripherals datahsheet](https://web.stanford.edu/class/cs140e/docs/BCM2837-ARM-Peripherals.pdf).
 
+>**NOTE:** The 2837 peripherals document is just a modified version of the original 2835 document
+with the addresses updated to suit the 2837's base peripheral address. See https://github.com/raspberrypi/documentation/issues/325 for
+further details.
+
 We'll be using the GPIO peripheral, and it would therefore be natural to jump straight to that
 documentation and start writing code, but we need to first read some of the 'basic' information
 about the processor. The important bit to note is the virtual address information. On page 5 of the
