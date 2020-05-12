@@ -36,6 +36,7 @@ ccflags="-g"
 ccflags="${ccflags} -nostartfiles"
 ccflags="${ccflags} -mfloat-abi=hard"
 ccflags="${ccflags} -O0"
+ccflags="${ccflags} -Wl, -verbose"
 
 # Whatever specific flags we use should also include the common c flags
 cflags="${ccflags}"
@@ -88,11 +89,13 @@ case "${model}" in
         ;;
 esac
 
+lflags="-Wl,-verbose"
+
 kernel_elf="${scriptdir}/kernel.${tutorial}.${model}.elf"
 kernel_img="${scriptdir}/kernel.${tutorial}.${model}.img"
 
 printf "%s\n" "${toolchain}gcc ${cflags} ${scriptdir}/*.c -o ${kernel_elf}"
-${toolchain}gcc ${cflags} ${scriptdir}/*.c -o ${kernel_elf}
+${toolchain}gcc ${cflags} ${lflags} ${scriptdir}/*.c -o ${kernel_elf}
 
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to compile!" >&2
