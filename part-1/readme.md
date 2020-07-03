@@ -247,6 +247,8 @@ Let's just concerntrate on the RPI-specific options rather than including all th
 Using the build script, let's compile the basic source code using the RPI specific options. Here,
 we compile for the RPI3. (I've shortened the output so it's easier to read on-screen)
 
+**THIS IS EXPECTED TO FAIL**
+
 ```
 valvers-new/arm-tutorial-rpi/part-1/armc-00 $ ./build.sh rpi3
 
