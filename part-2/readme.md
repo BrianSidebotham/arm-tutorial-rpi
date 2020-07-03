@@ -628,7 +628,7 @@ Disassembly of section .bss:
     80d0:	00000000 	andeq	r0, r0, r0
 ```
 
-Use the [ARM instruction set quick reference card](http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf)
+Use the [ARM instruction set quick reference card](https://documentation-service.arm.com/static/5ed66080ca06a95ce53f932d)
 to decypher if you're not familiar with ARM assembler.
 
 By the way, as a quick note - the comment in the linker script is entirely useless as it only
