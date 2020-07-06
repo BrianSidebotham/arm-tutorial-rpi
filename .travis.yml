@@ -9,7 +9,9 @@ addons:
 env:
   - RPI=rpi0
   - RPI=rpi1
+  - RPI=rpi1b
   - RPI=rpi2
+#  - RPI=rpi3
   - RPI=rpi3b
   - RPI=rpi4
 
