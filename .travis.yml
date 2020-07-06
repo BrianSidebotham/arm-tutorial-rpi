@@ -59,44 +59,44 @@ script:
     - bash part-2/armc-09/build.sh rpi3bp
     - bash part-2/armc-09/build.sh rpi4
 
-    - bash part-3/armc-10/build.sh rpi0
-    - bash part-3/armc-10/build.sh rpi1
-    - bash part-3/armc-10/build.sh rpi2
-    - bash part-3/armc-10/build.sh rpi3bp
-    - bash part-3/armc-10/build.sh rpi4
+    - bash part-3/armc-010/build.sh rpi0
+    - bash part-3/armc-010/build.sh rpi1
+    - bash part-3/armc-010/build.sh rpi2
+    - bash part-3/armc-010/build.sh rpi3bp
+    - bash part-3/armc-010/build.sh rpi4
 
-    - bash part-3/armc-11/build.sh rpi0
-    - bash part-3/armc-11/build.sh rpi1
-    - bash part-3/armc-11/build.sh rpi2
-    - bash part-3/armc-11/build.sh rpi3bp
-    - bash part-3/armc-11/build.sh rpi4
+    - bash part-3/armc-011/build.sh rpi0
+    - bash part-3/armc-011/build.sh rpi1
+    - bash part-3/armc-011/build.sh rpi2
+    - bash part-3/armc-011/build.sh rpi3bp
+    - bash part-3/armc-011/build.sh rpi4
 
-    - bash part-3/armc-12/build.sh rpi0
-    - bash part-3/armc-12/build.sh rpi1
-    - bash part-3/armc-12/build.sh rpi2
-    - bash part-3/armc-12/build.sh rpi3bp
-    - bash part-3/armc-12/build.sh rpi4
+    - bash part-3/armc-012/build.sh rpi0
+    - bash part-3/armc-012/build.sh rpi1
+    - bash part-3/armc-012/build.sh rpi2
+    - bash part-3/armc-012/build.sh rpi3bp
+    - bash part-3/armc-012/build.sh rpi4
 
-    - bash part-4/armc-13/build.sh rpi0
-    - bash part-4/armc-13/build.sh rpi1
-    - bash part-4/armc-13/build.sh rpi2
-    - bash part-4/armc-13/build.sh rpi3bp
-    - bash part-4/armc-13/build.sh rpi4
+    - bash part-4/armc-013/build.sh rpi0
+    - bash part-4/armc-013/build.sh rpi1
+    - bash part-4/armc-013/build.sh rpi2
+    - bash part-4/armc-013/build.sh rpi3bp
+    - bash part-4/armc-013/build.sh rpi4
 
-    - bash part-5/armc-14/build.sh rpi0
-    - bash part-5/armc-14/build.sh rpi1
-    - bash part-5/armc-14/build.sh rpi2
-    - bash part-5/armc-14/build.sh rpi3bp
-    - bash part-5/armc-14/build.sh rpi4
+    # - bash part-5/armc-14/build.sh rpi0
+    # - bash part-5/armc-14/build.sh rpi1
+    # - bash part-5/armc-14/build.sh rpi2
+    # - bash part-5/armc-14/build.sh rpi3bp
+    # - bash part-5/armc-14/build.sh rpi4
 
-    - bash part-5/armc-15/build.sh rpi0
-    - bash part-5/armc-15/build.sh rpi1
-    - bash part-5/armc-15/build.sh rpi2
-    - bash part-5/armc-15/build.sh rpi3bp
-    - bash part-5/armc-15/build.sh rpi4
+    # - bash part-5/armc-15/build.sh rpi0
+    # - bash part-5/armc-15/build.sh rpi1
+    # - bash part-5/armc-15/build.sh rpi2
+    # - bash part-5/armc-15/build.sh rpi3bp
+    # - bash part-5/armc-15/build.sh rpi4
 
-    - bash part-5/armc-16/build.sh rpi0
-    - bash part-5/armc-16/build.sh rpi1
-    - bash part-5/armc-16/build.sh rpi2
-    - bash part-5/armc-16/build.sh rpi3bp
-    - bash part-5/armc-16/build.sh rpi4
+    # - bash part-5/armc-16/build.sh rpi0
+    # - bash part-5/armc-16/build.sh rpi1
+    # - bash part-5/armc-16/build.sh rpi2
+    # - bash part-5/armc-16/build.sh rpi3bp
+    # - bash part-5/armc-16/build.sh rpi4
