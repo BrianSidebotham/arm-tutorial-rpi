@@ -9,7 +9,12 @@ addons:
 stages:
   - setup
   - build
-   -deploy
+  - deploy
+
+script:
+  - bash ./compiler/get_compiler.sh
+  - bash ./firmware/get_firmware_repo.sh
+
 jobs:
   include:
     - stage: setup
