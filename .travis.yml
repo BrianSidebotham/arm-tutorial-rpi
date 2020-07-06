@@ -9,10 +9,10 @@ addons:
 env:
   - RPI=rpi0
   - RPI=rpi1
-  - RPI=rpi1b
+  - RPI=rpi1bp
   - RPI=rpi2
 #  - RPI=rpi3
-  - RPI=rpi3b
+  - RPI=rpi3bp
   - RPI=rpi4
 
 script: 'bash ./compiler/get_compiler.sh && ./firmware/get_firmware_repo.sh && bash ./.build-all.sh'
