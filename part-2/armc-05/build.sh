@@ -36,7 +36,6 @@ ccflags="-g"
 ccflags="${ccflags} -nostartfiles"
 ccflags="${ccflags} -mfloat-abi=hard"
 ccflags="${ccflags} -O0"
-ccflags="${ccflags} -Wl, --verbose"
 
 # Whatever specific flags we use should also include the common c flags
 cflags="${ccflags}"
@@ -89,7 +88,7 @@ case "${model}" in
         ;;
 esac
 
-lflags=""
+lflags="-Wl,--verbose"
 
 kernel_elf="${scriptdir}/kernel.${tutorial}.${model}.elf"
 kernel_img="${scriptdir}/kernel.${tutorial}.${model}.img"
@@ -106,7 +105,7 @@ printf "%s\n" "${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}"
 ${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}
 
 # Generate a new card image
-${basedir}/card/make_card.sh ${model} ${tutorial} ${kernel_img}
+${basedir}/card/make_card.sh ${model} ${tutorial}
 
 if [ $? -ne 0 ]; then
     printf "%s\n" "ERROR: Failed to generate the SD Card image correctly" >&2
