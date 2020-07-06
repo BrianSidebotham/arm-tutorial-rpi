@@ -107,7 +107,7 @@ printf "%s\n" "${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}"
 ${toolchain}objcopy ${kernel_elf} -O binary ${kernel_img}
 
 # Generate a new card image
-${basedir}/card/make_card.sh ${model} ${tutorial}
+${basedir}/card/make_card.sh ${model} ${tutorial} ${kernel_img}
 
 if [ $? -ne 0 ]; then
     printf "%s\n" "ERROR: Failed to generate the SD Card image correctly" >&2

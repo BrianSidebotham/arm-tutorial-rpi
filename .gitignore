@@ -2,6 +2,7 @@
 !.gitignore
 !.gitattributes
 !.travis.yml
+!.build-all.sh
 
 # Don't include personal docs
 rpi-docs

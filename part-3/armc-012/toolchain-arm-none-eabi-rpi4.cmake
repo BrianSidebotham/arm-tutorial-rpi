@@ -16,7 +16,7 @@ include(CMakeForceCompiler)
 # The Generic system name is used for embedded targets (targets without OS) in
 # CMake
 set( CMAKE_SYSTEM_NAME          Generic )
-set( CMAKE_SYSTEM_PROCESSOR     BCM2838 )
+set( CMAKE_SYSTEM_PROCESSOR     BCM2837 )
 
 # Set a toolchain path. You only need to set this if the toolchain isn't in
 # your system path. Don't forget a trailing path separator!
@@ -28,7 +28,8 @@ set( CROSS_COMPILE arm-none-eabi- )
 # specify the cross compiler. We force the compiler so that CMake doesn't
 # attempt to build a simple test program as this will fail without us using
 # the -nostartfiles option on the command line
-CMAKE_FORCE_C_COMPILER( ${TC_PATH}${CROSS_COMPILE}gcc GNU )
+CMAKE_FORCE_C_COMPILER( "${TC_PATH}${CROSS_COMPILE}gcc" GNU )
+SET( CMAKE_ASM_COMPILER "${TC_PATH}${CROSS_COMPILE}gcc" )
 
 # We must set the OBJCOPY setting into cache so that it's available to the
 # whole project. Otherwise, this does not get set into the CACHE and therefore
@@ -47,4 +48,3 @@ set( CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 
 # Add the raspberry-pi 2 definition so conditional compilation works
 add_definitions( -DRPI4=1 )
-set( BOARD rpi4 )

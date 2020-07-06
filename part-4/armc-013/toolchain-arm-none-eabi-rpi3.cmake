@@ -29,6 +29,7 @@ set( CROSS_COMPILE arm-none-eabi- )
 # attempt to build a simple test program as this will fail without us using
 # the -nostartfiles option on the command line
 CMAKE_FORCE_C_COMPILER( ${TC_PATH}${CROSS_COMPILE}gcc GNU )
+SET( CMAKE_ASM_COMPILER "${TC_PATH}${CROSS_COMPILE}gcc" )
 
 # We must set the OBJCOPY setting into cache so that it's available to the
 # whole project. Otherwise, this does not get set into the CACHE and therefore
@@ -45,6 +46,6 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=cortex-a53" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 set( CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 
-# Add the raspberry-pi 2 definition so conditional compilation works
+# Add the raspberry-pi 3 definition so conditional compilation works
 add_definitions( -DRPI3=1 )
 set( BOARD rpi3 )

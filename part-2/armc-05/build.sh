@@ -36,7 +36,6 @@ ccflags="-g"
 ccflags="${ccflags} -nostartfiles"
 ccflags="${ccflags} -mfloat-abi=hard"
 ccflags="${ccflags} -O0"
-ccflags="${ccflags} -Wl, -verbose"
 
 # Whatever specific flags we use should also include the common c flags
 cflags="${ccflags}"
@@ -89,7 +88,7 @@ case "${model}" in
         ;;
 esac
 
-lflags="-Wl,-verbose"
+lflags="-Wl,--verbose"
 
 kernel_elf="${scriptdir}/kernel.${tutorial}.${model}.elf"
 kernel_img="${scriptdir}/kernel.${tutorial}.${model}.img"
