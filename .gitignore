@@ -16,4 +16,6 @@ part-*/**/*.hexdump
 part-*/**/*.img
 part-*/**/*.nm
 
+**/*.img
+
 compiler/gcc-arm*
