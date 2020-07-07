@@ -48,13 +48,9 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard" )
 
-if( "${BOARD}" STREQUAL "rpi0" )
-    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRPI0" )
-    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp" )
-    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv6zk" )
-    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
-endif()
-
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv6zk" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
 
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 set( CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
