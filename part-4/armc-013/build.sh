@@ -29,7 +29,7 @@ if [ -d ${scriptdir}/build ]; then
 fi
 
 mkdir -p ${scriptdir}/build && cd ${scriptdir}/build
-cmake -G "CodeBlocks - Unix Makefiles" -DTUTORIAL="${tutorial}" -DTC_PATH="${tcpath}/" -DCMAKE_TOOLCHAIN_FILE=${scriptdir}/toolchain-arm-none-eabi-${model}.cmake ${scriptdir}
+cmake -G "CodeBlocks - Unix Makefiles" -DTUTORIAL="${tutorial}" -DTC_PATH="${tcpath}/" -DCMAKE_TOOLCHAIN_FILE=${cmake_toolchain_dir}/toolchain-arm-none-eabi-${model}.cmake ${scriptdir}
 
 if [ $? -ne 0 ]; then
     echo "Failed to configure!" >&2
