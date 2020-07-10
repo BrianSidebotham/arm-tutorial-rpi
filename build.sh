@@ -2,7 +2,7 @@
 
 scriptdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
-function exit_if_errors() {
+exit_if_errors() {
     $@
     if [ $? -ne 0 ]; then
         echo "ERROR: Running $@" >&2
