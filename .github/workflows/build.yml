@@ -28,6 +28,6 @@ jobs:
     
     - name: Get Compiler and Firmware and Build
       run: |
-        compiler/get_compiler.sh
-        firmware/get_firmware_repo.sh
-        build.sh ${{ matrix.rpi }}
+        ./compiler/get_compiler.sh
+        ./firmware/get_firmware_repo.sh
+        ./build.sh ${{ matrix.rpi }}
