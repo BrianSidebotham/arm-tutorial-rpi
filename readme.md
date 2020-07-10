@@ -8,6 +8,11 @@ code is at
 [valvers.com](https://www.valvers.com/open-software/raspberry-pi/bare-metal-programming-in-c)
 and [github](https://github.com/BrianSidebotham/arm-tutorial-rpi)
 
+The tutorial supports all RPi models, except:
+
+- rpi3 because the ACT LED is not connected to an IO pin
+- rpi4 (Part1-4 only - Part-5 will support RPI4 very soon!)
+  
 The tutorial only supports a Linux host for compiling the tutorial code.
 
 ## Quickstart
