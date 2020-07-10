@@ -30,5 +30,4 @@ jobs:
       run: |
         compiler/get_compiler.sh
         firmware/get_firmware_repo.sh
-        export RPI=${{ matrix.rpi }}
-        .build-all.sh
+        build.sh ${{ matrix.rpi }}

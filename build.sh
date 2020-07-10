@@ -10,6 +10,11 @@ function exit_if_errors() {
     fi
 }
 
+# We can either use an environment variable or input argument to control the
+# RPI model we're building for
+if [ $# -gt 0 ]; then
+    export RPI="${1}"
+fi
 
 if [ "${RPI}X" = "X" ]; then
     echo "The environment variable RPI must be set to a support raspberry pi model" >&2
