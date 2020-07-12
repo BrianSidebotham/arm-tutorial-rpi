@@ -28,7 +28,7 @@ jobs:
     
     - name: Get Compiler and Firmware and Build
       run: |
-        compiler/get_compiler.sh
-        firmware/get_firmware_repo.sh
-        export RPI=${{ matrix.rpi }}
-        .build-all.sh
+        ./compiler/get_compiler.sh
+        ./firmware/get_firmware_repo.sh
+        sudo apt-get install -y mtools
+        ./build.sh ${{ matrix.rpi }}
