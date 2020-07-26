@@ -1,4 +1,6 @@
 MD013:
   line_length: 100
+  code_blocks: false
+  tables: false
 MD046:
   style: fenced
