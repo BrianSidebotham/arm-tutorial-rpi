@@ -3,6 +3,7 @@
 !.gitattributes
 !.travis.yml
 !.build-all.sh
+!.markdownlint.yaml
 
 # Don't include personal docs
 rpi-docs

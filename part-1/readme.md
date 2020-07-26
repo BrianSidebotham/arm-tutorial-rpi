@@ -3,24 +3,25 @@
 Although the Raspberry-Pi comes with a good Linux distribution, the Pi is about software
 development, and sometimes we want a real-time system without an operating system. I decided it'd
 be great to do a tutorial outside of Linux to get to the resources of this great piece of hardware
-in a similar vein to the [Cambridge University Tutorials](http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/)
-which are excellently written.
+in a similar vein to the
+[Cambridge University Tutorials](http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/) which
+are excellently written.
 
-However, they don't create an OS as purported and they stick with assembler rather than migrating to C. I will simply
-start with nothing but assembler to get us going, but switch to C as soon as possible.
+However, they don't create an OS as purported and they stick with assembler rather than migrating
+to C. I will simply start with nothing but assembler to get us going, but switch to C as soon as
+possible.
 
-**The C compiler simply converts C syntax to assembler and then assembles this into executable code
-for us anyway.**
+**The C compiler simply converts C syntax to assembler and then assembles this into executable
+code for us anyway.**
 
 I highly recommend going through the Cambridge University Raspberry Pi tutorials as they are
-excellent. If you want to learn a bit of assembler too, then definitely head off to there! These
-pages provide a similar experience, but with the additional of writing code in C and understanding
-the process behind that.
+excellent. If you want to learn a bit of assembler too, then definitely head off to there!
+These pages provide a similar experience, but with the additional of writing code in C and
+understanding the process behind that.
 
 ## TODO
 
-- Why is a card 16MiB when we're not using anywhere near that?
--
+- Why is a card of 16MiB necessary when we're not using anywhere near that?
 
 ## Compatibility
 
@@ -53,15 +54,18 @@ use with this tutorial.
 
 This is what I get when I run this on my command line having decompressed the archive:
 
-    ~/arm-tutorial-rpi/compiler/gcc-arm-none-eabi-7-2018-q2-update/bin $ ./arm-none-eabi-gcc --version
-    arm-none-eabi-gcc (GNU Tools for Arm Embedded Processors 7-2018-q2-update) 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907]
-    Copyright (C) 2017 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```sh
+~/arm-tutorial-rpi/compiler/gcc-arm-none-eabi-7-2018-q2-update/bin $ ./arm-none-eabi-gcc --version
+arm-none-eabi-gcc (GNU Tools for Arm Embedded Processors 7-2018-q2-update) 7.3.1 20180622 \
+    (release) [ARM/embedded-7-branch revision 261907]
+Copyright (C) 2017 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
 
 Cool.
 
-You can use the `compiler/get_compiler.sh` script as a shortcut to get the compiler and the
+You can use the `compiler/get_compiler.sh` script as a short-cut to get the compiler and the
 tutorial scripts will make use of it if you do.
 
 ### Compiler Version
@@ -78,13 +82,15 @@ version being used in this tutorial if you're using a different compiler version
 The [eLinux page](http://elinux.org/RPi_Software#ARM) gives us the optimal GCC settings for
 compiling code for the original Raspberry-Pi (V1):
 
-    -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s
+```sh
+-Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s
+```
 
 It is noted that -Ofast may cause problems with some compilations, so it is probably better that we
 stick with the more traditional -O2 optimisation setting. The other flags merely tell GCC what type
 of floating point unit we have, tell it to produce hard-floating point code (GCC can create
-    software floating point support instead), and tells GCC what ARM processor architecture we have
-    so that it can produce optimal and compatible assembly/machine code.
+software floating point support instead), and tells GCC what ARM processor architecture we have
+so that it can produce optimal and compatible assembly/machine code.
 
 #### RPI2 Compiler Flags
 
@@ -92,38 +98,48 @@ For the Raspberry-Pi 2 we know that the architecture is different. The ARM1176 f
 has been replaced by a quad core Cortex A7 processor. Therefore, in order to compile effectively
 for the Raspberry-Pi 2 we use a different set of compiler options:
 
-    -O2 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7
+```sh
+-O2 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7
+```
 
-You can see from the [ARM specification of the Cortex A7](http://docs-api-peg.northeurope.cloudapp.azure.com/assets/ddi0464/f/DDI0464F_cortex_a7_mpcore_r0p5_trm.pdf)
-that it contains a VFPV4 (See section 1.2.1) floating point processor and a NEON engine. The settings are gleaned from
-the [GCC ARM options](https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html) page.
+You can see from the
+[ARM specification of the Cortex A7](http://docs-api-peg.northeurope.cloudapp.azure.com/assets/ddi0464/f/DDI0464F_cortex_a7_mpcore_r0p5_trm.pdf)
+that it contains a VFPV4 (See section 1.2.1) floating point processor and a NEON engine. The
+settings are gleaned from the
+[GCC ARM options](https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html) page.
 
 #### RPI3 Compiler Flags
 
 Like this:
 
-    -O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a53
+```sh
+-O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a53
+```
 
 #### RPI4 Compiler Flags
 
-From the Raspberry Pi Foundation page for the RPi4 we can glean some information from the [technical specifications](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/specifications/)
+From the Raspberry Pi Foundation page for the RPi4 we can glean some information from the
+[technical specifications](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/specifications/)
 regarding what we need to do in order to compile code for the RPi4.
 
-All four processors are `A72`. From the ARM documentation we can see that these implement the `armv8-a` architecture.
-This is the same as the `A53`'s found in the RPi3 so we can go ahead and use the same `crypto-neon-fp-armv8` floating
-point unit option for the RPI4. This is detailed in the
-[v8 architecture programmers guide](https://static.docs.arm.com/den0024/a/DEN0024A_v8_architecture_PG.pdf)
+All four processors are `A72`. From the ARM documentation we can see that these implement the
+`armv8-a` architecture. This is the same as the `A53`'s found in the RPi3 so we can go ahead and
+use the same `crypto-neon-fp-armv8` floating point unit option for the RPI4. This is detailed in
+the [v8 architecture programmers guide](https://static.docs.arm.com/den0024/a/DEN0024A_v8_architecture_PG.pdf)
 
-    -O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a72
+```sh
+-O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a72
+```
 
 The [schematics](https://www.raspberrypi.org/documentation/hardware/raspberrypi/schematics/rpi_SCH_4b_4p0_reduced.pdf)
-you would think would be the place to get the ACT LED GPIO port number, but alas, they're so sparse they may as well
-not have bothered releasing them. _Seriously - what they've released is a joke_.
+you would think would be the place to get the ACT LED GPIO port number, but alas, they're so sparse
+they may as well not have bothered releasing them. _Seriously - what they've released is a joke_.
 
 Instead we get it from some of the
 [device tree source code for the RPi4](https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838-rpi-4-b.dts).
 
 Also make sure you've got the latest firmware, [fixes are always being introduced!](https://github.com/raspberrypi/firmware/issues/1175)
+
 ## Getting to know the Compiler and Linker
 
 In order to use a C compiler, we need to understand what the compiler does and what the linker does
@@ -162,12 +178,12 @@ have all the code to compile and modify as you work through the tutorials.
 
 > `git clone https://github.com/BrianSidebotham/arm-tutorial-rpi`
 
-If you're on Windows - these day's I'll say, just get with the program and get yourself a Linux install. If you're
-entering the world of Raspberry Pi and/or embedded devices Linux is going to be your friend and will give you
-everything you need. This tutorial used to support both Linux and Windows, but I have no Windows installs left and
-so can't cover off Windows. If someone else takes that on, I'd fully support them in updating the tutorial - it's
-all on [Github](https://github.com/BrianSidebotham/arm-tutorial-rpi).
-
+If you're on Windows - these day's I'll say, just get with the program and get yourself a Linux
+install. If you're entering the world of Raspberry Pi and/or embedded devices Linux is going to
+be your friend and will give you everything you need. This tutorial used to support both Linux
+and Windows, but I have no Windows installs left and so can't cover off Windows. If someone
+else takes that on, I'd fully support them in updating the tutorial - it's all on
+[Github](https://github.com/BrianSidebotham/arm-tutorial-rpi).
 
 Let's have a look at compiling one of the simplest programs that we can. Let's compile and link the
 following program (`part-1/armc-00`):
@@ -192,9 +208,11 @@ In order to compile the code (I realise there's not much to that code!) we can u
 script in the tutorial directory. Navigate to `part-1/armc-00` and run `./build.sh`. With no
 arguments this script will just show you what it expects in order to run.
 
-    arm-tutorial-rpi/part-1/armc-00 $ ./build.sh
-    usage: build.sh <pi-model>
-           pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpi3bp, rpi4
+```sh
+arm-tutorial-rpi/part-1/armc-00 $ ./build.sh
+usage: build.sh <pi-model>
+       pi-model options: rpi0, rpi1, rpi1bp, rpi2, rpi3, rpi3bp, rpi4
+```
 
 As there are different compiler flags for the various RPI models, it's necessary to tell the script
 what RPI you have in order to use the correct flags to compile with.
@@ -205,51 +223,57 @@ build commands to build for the various RPI models.
 
 Let's have a look at what the compiler command lines look like for the various RPI models.
 
-Let's just concerntrate on the RPI-specific options rather than including all the options here.
-
+Let's just concentrate on the RPI-specific options rather than including all the options here.
 
 #### RPI0 (PiZero) and RPI1
 
-    arm-none-eabi-gcc \
-        -mfloat-abi=hard \
-        -mfpu=vfp \
-        -march=armv6zk \
-        -mtune=arm1176jzf-s \
-        main.c -o main.elf
+```sh
+arm-none-eabi-gcc \
+    -mfloat-abi=hard \
+    -mfpu=vfp \
+    -march=armv6zk \
+    -mtune=arm1176jzf-s \
+    main.c -o main.elf
+```
 
 #### RPI2
 
-    arm-none-eabi-gcc \
-        -mfloat-abi=hard \
-        -mfpu=neon-vfpv4 \
-        -march=armv7-a \
-        -mtune=cortex-a7 \
-        main.c -o main.elf
+```sh
+arm-none-eabi-gcc \
+    -mfloat-abi=hard \
+    -mfpu=neon-vfpv4 \
+    -march=armv7-a \
+    -mtune=cortex-a7 \
+    main.c -o main.elf
+```
 
 #### RPI3
 
-    arm-none-eabi-gcc \
-        -mfloat-abi=hard \
-        -mfpu=crypto-neon-fp-armv8 \
-        -march=armv8-a+crc \
-        -mcpu=cortex-a53 \
-        main.c -o main.elf
+```sh
+arm-none-eabi-gcc \
+    -mfloat-abi=hard \
+    -mfpu=crypto-neon-fp-armv8 \
+    -march=armv8-a+crc \
+    -mcpu=cortex-a53 \
+    main.c -o main.elf
+```
 
 #### RPI4
 
-    arm-none-eabi-gcc \
-        -mfloat-abi=hard \
-        -mfpu=crypto-neon-fp-armv8 \
-        -march=armv8-a+crc \
-        -mcpu=cortex-a72 \
-        main.c -o main.elf
-
-Using the build script, let's compile the basic source code using the RPI specific options. Here,
-we compile for the RPI3. (I've shortened the output so it's easier to read on-screen)
-
-**THIS IS EXPECTED TO FAIL**
-
+```sh
+arm-none-eabi-gcc \
+    -mfloat-abi=hard \
+    -mfpu=crypto-neon-fp-armv8 \
+    -march=armv8-a+crc \
+    -mcpu=cortex-a72 \
+    main.c -o main.elf
 ```
+
+_THIS IS EXPECTED TO FAIL_: Using the build script, let's compile the basic source code using the
+RPI specific options. Here, we compile for the RPI3. (I've shortened the output so it's easier to
+read on-screen).
+
+```sh
 valvers-new/arm-tutorial-rpi/part-1/armc-00 $ ./build.sh rpi3
 
 arm-none-eabi-gcc -mfloat-abi=hard \
@@ -263,9 +287,9 @@ arm-none-eabi-gcc -mfloat-abi=hard \
 GCC does successfully compile the source code (there are no C errors in it), but the linker fails
 with the following message:
 
-```
+```sh
 .../hard/libc.a(lib_a-exit.o): In function `exit':
-exit.c:(.text.exit+0x1c): undefined reference to `_exit'
+exit.c:(.text.exit+0x1c): undefined reference to '_exit'
 collect2: error: ld returned 1 exit status
 ```
 
@@ -273,7 +297,7 @@ So with our one-line command above we're invoking the C compiler, the assembler 
 C compiler does most of the menial tasks for us to make life easier for us, but because we're
 embedded engineers (aren't we?) we MUST be aware of how the compiler, assembler and linker work at
 a very low level as we generally work with custom systems which we must describe intimately to the
-toolchain.
+tool-chain.
 
 So there's a missing `_exit` symbol. This symbol is reference by the C library we're using. It is
 in-fact a system call. It's designed to be implemented by the OS. It would be called when a program
@@ -330,7 +354,7 @@ underscore prefix ourselves.
 As we can see, compilation is successful and we get a `kernel*.elf` file generated by the compiler.
 Currently, that elf file is 37k.
 
-```
+```sh
 part-1/armc-01 $ ./build.sh rpi3
 
 arm-none-eabi-gcc -mfloat-abi=hard \
@@ -341,13 +365,12 @@ arm-none-eabi-gcc -mfloat-abi=hard \
     -o kernel.armc-01.rpi3.elf
 ```
 
-```
+```sh
 part-1/armc-01 $ ls -lh
 total 16K
 -rw-r--r-- 1 brian brian  366 Sep 21 00:19 armc-01.c
 -rwxr-xr-x 1 brian brian 2.3K Sep 21 00:45 build.sh
 -rwxr-xr-x 1 brian brian  36K Sep 21 00:45 kernel.armc-01.rpi3.elf
-
 ```
 
 It's important to have an infinite loop in the exit function. In the C library, which is not
@@ -408,17 +431,19 @@ The first thing we will need to set up is the GPIO controller. There are no driv
 as there is no OS running, all the bootloader has done is boot the processor into a working state,
 ready to start loading the OS.
 
-You'll need to get the [Raspberry-Pi BCM2835 peripherals datahsheet](http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf),
+You'll need to get the
+[Raspberry-Pi BCM2835 peripherals datahsheet](http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf),
 and make sure you pay attention to the [errata](https://elinux.org/BCM2835_datasheet_errata) for
 that too as it's not perfect. This gives us the information we require to control the IO
 peripherals of the BCM2835. I'll guide us through using the GPIO peripheral - there are as always
 some gotcha's:
 
-The Raspberry-Pi 2B 1.2 uses the BMC2837 and so you'll want to get the [Raspberry-Pi BCM2837 peripherals datahsheet](https://web.stanford.edu/class/cs140e/docs/BCM2837-ARM-Peripherals.pdf).
+The Raspberry-Pi 2B 1.2 uses the BMC2837 and so you'll want to get the
+[Raspberry-Pi BCM2837 peripherals datahsheet](https://web.stanford.edu/class/cs140e/docs/BCM2837-ARM-Peripherals.pdf).
 
 >**NOTE:** The 2837 peripherals document is just a modified version of the original 2835 document
-with the addresses updated to suit the 2837's base peripheral address. See https://github.com/raspberrypi/documentation/issues/325 for
-further details.
+with the addresses updated to suit the 2837's base peripheral address. See
+[rpi issue 325](https://github.com/raspberrypi/documentation/issues/325) for further details.
 
 We'll be using the GPIO peripheral, and it would therefore be natural to jump straight to that
 documentation and start writing code, but we need to first read some of the 'basic' information
@@ -459,8 +484,8 @@ BCM2836 so we can search for that and u-boot and we come along a
 Further on in the manual we come across the GPIO peripheral section of the manual (Chapter 6, page
 89).
 
-RPi4 has the peripheral base mapped to `0xFE000000`. The peripheral address space looks to be laid out the same as
-the previous pis.
+RPi4 has the peripheral base mapped to `0xFE000000`. The peripheral address space looks to be laid
+out the same as the previous pis.
 
 ## Visual Output and Running Code
 
@@ -470,14 +495,14 @@ board.
 
 The GPIO peripheral has a base address in the BCM2835 manual at `0x7E200000`. We know from getting
 to know our processor that this translates to an ARM Physical Address of `0x20200000` (`0x3F200000`
-for RPI2 and RPI3, and `0xFE200000` for RPI4). This is the first register in the GPIO peripheral register set, the
-'GPIO Function Select 0' register.
+for RPI2 and RPI3, and `0xFE200000` for RPI4). This is the first register in the GPIO peripheral
+register set, the `GPIO Function Select 0` register.
 
 In order to use an IO pin, we need to configure the GPIO peripheral. From the
 [Raspberry-Pi schematic diagrams](http://www.raspberrypi.org/wp-content/uploads/2012/10/Raspberry-Pi-R2.0-Schematics-Issue2.2_027.pdf)
 the OK LED is wired to the GPIO16 line (Sheet 2, B5) . The LED is wired active LOW - this is fairly
 standard practice. It means to turn the LED on we need to output a 0 (the pin is connected to 0V by
-    the processor) and to turn it off we output a 1 (the pin is connected to VDD by the processor).
+the processor) and to turn it off we output a 1 (the pin is connected to VDD by the processor).
 
 Unfortunately, again, lack of documentation is rife and we don't have schematics for the
 Raspberry-Pi 2 or plus models! This is important because the GPIO lines were re-jigged and as
@@ -488,11 +513,11 @@ RPI 2).
 Back to the processor manual and we see that the first thing we need to do is set the GPIO pin to
 an output. This is done by setting the function of GPIO16 (GPIO47 RPI+) to an output.
 
-Bits 18 to 20 in the 'GPIO Function Select 1' register control the GPIO16 pin.
+Bits 18 to 20 in the `GPIO Function Select 1` register control the GPIO16 pin.
 
-Bits 21 to 23 in the 'GPIO Function Select 4' register control the GPIO47 pin. (RPI B+)
+Bits 21 to 23 in the `GPIO Function Select 4` register control the GPIO47 pin. (RPI B+)
 
-Bits 27 to 29 in the 'GPIO Function Select 2' register control the GPIO29 pin. (RPI3 B+)
+Bits 27 to 29 in the `GPIO Function Select 2` register control the GPIO29 pin. (RPI3 B+)
 GPIO42 pin. (RPI4)
 
 In C, we will generate a pointer to the register and use the pointer to write a value into the
@@ -506,9 +531,9 @@ pin changes). We inform the compiler through the volatile keyword to not take an
 granted on this variable and to simply do as I say with it:
 
 We will use pre-processor definitions to change the base address of the GPIO peripheral depending on
-what RPI model is being targetted.
+what RPI model is being targeted.
 
-``` c
+```c
 #if defined( RPI0 ) || defined( RPI1 )
     #define GPIO_BASE       0x20200000UL
 #elif defined( RPI2 ) || defined( RPI3 )
@@ -524,13 +549,11 @@ In order to set GPIO16 as an output then we need to write a value of 1 in the re
 function select register. Here we can rely on the fact that this register is set to 0 after a reset
 and so all we need to do is set:
 
-
-``` c
-    /* Assign the address of the GPIO peripheral (Using ARM Physical Address) */
-    gpio = (unsigned int*)GPIO_BASE;
-    gpio[LED_GPFSEL] |= (1 << LED_GPFBIT);
+```c
+/* Assign the address of the GPIO peripheral (Using ARM Physical Address) */
+gpio = (unsigned int*)GPIO_BASE;
+gpio[LED_GPFSEL] |= (1 << LED_GPFBIT);
 ```
-
 
 This code looks a bit messy, but we will tidy up and optimise later on. For now we just want to get
 to the point where we can light an LED and understand why it is lit!
@@ -670,7 +693,7 @@ int main(void)
 
 We now compile with the no start files option too:
 
-```
+```sh
 part-1/armc-02 $ ./build.sh rpi3
 
 arm-none-eabi-gcc -nostartfiles \
@@ -685,7 +708,7 @@ arm-none-eabi-gcc -nostartfiles \
 The linker gives us a warning, which we'll sort out later, but importantly the linker has resolved
 the problem for us. This is the warning we'll see and ignore:
 
-```
+```sh
 .../arm-none-eabi/bin/ld: warning: cannot find entry symbol _start; defaulting to 0000000000008000
 ```
 
@@ -693,7 +716,7 @@ As we can see from the compilation, the standard output is ELF format which is e
 executable wrapped with information that an OS binary loader may need to know. We need a binary
 ARM executable that only includes machine code. We can extract this using the objcopy utility:
 
-```
+```sh
 arm-none-eabi-objcopy kernel.elf -O binary kernel.img
 ```
 
@@ -722,8 +745,9 @@ just the compiled machine code in the `kernel.img` file ready for execution.
 ### Back to our example
 
 This gives us the `kernel.img` binary file which should only contain ARM machine code. It should be
-tens of bytes long. You'll notice that `kernel.elf` on the otherhand is ~34Kb. Rename the `kernel.img`
-on your SD Card to something like old.kernel.img and save your new kernel.img to the SD Card.
+tens of bytes long. You'll notice that `kernel.elf` on the otherhand is ~34Kb. Rename the
+`kernel.img` on your SD Card to something like old.kernel.img and save your new kernel.img to
+the SD Card.
 
 Booting from this SD Card should now leave the OK LED on permanently. The normal startup is for the
 OK LED to be on, then extinguish. If it remains extinguished something went wrong with building or
@@ -740,7 +764,7 @@ the SD card.
 You can see that a binary image is now in the folder and is a much more sane size for some code
 that does so little:
 
-```
+```sh
 part-1/armc-03 $ ./build.sh rpi3bp
     arm-none-eabi-gcc -g \
         -nostartfiles \
@@ -758,9 +782,9 @@ part-1/armc-03 $ ./build.sh rpi3bp
 arm-none-eabi-objcopy kernel.armc-03.rpi3bp.elf -O binary kernel.img
 ```
 
-The kernel.img file contains just the ARM machine code and so is just a few hundred bytes.
+The `kernel.img` file contains just the ARM machine code and so is just a few hundred bytes.
 
-```
+```sh
 part-1/armc-03 $ ll
 total 28
 drwxr-xr-x 2 brian brian     4096 Sep 21 01:05 ./
@@ -777,9 +801,9 @@ drwxr-xr-x 6 brian brian     4096 Sep 21 00:19 ../
 The next step is how to get this `kernel.img` file onto an SD Card so we can boot the card and run
 our newly compiled code.
 
-A script, called `make_card.sh` was run during the `build.sh` script run. Have a look in the `build.sh`
-script to see the call near the end of the script. It does the work of generating an SD Card image
-that can be written directly to an SD card.
+A script, called `make_card.sh` was run during the `build.sh` script run. Have a look in the
+`build.sh` script to see the call near the end of the script. It does the work of generating an SD
+Card image that can be written directly to an SD card.
 
 The `/card/make_card.sh` script is worth a look. It can generate a card image without the need to
 user super user priveleges. It always uses the latest firmware available from the
@@ -797,7 +821,8 @@ list all of the block devices available.
 
 **DON'T GET THE SD CARD DEVICE WRONG OR YOU'LL COMPLETELY WIPE OUT ANOTHER DISK!**
 
-When you know what disk to use, you can simply cat the image to the disk using `cat kernel.armc-03.rpibp.img > /dev/sdg` for example
+When you know what disk to use, you can simply cat the image to the disk using
+`cat kernel.armc-03.rpibp.img > /dev/sdg` for example
 
 ## Provided Binaries
 

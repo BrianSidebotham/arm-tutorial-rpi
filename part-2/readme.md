@@ -20,7 +20,7 @@ we initialise the variable in the code at the start of main from a pre-processor
 
 Let's modify and use a pre-initialised variable instead:
 
-part-2/armc-04:
+### part-2/armc-04
 
 ```c
 #include "rpi-gpio.h"
@@ -60,21 +60,24 @@ int main(void)
 
 Compile it (using the build.sh script):
 
-```bash
+```console
 part-2/armc-04 $ ./build.sh rpi0
-arm-none-eabi-gcc -g -nostartfiles -mfloat-abi=hard -O0 -DRPI0 -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s /.../part-2/armc-04/*.c -o /.../part-2/armc-04/kernel.armc-04.rpi0.elf
-/.../gcc-arm-none-eabi-7-2017-q4-major/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/bin/ld: warning: cannot find entry symbol _start; defaulting to 0000000000008000
-arm-none-eabi-objcopy /.../part-2/armc-04/kernel.armc-04.rpi0.elf -O binary /.../part-2/armc-04/kernel.armc-04.rpi0.img
+arm-none-eabi-gcc -g -nostartfiles -mfloat-abi=hard -O0 -DRPI0 -mfpu=vfp -march=armv6zk \
+    -mtune=arm1176jzf-s /.../part-2/armc-04/*.c -o /.../part-2/armc-04/kernel.armc-04.rpi0.elf
+/.../gcc-arm-none-eabi-7-2017-q4-major/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../\
+    arm-none-eabi/bin/ld: warning: cannot find entry symbol _start; defaulting to 0000000000008000
+arm-none-eabi-objcopy /.../part-2/armc-04/kernel.armc-04.rpi0.elf -O binary \
+    /.../part-2/armc-04/kernel.armc-04.rpi0.img
 ```
 
- and we notice a few things:
+and we notice a few things:
 
 - The size of the binary image is now 33k, but the previous version of this code was only a
 hundred bytes or so!
 - The code, when written to the SDCARD still works - this isn't really expected without a working
 C-Runtime in place to initialise the variable gpio before calling main!?
 
-```bash
+```sh
 part-2/armc-04 $ ls -lah
 total 40K
 drwxr-xr-x 2 brian brian 4.0K Oct 11 21:07 .
@@ -128,19 +131,22 @@ The code works without any initialisation because the variables exist in the sam
 as the code. The bootloading process results in the raspberry-pi kernel being loaded into RAM
 in order to be executed, the GPU bootloader runs before the ARM processor we're targeting runs,
 and loads the kernel.img file from disk. Because of this, the variables position within the
-binary image becomes their variable memory location. The image is loaded by the boot-loader at
-address `0x8000` and then executed. So the bootloader has essentially done a taskt that the
-C-Runtime would normally do, copy the initial values of initialised variables from non-volatile
-memory to volatile memory. Cool.
+binary image becomes their variable memory location.
+
+The image is loaded by the boot-loader at address `0x8000` and then executed. So the
+bootloader has essentially done a taskt that the C-Runtime would normally do, copy the
+initial values of initialised variables from non-volatile memory to volatile memory. Cool.
 
 Look at the code produced closer with a disassembler. You've already got a disassembler!
-It comes with the toolchain; Welcome to the world of objdump (or in our case `arm-non-eabi-objdump`).
+It comes with the toolchain; Welcome to the world of objdump (or in our case
+`arm-non-eabi-objdump`).
+
 We disassemble the elf file because then objdump knows what processor the binary was built for.
 It also then has knowledge of the different code sections too. There's a `disassemble.sh` script
 so go ahead and disassemble the code to see what the compiler generated. You'll get a `kernel*.asm`
 file that looks similar to if not the same as the following (RPI0) code:
 
-```
+```text
 Disassembly of section .text:
 
 00008000 <main>:
@@ -215,9 +221,9 @@ Let's take it line by line. The toolchain's linker has decided that the entry po
 should be at memory address `0x8000`. We see from the disassembled listing that this is where the
 machine code starts. Let's look at what it does.
 
-```
+```text
 00008000 <main>:
-    8000:	e59f30b8 	ldr	r3, [pc, #184]	; 80c0 <main+0xc0>
+    8000:    e59f30b8     ldr    r3, [pc, #184]    ; 80c0 <main+0xc0>
 ```
 
 This first line loads r3 with the value at the *address* contained at the Program Counter
@@ -230,7 +236,9 @@ disassembler is suggesting the data comes from `0x80c0`?
 
 Well PC relative addressing works slightly different to what you may expect and really there's a
 issue with it, the value of PC is different depending on whether the instruction set is currently
-ARM or Thumb. Further information is available on the [ARM website](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0473e/Cacdbfji.html).
+ARM or Thumb. Further information is available on the
+[ARM website](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0473e/Cacdbfji.html).
+
 The important thing to note here is:
 
 > In ARM state, the value of the PC is the address of the current instruction plus 8 bytes.
@@ -250,8 +258,8 @@ for more compact code which is very useful in heavily embedded systems.
 So actually the maths here sound be: `0x8000 + 0x8 + 0xb8 = 0x80c0` to get us to a memory address.
 At `0x80c0` there's the value `0x180cc` (`0x8000 + 0x80cc`):
 
-```
-    80c0:	000180cc 	andeq	r8, r1, ip, asr #1
+```text
+80c0:    000180cc     andeq    r8, r1, ip, asr #1
 ```
 
 You can ignore the disassembled version of this value as it's not machine code, instead it's merely
@@ -273,10 +281,10 @@ let's look at exactly what's going on and find out why it works like this.
 
 The value at the end of our executable image can be viewed by dumping the hex and having a look at
 the plain machine code that's in the binary file. The disassemble script does this for you with a
-tool called `hexdump` and puts the result into a `kernel*.img.hexdump` file. It's a plain text file -
-you can go ahead and crack it open in a text editor or `cat` it.
+tool called `hexdump` and puts the result into a `kernel*.img.hexdump` file. It's a plain text
+file - you can go ahead and crack it open in a text editor or `cat` it.
 
-```
+```text
 0000000 30b8 e59f 3000 e593 3004 e283 2000 e593
 0000010 30a8 e59f 3000 e593 3004 e283 2701 e382
 0000020 2000 e583 3098 e59f 2000 e3a0 2000 e583
@@ -306,8 +314,8 @@ this binary image in memory at `0x8000` the last memory location we touch is `0x
 
 Let's have a quick look at what happens next:
 
-```
-8008:	e2833004 	add	r3, r3, #4
+```text
+8008:    e2833004     add    r3, r3, #4
 ```
 
 Increase the value in r3 from `0x20200000` to `0x20200004` and store it in r3. This is part of
@@ -328,18 +336,18 @@ From the definition of `gpio` as `volatile unsigned int*` each item pointed to i
 which is 32-bit wide. That's 4 bytes, so we increase the pointer into gpio by 4 bytes to get the
 register address we require in r3.
 
-```
-800c:	e5932000 	ldr	r2, [r3]
+```text
+800c:    e5932000     ldr    r2, [r3]
 ```
 
 Load the value of `gpio[LED_GPFSEL]` into r2. This is common for read-modify-write operations
 such as the `|=` operator we're using in this example. We need to do exactly that, read the
 value, modify the value and then write the new value.
 
-```
-8010:	e59f30a8 	ldr	r3, [pc, #168]	; 80c0 <main+0xc0>
-8014:	e5933000 	ldr	r3, [r3]
-8018:	e2833004 	add	r3, r3, #4
+```text
+8010:    e59f30a8     ldr    r3, [pc, #168]    ; 80c0 <main+0xc0>
+8014:    e5933000     ldr    r3, [r3]
+8018:    e2833004     add    r3, r3, #4
 ```
 
 The compiler being rather inefficient here. It's preparing r3 again to be the memory write
@@ -347,26 +355,27 @@ destination which is exactly the same read memory location. Any sort of compiler
 should be able to get rid of the above three lines. They're really not required, but we
 understand what's going on still.
 
+```text
+801c:    e3822701     orr    r2, r2, #262144    ; 0x40000
 ```
-801c:	e3822701 	orr	r2, r2, #262144	; 0x40000
-```
+
 The modify part of `|=`. In this case `(1 << LED_GPFBIT)` has been reduced to a constant.
 The original `gpio[LED_GPFSEL]` value is still in r2. We OR that value with the constant to
 set the bit and store the new value in r2. The ARM architecture cannot modify a register value
 and store it to a memory location in a single instruction BTW in case you're thinking that
 would serve us better.
 
-```
-8020:	e5832000 	str	r2, [r3]
+```text
+8020:    e5832000     str    r2, [r3]
 ```
 
 Finally, the write part of the read-modify-write operation is to write the new value back to
 the destination `gpio[LED_GPFSEL]`
 
-```
-8024:	e59f3098 	ldr	r3, [pc, #152]	; 80c4 <main+0xc4>
+```text
+8024:    e59f3098     ldr    r3, [pc, #152]    ; 80c4 <main+0xc4>
 ...
-80c4:	000180d0 	ldrdeq	r8, [r1], -r0
+80c4:    000180d0     ldrdeq    r8, [r1], -r0
 ```
 
 Loads the value `0x180d0` into r3.
@@ -379,16 +388,17 @@ by the C standard to have automatic storage duration and according to the C stan
 therefore have a initialised value of 0, but we know here that this is not the case, instead
 we'll have a random value.
 
-Actually what happens in the code next is the `for` loop starts by setting the `tim` variable to `0`.
+Actually what happens in the code next is the `for` loop starts by setting the `tim` variable
+to `0`.
 
-```
-8028:	e3a02000 	mov	r2, #0
-802c:	e5832000 	str	r2, [r3]
+```text
+8028:    e3a02000     mov    r2, #0
+802c:    e5832000     str    r2, [r3]
 ```
 
 Let's do a sanity check and make sure we're right by assuming that this is the `tim` variable:
 
-```
+```text
 000180d4 B __bss_end__
 000180d4 B _bss_end__
 000180d0 B __bss_start
@@ -460,7 +470,7 @@ int main(void)
 `armc-05.c` varies only slightly from `armc-04.c` in that it adds in some code. When we look at this
 with `nm` we see that the `__data_start` section shifts by the same amount as the code we've added:
 
-```
+```console
 part-2/armc-05 $ ./build.sh rpi0
 ...
 
@@ -497,7 +507,7 @@ There's a lot more output when building this code. That's because we've added an
 
 As you see from the start of the ld verbose output:
 
-```
+```text
 GNU ld (GNU Tools for Arm Embedded Processors 7-2017-q4-major) 2.29.51.20171128
   Supported emulations:
    armelf
@@ -539,7 +549,7 @@ The "problem" must be between the `__data_start` section and end of the text sec
 symbol main indicated the start of the text section). After a little bit of hunting, I see a
 comment and an alignment pertaining to the data section on line 107:
 
-```
+```c
 /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
   . = ALIGN(CONSTANT (MAXPAGESIZE)) + (. & (CONSTANT (MAXPAGESIZE) - 1));
@@ -549,7 +559,7 @@ Interesting, we apparently "want" to adjust up to the next page. If I comment th
 standard C-style comment as can be seen in the rest of the file, we get back down to a size of a
 few hundred bytes with initialised data. Check again with the output of:
 
-```
+```console
 part-2/armc-06 $ ll
 
 -rwxr-xr-x 1 brian brian   284 Oct 14 22:17 kernel.armc-06.rpi0.img*
@@ -557,75 +567,75 @@ part-2/armc-06 $ ll
 
 When we disassemble the kernel code, we end up with something similar to the following:
 
-```
+```console
 part-2/armc-06 $ ./disassemble.sh
 ```
 
-```
+```text
 Disassembly of section .text:
 
 00008000 <main>:
-    8000:	e59f30b8 	ldr	r3, [pc, #184]	; 80c0 <main+0xc0>
-    8004:	e5933000 	ldr	r3, [r3]
-    8008:	e2833010 	add	r3, r3, #16
-    800c:	e5932000 	ldr	r2, [r3]
-    8010:	e59f30a8 	ldr	r3, [pc, #168]	; 80c0 <main+0xc0>
-    8014:	e5933000 	ldr	r3, [r3]
-    8018:	e2833010 	add	r3, r3, #16
-    801c:	e3822602 	orr	r2, r2, #2097152	; 0x200000
-    8020:	e5832000 	str	r2, [r3]
-    8024:	e59f3098 	ldr	r3, [pc, #152]	; 80c4 <main+0xc4>
-    8028:	e3a02000 	mov	r2, #0
-    802c:	e5832000 	str	r2, [r3]
-    8030:	ea000004 	b	8048 <main+0x48>
-    8034:	e59f3088 	ldr	r3, [pc, #136]	; 80c4 <main+0xc4>
-    8038:	e5933000 	ldr	r3, [r3]
-    803c:	e2833001 	add	r3, r3, #1
-    8040:	e59f207c 	ldr	r2, [pc, #124]	; 80c4 <main+0xc4>
-    8044:	e5823000 	str	r3, [r2]
-    8048:	e59f3074 	ldr	r3, [pc, #116]	; 80c4 <main+0xc4>
-    804c:	e5933000 	ldr	r3, [r3]
-    8050:	e59f2070 	ldr	r2, [pc, #112]	; 80c8 <main+0xc8>
-    8054:	e1530002 	cmp	r3, r2
-    8058:	9afffff5 	bls	8034 <main+0x34>
-    805c:	e59f305c 	ldr	r3, [pc, #92]	; 80c0 <main+0xc0>
-    8060:	e5933000 	ldr	r3, [r3]
-    8064:	e283302c 	add	r3, r3, #44	; 0x2c
-    8068:	e3a02902 	mov	r2, #32768	; 0x8000
-    806c:	e5832000 	str	r2, [r3]
-    8070:	e59f304c 	ldr	r3, [pc, #76]	; 80c4 <main+0xc4>
-    8074:	e3a02000 	mov	r2, #0
-    8078:	e5832000 	str	r2, [r3]
-    807c:	ea000004 	b	8094 <main+0x94>
-    8080:	e59f303c 	ldr	r3, [pc, #60]	; 80c4 <main+0xc4>
-    8084:	e5933000 	ldr	r3, [r3]
-    8088:	e2833001 	add	r3, r3, #1
-    808c:	e59f2030 	ldr	r2, [pc, #48]	; 80c4 <main+0xc4>
-    8090:	e5823000 	str	r3, [r2]
-    8094:	e59f3028 	ldr	r3, [pc, #40]	; 80c4 <main+0xc4>
-    8098:	e5933000 	ldr	r3, [r3]
-    809c:	e59f2024 	ldr	r2, [pc, #36]	; 80c8 <main+0xc8>
-    80a0:	e1530002 	cmp	r3, r2
-    80a4:	9afffff5 	bls	8080 <main+0x80>
-    80a8:	e59f3010 	ldr	r3, [pc, #16]	; 80c0 <main+0xc0>
-    80ac:	e5933000 	ldr	r3, [r3]
-    80b0:	e2833020 	add	r3, r3, #32
-    80b4:	e3a02902 	mov	r2, #32768	; 0x8000
-    80b8:	e5832000 	str	r2, [r3]
-    80bc:	eaffffd8 	b	8024 <main+0x24>
-    80c0:	000080cc 	andeq	r8, r0, ip, asr #1
-    80c4:	000080d0 	ldrdeq	r8, [r0], -r0
-    80c8:	0007a11f 	andeq	sl, r7, pc, lsl r1
+    8000:    e59f30b8     ldr    r3, [pc, #184]    ; 80c0 <main+0xc0>
+    8004:    e5933000     ldr    r3, [r3]
+    8008:    e2833010     add    r3, r3, #16
+    800c:    e5932000     ldr    r2, [r3]
+    8010:    e59f30a8     ldr    r3, [pc, #168]    ; 80c0 <main+0xc0>
+    8014:    e5933000     ldr    r3, [r3]
+    8018:    e2833010     add    r3, r3, #16
+    801c:    e3822602     orr    r2, r2, #2097152    ; 0x200000
+    8020:    e5832000     str    r2, [r3]
+    8024:    e59f3098     ldr    r3, [pc, #152]    ; 80c4 <main+0xc4>
+    8028:    e3a02000     mov    r2, #0
+    802c:    e5832000     str    r2, [r3]
+    8030:    ea000004     b    8048 <main+0x48>
+    8034:    e59f3088     ldr    r3, [pc, #136]    ; 80c4 <main+0xc4>
+    8038:    e5933000     ldr    r3, [r3]
+    803c:    e2833001     add    r3, r3, #1
+    8040:    e59f207c     ldr    r2, [pc, #124]    ; 80c4 <main+0xc4>
+    8044:    e5823000     str    r3, [r2]
+    8048:    e59f3074     ldr    r3, [pc, #116]    ; 80c4 <main+0xc4>
+    804c:    e5933000     ldr    r3, [r3]
+    8050:    e59f2070     ldr    r2, [pc, #112]    ; 80c8 <main+0xc8>
+    8054:    e1530002     cmp    r3, r2
+    8058:    9afffff5     bls    8034 <main+0x34>
+    805c:    e59f305c     ldr    r3, [pc, #92]    ; 80c0 <main+0xc0>
+    8060:    e5933000     ldr    r3, [r3]
+    8064:    e283302c     add    r3, r3, #44    ; 0x2c
+    8068:    e3a02902     mov    r2, #32768    ; 0x8000
+    806c:    e5832000     str    r2, [r3]
+    8070:    e59f304c     ldr    r3, [pc, #76]    ; 80c4 <main+0xc4>
+    8074:    e3a02000     mov    r2, #0
+    8078:    e5832000     str    r2, [r3]
+    807c:    ea000004     b    8094 <main+0x94>
+    8080:    e59f303c     ldr    r3, [pc, #60]    ; 80c4 <main+0xc4>
+    8084:    e5933000     ldr    r3, [r3]
+    8088:    e2833001     add    r3, r3, #1
+    808c:    e59f2030     ldr    r2, [pc, #48]    ; 80c4 <main+0xc4>
+    8090:    e5823000     str    r3, [r2]
+    8094:    e59f3028     ldr    r3, [pc, #40]    ; 80c4 <main+0xc4>
+    8098:    e5933000     ldr    r3, [r3]
+    809c:    e59f2024     ldr    r2, [pc, #36]    ; 80c8 <main+0xc8>
+    80a0:    e1530002     cmp    r3, r2
+    80a4:    9afffff5     bls    8080 <main+0x80>
+    80a8:    e59f3010     ldr    r3, [pc, #16]    ; 80c0 <main+0xc0>
+    80ac:    e5933000     ldr    r3, [r3]
+    80b0:    e2833020     add    r3, r3, #32
+    80b4:    e3a02902     mov    r2, #32768    ; 0x8000
+    80b8:    e5832000     str    r2, [r3]
+    80bc:    eaffffd8     b    8024 <main+0x24>
+    80c0:    000080cc     andeq    r8, r0, ip, asr #1
+    80c4:    000080d0     ldrdeq    r8, [r0], -r0
+    80c8:    0007a11f     andeq    sl, r7, pc, lsl r1
 
 Disassembly of section .data:
 
 000080cc <gpio>:
-    80cc:	20200000 	eorcs	r0, r0, r0
+    80cc:    20200000     eorcs    r0, r0, r0
 
 Disassembly of section .bss:
 
 000080d0 <tim>:
-    80d0:	00000000 	andeq	r0, r0, r0
+    80d0:    00000000     andeq    r0, r0, r0
 ```
 
 Use the [ARM instruction set quick reference card](https://documentation-service.arm.com/static/5ed66080ca06a95ce53f932d)
@@ -652,17 +662,21 @@ for the C-Runtime anyway!
 
 Have a quick check of the sections with nm again, now there's no Undefined sections!
 
-```
+```console
 part-2/armc-07 $ ./build.sh rpi0
-arm-none-eabi-gcc -g -nostartfiles -mfloat-abi=hard -O0 -DRPI0 -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s part-2/armc-07/*.c -o part-2/armc-07/kernel.armc-07.rpi0.elf
-arm-none-eabi-objcopy part-2/armc-07/kernel.armc-07.rpi0.elf -O binary part-2/armc-07/kernel.armc-07.rpi0.img
+
+arm-none-eabi-gcc -g -nostartfiles -mfloat-abi=hard -O0 -DRPI0 -mfpu=vfp -march=armv6zk \
+    -mtune=arm1176jzf-s part-2/armc-07/*.c -o part-2/armc-07/kernel.armc-07.rpi0.elf
+
+arm-none-eabi-objcopy part-2/armc-07/kernel.armc-07.rpi0.elf -O binary \
+    part-2/armc-07/kernel.armc-07.rpi0.img
 ```
 
-```
+```console
 part-2/armc-07 $ ./disassemble.sh
 ```
 
-```
+```console
 part-2/armc-07 $ cat ./kernel.armc-07.rpi0.elf.nm
 000080d4 B __bss_end__
 000080d4 B _bss_end__
@@ -740,7 +754,7 @@ we can get away with, and see what trips us up next!
 
 ## armc-08-start.S
 
-```
+```text
 .section ".text.startup"
 
 .global _start
@@ -766,7 +780,7 @@ for the stack.
 Some important information about the `.section` declaration. With the linker script, I can see
 in `rpi.x` that the following text sections are available:
 
-```
+```text
 .text           :
 {
   *(.text.unlikely .text.*_unlikely .text.unlikely.*)
@@ -873,17 +887,21 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
 We again confirm with nm that everything is ordered at least something like sensible:
 
-```
+```console
 part-2/armc-08 $ ./build.sh rpi0
-arm-none-eabi-gcc -g -nostartfiles -mfloat-abi=hard -O0 -DRPI0 -mfpu=vfp -march=armv6zk -mtune=arm1176jzf-s part-2/armc-08/*.S part-2/armc-08/*.c -o part-2/armc-08/kernel.armc-08.rpi0.elf
-arm-none-eabi-objcopy part-2/armc-08/kernel.armc-08.rpi0.elf -O binary part-2/armc-08/kernel.armc-08.rpi0.img
+
+arm-none-eabi-gcc -g -nostartfiles -mfloat-abi=hard -O0 -DRPI0 -mfpu=vfp -march=armv6zk \
+    -mtune=arm1176jzf-s part-2/armc-08/*.S part-2/armc-08/*.c -o part-2/armc-08/kernel.armc-08.rpi0.elf
+
+arm-none-eabi-objcopy part-2/armc-08/kernel.armc-08.rpi0.elf -O binary \
+    part-2/armc-08/kernel.armc-08.rpi0.img
 ```
 
-```
-brian@brian-PH67-UD3-B3 ~/valvers-new/arm-tutorial-rpi/part-2/armc-08 $ ./disassemble.sh
+```console
+part-2/armc-08 $ ./disassemble.sh
 ```
 
-```
+```console
 part-2/armc-08 $ cat ./kernel.armc-08.rpi0.elf.nm
 
 00008164 B __bss_end__
@@ -909,7 +927,7 @@ can't see more interesting results - but it'll get better soon, I promise! For n
 a great foundation for developing in C for the bare metal Raspberry-Pi. Knowing what your tools
 are doing is pretty essential!
 
-```
+```console
 part-2/armc-08 $ ./make_card.sh rpi0
 part-2/armc-08 $ cat ./card.armc-08.rpi0.img > /dev/sdg && sync && eject /dev/sdg
 ```
@@ -926,7 +944,7 @@ Therefore, the linker disregards the whole of the C-Library because there are no
 it within the code. Let's jump straight in and malloc some memory as I know that requires a
 stub. Compile `armc-09` without the `*-cstubs.c` and you'll see the error:
 
-```
+```text
 .../arm-none-eabi/lib/fpu\libg.a(lib_a-sbrkr.o): In function `_sbrk_r':
 sbrkr.c:(.text._sbrk_r+0x18): undefined reference to `_sbrk'
 collect2.exe: error: ld returned 1 exit status
@@ -980,7 +998,7 @@ caddr_t _sbrk( int incr )
 
 ## armc-09-start.S
 
-```
+```text
 .section ".text.startup"
 
 .global _start
@@ -1099,5 +1117,6 @@ a silly single command-line, and we can harness the power of a full build system
 bare-metal environment. We'll then fall back to the Cambridge ASM tutorials and progress to
 using the timer for flashing the LED rather than the incrementing loop counter we've used so far.
 
-So, what are you waiting for? Head off to [Part3](http://www.valvers.com/embedded-linux/raspberry-pi/step03-bare-metal-programming-in-c-pt3)
+So, what are you waiting for? Head off to
+[Part3](http://www.valvers.com/embedded-linux/raspberry-pi/step03-bare-metal-programming-in-c-pt3)
 now!

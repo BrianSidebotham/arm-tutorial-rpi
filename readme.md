@@ -1,6 +1,7 @@
 # Raspberry-Pi Bare Metal Tutorial
 
-![](https://github.com/BrianSidebotham/arm-tutorial-rpi/workflows/Build/badge.svg) ![](https://github.com/BrianSidebotham/arm-tutorial-rpi/workflows/Markdown%20Lint/badge.svg)
+![Build Status](https://github.com/BrianSidebotham/arm-tutorial-rpi/workflows/Build/badge.svg)
+![Markdown Status](https://github.com/BrianSidebotham/arm-tutorial-rpi/workflows/Markdown%20Lint/badge.svg)
 
 This repository contains the code for the Raspberry-Pi bare-metal programming
 in C series. The home of the tutorial and all of the articles relating to the
@@ -12,7 +13,7 @@ The tutorial supports all RPi models, except:
 
 - rpi3 because the ACT LED is not connected to an IO pin
 - rpi4 (Part1-4 only - Part-5 will support RPI4 very soon!)
-  
+
 The tutorial only supports a Linux host for compiling the tutorial code.
 
 ## Quickstart
@@ -59,7 +60,7 @@ The tutorial has a few dependencies which you might want to install before you g
 
 [Step05 - Graphics(Basic)](/part-5/readme.md)
 
-## Some interesting links:
+## Interesting Links
 
 Original [Cambridge Tutorial](http://www.cl.cam.ac.uk/projects/raspberrypi/tutorials/os/index.html) that
 inspired this tutorial series.
