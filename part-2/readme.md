@@ -223,7 +223,7 @@ machine code starts. Let's look at what it does.
 
 ```text
 00008000 <main>:
-    8000:	e59f30b8 	ldr	r3, [pc, #184]	; 80c0 <main+0xc0>
+    8000:    e59f30b8     ldr    r3, [pc, #184]    ; 80c0 <main+0xc0>
 ```
 
 This first line loads r3 with the value at the *address* contained at the Program Counter
@@ -259,7 +259,7 @@ So actually the maths here sound be: `0x8000 + 0x8 + 0xb8 = 0x80c0` to get us to
 At `0x80c0` there's the value `0x180cc` (`0x8000 + 0x80cc`):
 
 ```text
-80c0:	000180cc 	andeq	r8, r1, ip, asr #1
+80c0:    000180cc     andeq    r8, r1, ip, asr #1
 ```
 
 You can ignore the disassembled version of this value as it's not machine code, instead it's merely
@@ -315,7 +315,7 @@ this binary image in memory at `0x8000` the last memory location we touch is `0x
 Let's have a quick look at what happens next:
 
 ```text
-8008:	e2833004 	add	r3, r3, #4
+8008:    e2833004     add    r3, r3, #4
 ```
 
 Increase the value in r3 from `0x20200000` to `0x20200004` and store it in r3. This is part of
@@ -337,7 +337,7 @@ which is 32-bit wide. That's 4 bytes, so we increase the pointer into gpio by 4 
 register address we require in r3.
 
 ```text
-800c:	e5932000 	ldr	r2, [r3]
+800c:    e5932000     ldr    r2, [r3]
 ```
 
 Load the value of `gpio[LED_GPFSEL]` into r2. This is common for read-modify-write operations
@@ -345,9 +345,9 @@ such as the `|=` operator we're using in this example. We need to do exactly tha
 value, modify the value and then write the new value.
 
 ```text
-8010:	e59f30a8 	ldr	r3, [pc, #168]	; 80c0 <main+0xc0>
-8014:	e5933000 	ldr	r3, [r3]
-8018:	e2833004 	add	r3, r3, #4
+8010:    e59f30a8     ldr    r3, [pc, #168]    ; 80c0 <main+0xc0>
+8014:    e5933000     ldr    r3, [r3]
+8018:    e2833004     add    r3, r3, #4
 ```
 
 The compiler being rather inefficient here. It's preparing r3 again to be the memory write
@@ -356,7 +356,7 @@ should be able to get rid of the above three lines. They're really not required,
 understand what's going on still.
 
 ```text
-801c:	e3822701 	orr	r2, r2, #262144	; 0x40000
+801c:    e3822701     orr    r2, r2, #262144    ; 0x40000
 ```
 The modify part of `|=`. In this case `(1 << LED_GPFBIT)` has been reduced to a constant.
 The original `gpio[LED_GPFSEL]` value is still in r2. We OR that value with the constant to
@@ -365,16 +365,16 @@ and store it to a memory location in a single instruction BTW in case you're thi
 would serve us better.
 
 ```text
-8020:	e5832000 	str	r2, [r3]
+8020:    e5832000     str    r2, [r3]
 ```
 
 Finally, the write part of the read-modify-write operation is to write the new value back to
 the destination `gpio[LED_GPFSEL]`
 
 ```text
-8024:	e59f3098 	ldr	r3, [pc, #152]	; 80c4 <main+0xc4>
+8024:    e59f3098     ldr    r3, [pc, #152]    ; 80c4 <main+0xc4>
 ...
-80c4:	000180d0 	ldrdeq	r8, [r1], -r0
+80c4:    000180d0     ldrdeq    r8, [r1], -r0
 ```
 
 Loads the value `0x180d0` into r3.
@@ -391,8 +391,8 @@ Actually what happens in the code next is the `for` loop starts by setting the `
 to `0`.
 
 ```text
-8028:	e3a02000 	mov	r2, #0
-802c:	e5832000 	str	r2, [r3]
+8028:    e3a02000     mov    r2, #0
+802c:    e5832000     str    r2, [r3]
 ```
 
 Let's do a sanity check and make sure we're right by assuming that this is the `tim` variable:
@@ -574,67 +574,67 @@ part-2/armc-06 $ ./disassemble.sh
 Disassembly of section .text:
 
 00008000 <main>:
-    8000:	e59f30b8 	ldr	r3, [pc, #184]	; 80c0 <main+0xc0>
-    8004:	e5933000 	ldr	r3, [r3]
-    8008:	e2833010 	add	r3, r3, #16
-    800c:	e5932000 	ldr	r2, [r3]
-    8010:	e59f30a8 	ldr	r3, [pc, #168]	; 80c0 <main+0xc0>
-    8014:	e5933000 	ldr	r3, [r3]
-    8018:	e2833010 	add	r3, r3, #16
-    801c:	e3822602 	orr	r2, r2, #2097152	; 0x200000
-    8020:	e5832000 	str	r2, [r3]
-    8024:	e59f3098 	ldr	r3, [pc, #152]	; 80c4 <main+0xc4>
-    8028:	e3a02000 	mov	r2, #0
-    802c:	e5832000 	str	r2, [r3]
-    8030:	ea000004 	b	8048 <main+0x48>
-    8034:	e59f3088 	ldr	r3, [pc, #136]	; 80c4 <main+0xc4>
-    8038:	e5933000 	ldr	r3, [r3]
-    803c:	e2833001 	add	r3, r3, #1
-    8040:	e59f207c 	ldr	r2, [pc, #124]	; 80c4 <main+0xc4>
-    8044:	e5823000 	str	r3, [r2]
-    8048:	e59f3074 	ldr	r3, [pc, #116]	; 80c4 <main+0xc4>
-    804c:	e5933000 	ldr	r3, [r3]
-    8050:	e59f2070 	ldr	r2, [pc, #112]	; 80c8 <main+0xc8>
-    8054:	e1530002 	cmp	r3, r2
-    8058:	9afffff5 	bls	8034 <main+0x34>
-    805c:	e59f305c 	ldr	r3, [pc, #92]	; 80c0 <main+0xc0>
-    8060:	e5933000 	ldr	r3, [r3]
-    8064:	e283302c 	add	r3, r3, #44	; 0x2c
-    8068:	e3a02902 	mov	r2, #32768	; 0x8000
-    806c:	e5832000 	str	r2, [r3]
-    8070:	e59f304c 	ldr	r3, [pc, #76]	; 80c4 <main+0xc4>
-    8074:	e3a02000 	mov	r2, #0
-    8078:	e5832000 	str	r2, [r3]
-    807c:	ea000004 	b	8094 <main+0x94>
-    8080:	e59f303c 	ldr	r3, [pc, #60]	; 80c4 <main+0xc4>
-    8084:	e5933000 	ldr	r3, [r3]
-    8088:	e2833001 	add	r3, r3, #1
-    808c:	e59f2030 	ldr	r2, [pc, #48]	; 80c4 <main+0xc4>
-    8090:	e5823000 	str	r3, [r2]
-    8094:	e59f3028 	ldr	r3, [pc, #40]	; 80c4 <main+0xc4>
-    8098:	e5933000 	ldr	r3, [r3]
-    809c:	e59f2024 	ldr	r2, [pc, #36]	; 80c8 <main+0xc8>
-    80a0:	e1530002 	cmp	r3, r2
-    80a4:	9afffff5 	bls	8080 <main+0x80>
-    80a8:	e59f3010 	ldr	r3, [pc, #16]	; 80c0 <main+0xc0>
-    80ac:	e5933000 	ldr	r3, [r3]
-    80b0:	e2833020 	add	r3, r3, #32
-    80b4:	e3a02902 	mov	r2, #32768	; 0x8000
-    80b8:	e5832000 	str	r2, [r3]
-    80bc:	eaffffd8 	b	8024 <main+0x24>
-    80c0:	000080cc 	andeq	r8, r0, ip, asr #1
-    80c4:	000080d0 	ldrdeq	r8, [r0], -r0
-    80c8:	0007a11f 	andeq	sl, r7, pc, lsl r1
+    8000:    e59f30b8     ldr    r3, [pc, #184]    ; 80c0 <main+0xc0>
+    8004:    e5933000     ldr    r3, [r3]
+    8008:    e2833010     add    r3, r3, #16
+    800c:    e5932000     ldr    r2, [r3]
+    8010:    e59f30a8     ldr    r3, [pc, #168]    ; 80c0 <main+0xc0>
+    8014:    e5933000     ldr    r3, [r3]
+    8018:    e2833010     add    r3, r3, #16
+    801c:    e3822602     orr    r2, r2, #2097152    ; 0x200000
+    8020:    e5832000     str    r2, [r3]
+    8024:    e59f3098     ldr    r3, [pc, #152]    ; 80c4 <main+0xc4>
+    8028:    e3a02000     mov    r2, #0
+    802c:    e5832000     str    r2, [r3]
+    8030:    ea000004     b    8048 <main+0x48>
+    8034:    e59f3088     ldr    r3, [pc, #136]    ; 80c4 <main+0xc4>
+    8038:    e5933000     ldr    r3, [r3]
+    803c:    e2833001     add    r3, r3, #1
+    8040:    e59f207c     ldr    r2, [pc, #124]    ; 80c4 <main+0xc4>
+    8044:    e5823000     str    r3, [r2]
+    8048:    e59f3074     ldr    r3, [pc, #116]    ; 80c4 <main+0xc4>
+    804c:    e5933000     ldr    r3, [r3]
+    8050:    e59f2070     ldr    r2, [pc, #112]    ; 80c8 <main+0xc8>
+    8054:    e1530002     cmp    r3, r2
+    8058:    9afffff5     bls    8034 <main+0x34>
+    805c:    e59f305c     ldr    r3, [pc, #92]    ; 80c0 <main+0xc0>
+    8060:    e5933000     ldr    r3, [r3]
+    8064:    e283302c     add    r3, r3, #44    ; 0x2c
+    8068:    e3a02902     mov    r2, #32768    ; 0x8000
+    806c:    e5832000     str    r2, [r3]
+    8070:    e59f304c     ldr    r3, [pc, #76]    ; 80c4 <main+0xc4>
+    8074:    e3a02000     mov    r2, #0
+    8078:    e5832000     str    r2, [r3]
+    807c:    ea000004     b    8094 <main+0x94>
+    8080:    e59f303c     ldr    r3, [pc, #60]    ; 80c4 <main+0xc4>
+    8084:    e5933000     ldr    r3, [r3]
+    8088:    e2833001     add    r3, r3, #1
+    808c:    e59f2030     ldr    r2, [pc, #48]    ; 80c4 <main+0xc4>
+    8090:    e5823000     str    r3, [r2]
+    8094:    e59f3028     ldr    r3, [pc, #40]    ; 80c4 <main+0xc4>
+    8098:    e5933000     ldr    r3, [r3]
+    809c:    e59f2024     ldr    r2, [pc, #36]    ; 80c8 <main+0xc8>
+    80a0:    e1530002     cmp    r3, r2
+    80a4:    9afffff5     bls    8080 <main+0x80>
+    80a8:    e59f3010     ldr    r3, [pc, #16]    ; 80c0 <main+0xc0>
+    80ac:    e5933000     ldr    r3, [r3]
+    80b0:    e2833020     add    r3, r3, #32
+    80b4:    e3a02902     mov    r2, #32768    ; 0x8000
+    80b8:    e5832000     str    r2, [r3]
+    80bc:    eaffffd8     b    8024 <main+0x24>
+    80c0:    000080cc     andeq    r8, r0, ip, asr #1
+    80c4:    000080d0     ldrdeq    r8, [r0], -r0
+    80c8:    0007a11f     andeq    sl, r7, pc, lsl r1
 
 Disassembly of section .data:
 
 000080cc <gpio>:
-    80cc:	20200000 	eorcs	r0, r0, r0
+    80cc:    20200000     eorcs    r0, r0, r0
 
 Disassembly of section .bss:
 
 000080d0 <tim>:
-    80d0:	00000000 	andeq	r0, r0, r0
+    80d0:    00000000     andeq    r0, r0, r0
 ```
 
 Use the [ARM instruction set quick reference card](https://documentation-service.arm.com/static/5ed66080ca06a95ce53f932d)
