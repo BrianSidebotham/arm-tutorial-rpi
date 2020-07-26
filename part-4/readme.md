@@ -905,8 +905,8 @@ The functional block offsets are shown in the table and align with the device tr
 | `0x0000 - 0x0FFF` | Reserved |
 | `0x1000 - 0x1FFF` | Distributor (**GICD_**) |
 | `0x2000 - 0x2FFF` | CPU Interfaces (**GICC_**) |
-| `0x4000 - 0x4FFF` | Virtual interface control block for process that is performing the access |
-| `0x5000 - 0x5FFF` | Virtual interface control block for the processor selected by address bits 11:9 |
+| `0x4000 - 0x4FFF` | Virtual interface control for the process that is performing the access |
+| `0x5000 - 0x5FFF` | Virtual interface control for the processor selected by address bits 11:9 |
 
 Later on in the same section is breakdown of all registers in those blocks. It's this information
 that can be put into code. Then, in order to do a simple enablement of the peripheral, we will
