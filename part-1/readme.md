@@ -82,13 +82,15 @@ version being used in this tutorial if you're using a different compiler version
 The [eLinux page](http://elinux.org/RPi_Software#ARM) gives us the optimal GCC settings for
 compiling code for the original Raspberry-Pi (V1):
 
-    -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s
+```sh
+-Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s
+```
 
 It is noted that -Ofast may cause problems with some compilations, so it is probably better that we
 stick with the more traditional -O2 optimisation setting. The other flags merely tell GCC what type
 of floating point unit we have, tell it to produce hard-floating point code (GCC can create
-    software floating point support instead), and tells GCC what ARM processor architecture we have
-    so that it can produce optimal and compatible assembly/machine code.
+software floating point support instead), and tells GCC what ARM processor architecture we have
+so that it can produce optimal and compatible assembly/machine code.
 
 #### RPI2 Compiler Flags
 
@@ -96,7 +98,9 @@ For the Raspberry-Pi 2 we know that the architecture is different. The ARM1176 f
 has been replaced by a quad core Cortex A7 processor. Therefore, in order to compile effectively
 for the Raspberry-Pi 2 we use a different set of compiler options:
 
-    -O2 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7
+```sh
+-O2 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7
+```
 
 You can see from the
 [ARM specification of the Cortex A7](http://docs-api-peg.northeurope.cloudapp.azure.com/assets/ddi0464/f/DDI0464F_cortex_a7_mpcore_r0p5_trm.pdf)
@@ -108,7 +112,9 @@ settings are gleaned from the
 
 Like this:
 
-    -O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a53
+```sh
+-O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a53
+```
 
 #### RPI4 Compiler Flags
 
@@ -121,7 +127,9 @@ All four processors are `A72`. From the ARM documentation we can see that these 
 use the same `crypto-neon-fp-armv8` floating point unit option for the RPI4. This is detailed in
 the [v8 architecture programmers guide](https://static.docs.arm.com/den0024/a/DEN0024A_v8_architecture_PG.pdf)
 
-    -O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a72
+```sh
+-O2 -mfpu=crypto-neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc -mcpu=cortex-a72
+```
 
 The [schematics](https://www.raspberrypi.org/documentation/hardware/raspberrypi/schematics/rpi_SCH_4b_4p0_reduced.pdf)
 you would think would be the place to get the ACT LED GPIO port number, but alas, they're so sparse
@@ -261,10 +269,9 @@ arm-none-eabi-gcc \
     main.c -o main.elf
 ```
 
-Using the build script, let's compile the basic source code using the RPI specific options. Here,
-we compile for the RPI3. (I've shortened the output so it's easier to read on-screen)
-
-**THIS IS EXPECTED TO FAIL**
+_THIS IS EXPECTED TO FAIL_: Using the build script, let's compile the basic source code using the
+RPI specific options. Here, we compile for the RPI3. (I've shortened the output so it's easier to
+read on-screen).
 
 ```sh
 valvers-new/arm-tutorial-rpi/part-1/armc-00 $ ./build.sh rpi3
@@ -435,8 +442,8 @@ The Raspberry-Pi 2B 1.2 uses the BMC2837 and so you'll want to get the
 [Raspberry-Pi BCM2837 peripherals datahsheet](https://web.stanford.edu/class/cs140e/docs/BCM2837-ARM-Peripherals.pdf).
 
 >**NOTE:** The 2837 peripherals document is just a modified version of the original 2835 document
-with the addresses updated to suit the 2837's base peripheral address. See https://github.com/raspberrypi/documentation/issues/325 for
-further details.
+with the addresses updated to suit the 2837's base peripheral address. See
+[rpi issue 325](https://github.com/raspberrypi/documentation/issues/325) for further details.
 
 We'll be using the GPIO peripheral, and it would therefore be natural to jump straight to that
 documentation and start writing code, but we need to first read some of the 'basic' information
@@ -537,18 +544,15 @@ what RPI model is being targeted.
     #error Unknown RPI Model!
 #endif
 ```
-
 In order to set GPIO16 as an output then we need to write a value of 1 in the relevant bits of the
 function select register. Here we can rely on the fact that this register is set to 0 after a reset
 and so all we need to do is set:
-
 
 ```c
 /* Assign the address of the GPIO peripheral (Using ARM Physical Address) */
 gpio = (unsigned int*)GPIO_BASE;
 gpio[LED_GPFSEL] |= (1 << LED_GPFBIT);
 ```
-
 
 This code looks a bit messy, but we will tidy up and optimise later on. For now we just want to get
 to the point where we can light an LED and understand why it is lit!
@@ -566,7 +570,6 @@ register:
 ```c
 *gpio_clear |= (1<<16);
 ```
-
 Putting what we've learnt into the minimal example above gives us a program that compiles and links
 into an executable which should provide us with a Raspberry-Pi that lights the OK LED when it is
 powered. Here's the complete code we'll compile `part-1/armc-02`
