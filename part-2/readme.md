@@ -358,6 +358,7 @@ understand what's going on still.
 ```text
 801c:    e3822701     orr    r2, r2, #262144    ; 0x40000
 ```
+
 The modify part of `|=`. In this case `(1 << LED_GPFBIT)` has been reduced to a constant.
 The original `gpio[LED_GPFSEL]` value is still in r2. We OR that value with the constant to
 set the bit and store the new value in r2. The ARM architecture cannot modify a register value
