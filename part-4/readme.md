@@ -853,7 +853,7 @@ soc {
       interrupt-controller;
       #interrupt-cells = <3>;
       compatible = "arm,gic-400";
-      reg =	<0x40041000 0x1000>,
+      reg =    <0x40041000 0x1000>,
             <0x40042000 0x2000>,
             <0x40044000 0x2000>,
             <0x40046000 0x2000>;
