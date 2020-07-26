@@ -1,6 +1,7 @@
 # Raspberry-Pi Bare Metal Tutorial
 
-![Build Status](https://github.com/BrianSidebotham/arm-tutorial-rpi/workflows/Build/badge.svg) ![Markdown Status](https://github.com/BrianSidebotham/arm-tutorial-rpi/workflows/Markdown%20Lint/badge.svg)
+![Build Status](https://github.com/BrianSidebotham/arm-tutorial-rpi/workflows/Build/badge.svg)
+![Markdown Status](https://github.com/BrianSidebotham/arm-tutorial-rpi/workflows/Markdown%20Lint/badge.svg)
 
 This repository contains the code for the Raspberry-Pi bare-metal programming
 in C series. The home of the tutorial and all of the articles relating to the
