@@ -544,6 +544,7 @@ what RPI model is being targeted.
     #error Unknown RPI Model!
 #endif
 ```
+
 In order to set GPIO16 as an output then we need to write a value of 1 in the relevant bits of the
 function select register. Here we can rely on the fact that this register is set to 0 after a reset
 and so all we need to do is set:
@@ -570,6 +571,7 @@ register:
 ```c
 *gpio_clear |= (1<<16);
 ```
+
 Putting what we've learnt into the minimal example above gives us a program that compiles and links
 into an executable which should provide us with a Raspberry-Pi that lights the OK LED when it is
 powered. Here's the complete code we'll compile `part-1/armc-02`
