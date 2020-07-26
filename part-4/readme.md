@@ -180,19 +180,19 @@ Therefore to write a very basic "undefined instruction" handler we can define de
 implement our handler like this:
 
 ```c
-    /**
-        @brief The undefined instruction interrupt handler
+/**
+    @brief The undefined instruction interrupt handler
 
-        If an undefined instruction is encountered, the CPU will start
-        executing this function. Just trap here as a debug solution.
-    */
-    void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
+    If an undefined instruction is encountered, the CPU will start
+    executing this function. Just trap here as a debug solution.
+*/
+void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
+{
+    while( 1 )
     {
-        while( 1 )
-        {
-            /* Do Nothing! */
-        }
+        /* Do Nothing! */
     }
+}
 ```
 
 While it looks like this is useless code, it is actually pretty useful. We can set a breakpoint
@@ -282,14 +282,14 @@ doesn't get you a working application. Earlier in the tutorials I introduced the
 disassembler - a great tool, but there's something else in our toolchain's toolbag already, objdump!
 
 ```console
-$ arm-none-eabi-objdump --help
+[~]$ arm-none-eabi-objdump --help
 ```
 
 That's your friend, and even more friendly is running this from the build directory of the
 `part-4/armc-013/` tutorial folder once you've built the tutorial:
 
 ```console
-$ arm-none-eabi-objdump -S armc-013 > armc-013.disasm
+[~]$ arm-none-eabi-objdump -S armc-013 > armc-013.disasm
 ```
 
 This tells objdump to disassemble the executable and we then redirect objdumps output to the
