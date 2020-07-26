@@ -167,9 +167,8 @@ It reads:
 > when this attribute is present.
 >
 > NOTE, for the ARM, you can specify the kind of interrupt to be handled by
-> adding an optional parameter to the interrupt attribute like this:
->
->       void f () __attribute__ ((interrupt ("IRQ")));
+> adding an optional parameter to the interrupt attribute like
+> this: `void f () __attribute__ ((interrupt ("IRQ")));`
 >
 > Permissible values for this parameter are: IRQ, FIQ, SWI, ABORT and UNDEF.
 
@@ -889,7 +888,8 @@ need to delve too deep. Our task is simple - get interrupts routed to `CPU0`.
 The GIC-400 register map is available under the `Programmer's Model` section of the
 [CoreLink-400 Generic Interrupt Controller documentation](https://static.docs.arm.com/ddi0471/a/DDI0471A_gic400_r0p0_trm.pdf).
 
-The Register Map is divided up into function blocks. The functional blocks are defined in section 3.2 as:
+The Register Map is divided up into function blocks. The functional blocks are defined in
+section 3.2 as:
 
 - **GICD_** Distributor
 - **GICC_** CPU Interfaces
