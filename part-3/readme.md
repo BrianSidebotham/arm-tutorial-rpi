@@ -171,15 +171,15 @@ The `project()` call tells CMake what the project is called and what languages a
 languages can be left out, and frequently are - but there's a few reasons why we need to tell
 CMake explicitly what languages we're using here.
 
-1. If we don't do this, CMake tests the C++ compiler to make sure it can compile a simple program
-2. to validate the C++ compiler. However, as our system is bare metal and requires specific
-3. linker steps this fails and CMake falls over at the first hurdle. CMake assumes that C and C++
-4. are the project's languages if you do not tell it any languages explicitly.
+If we don't do this, CMake tests the C++ compiler to make sure it can compile a simple program
+to validate the C++ compiler. However, as our system is bare metal and requires specific
+linker steps this fails and CMake falls over at the first hurdle. CMake assumes that C and C++
+are the project's languages if you do not tell it any languages explicitly.
 
-2. Assembler files (.S) in the source list are ignored completely by CMake unless we "enable" the
-3. assembler by telling CMake in the project definition that we're using assembly files. When we
-4. enable assembler, CMake detects gcc as the assembler rather than as - this is good for us
-5. because we then only need one set of compilation flags.
+Assembler files (.S) in the source list are ignored completely by CMake unless we "enable" the
+assembler by telling CMake in the project definition that we're using assembly files. When we
+enable assembler, CMake detects gcc as the assembler rather than as - this is good for us
+because we then only need one set of compilation flags.
 
 As we'll see in a bit, to successfully configure, we need to pass some C flags to CMake when
 configuring. This is so that the C compiler sanity check passes by enabling the C compiler to
