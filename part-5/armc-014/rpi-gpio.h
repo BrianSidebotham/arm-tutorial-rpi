@@ -45,7 +45,7 @@
 
     /* The RPi3B+ again made the ACT LED available on a GPIO pin (of course on yet another pin!) */
     /* https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2837-rpi-3-b-plus.dts */
-    #define LED_GPFSEL      GPIO_GPFSEL2
+    #define LED_GPFSEL      GPFSEL2
     #define LED_GPFBIT      27
     #define LED_GPSET       GPSET0
     #define LED_GPCLR       GPCLR0
