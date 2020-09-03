@@ -15,10 +15,6 @@
 #include "rpi-gpio.h"
 #include "rpi-interrupts.h"
 
-extern void outbyte( char b );
-
-volatile int uptime = 0;
-
 /**
     @brief The Reset vector interrupt handler
 
@@ -28,13 +24,7 @@ volatile int uptime = 0;
 */
 void __attribute__((interrupt("ABORT"))) reset_vector(void)
 {
-    outbyte('R');
-    outbyte('\r');
-    outbyte('\n');
-    while(1)
-    {
-        LED_ON();
-    }
+
 }
 
 /**
@@ -45,12 +35,9 @@ void __attribute__((interrupt("ABORT"))) reset_vector(void)
 */
 void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
 {
-    outbyte('U');
-    outbyte('\r');
-    outbyte('\n');
-    while(1)
+    while( 1 )
     {
-        LED_ON();
+        /* Do Nothing! */
     }
 }
 
@@ -63,12 +50,9 @@ void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
 */
 void __attribute__((interrupt("SWI"))) software_interrupt_vector(void)
 {
-    outbyte('S');
-    outbyte('\r');
-    outbyte('\n');
-    while(1)
+    while( 1 )
     {
-        LED_ON();
+        /* Do Nothing! */
     }
 }
 
@@ -81,13 +65,7 @@ void __attribute__((interrupt("SWI"))) software_interrupt_vector(void)
 */
 void __attribute__((interrupt("ABORT"))) prefetch_abort_vector(void)
 {
-    outbyte('P');
-    outbyte('\r');
-    outbyte('\n');
-    while(1)
-    {
-        LED_ON();
-    }
+
 }
 
 
@@ -99,13 +77,7 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_vector(void)
 */
 void __attribute__((interrupt("ABORT"))) data_abort_vector(void)
 {
-    outbyte('D');
-    outbyte('\r');
-    outbyte('\n');
-    while(1)
-    {
-        LED_ON();
-    }
+
 }
 
 
@@ -120,19 +92,26 @@ void __attribute__((interrupt("ABORT"))) data_abort_vector(void)
 void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 {
     static int lit = 0;
-    static int jiffies = 0;
+    static int ticks = 0;
+    static int seconds = 0;
 
     if( RPI_GetArmTimer()->MaskedIRQ ) {
         /* Clear the ARM Timer interrupt - it's the only interrupt we have
            enabled, so we want don't have to work out which interrupt source
            caused us to interrupt */
         RPI_GetArmTimer()->IRQClear = 1;
-
-        jiffies++;
-        if( jiffies == 2 )
+        ticks++;
+        if( ticks > 1 )
         {
-            jiffies = 0;
-            uptime++;
+            ticks = 0;
+
+            /* Calculate the FPS once a minute */
+            seconds++;
+            if( seconds > 59 )
+            {
+                seconds = 0;
+                calculate_frame_count = 1;
+            }
         }
 
         /* Flip the LED */
@@ -177,11 +156,5 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 */
 void __attribute__((interrupt("FIQ"))) fast_interrupt_vector(void)
 {
-    outbyte('F');
-    outbyte('\r');
-    outbyte('\n');
-    while(1)
-    {
-        LED_ON();
-    }
+
 }

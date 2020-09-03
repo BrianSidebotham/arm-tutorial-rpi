@@ -23,12 +23,10 @@ aux_t* RPI_GetAux( void )
 /* Define the system clock frequency in MHz for the baud rate calculation.
    This is clearly defined on the BCM2835 datasheet errata page:
    http://elinux.org/BCM2835_datasheet_errata */
-#define SYS_FREQ    250000000
+
 
 void RPI_AuxMiniUartInit( int baud, int bits )
 {
-    volatile int i;
-
     /* As this is a mini uart the configuration is complete! Now just
        enable the uart. Note from the documentation in section 2.1.1 of
        the ARM peripherals manual:
@@ -36,9 +34,6 @@ void RPI_AuxMiniUartInit( int baud, int bits )
        If the enable bits are clear you will have no access to a
        peripheral. You can not even read or write the registers */
     auxillary->ENABLES = AUX_ENA_MINIUART;
-
-    /* Disable interrupts for now */
-    /* auxillary->IRQ &= ~AUX_IRQ_MU; */
 
     auxillary->MU_IER = 0;
 
@@ -58,19 +53,21 @@ void RPI_AuxMiniUartInit( int baud, int bits )
 
     auxillary->MU_IIR = 0xC6;
 
-    /* Transposed calculation from Section 2.2.1 of the ARM peripherals
-       manual */
-    auxillary->MU_BAUD = ( SYS_FREQ / ( 8 * baud ) ) - 1;
+    /* Transposed calculation from Section 2.2.1 of the ARM peripherals manual */
+    auxillary->MU_BAUD = ( SYSFREQ / ( 8 * baud ) ) - 1;
 
-     /* Setup GPIO 14 and 15 as alternative function 5 which is
-        UART 1 TXD/RXD. These need to be set before enabling the UART */
+    /* Setup GPIO 14 and 15 as alternative function 5 which is UART 1 TXD/RXD. These need to be
+       set before enabling the UART */
     RPI_SetGpioPinFunction( RPI_GPIO14, FS_ALT5 );
     RPI_SetGpioPinFunction( RPI_GPIO15, FS_ALT5 );
 
+    /* See the requirements in the GPIO section of the timing requirements of the GPIO controller.
+       Who knows why 150 cycles is mentioned - what if we're running at 1500MHz as opposed to
+       500MHz ? */
     RPI_GetGpio()->GPPUD = 0;
-    for( i=0; i<150; i++ ) { }
+    for( volatile int i=0; i<150; i++ ) { }
     RPI_GetGpio()->GPPUDCLK0 = ( 1 << 14 );
-    for( i=0; i<150; i++ ) { }
+    for( volatile int i=0; i<150; i++ ) { }
     RPI_GetGpio()->GPPUDCLK0 = 0;
 
     /* Disable flow control,enable transmitter and receiver! */

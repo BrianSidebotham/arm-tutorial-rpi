@@ -1,26 +1,23 @@
+/*
+    Part of the Raspberry-Pi Bare Metal Tutorials
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2020, Brian Sidebotham
+
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
+
+*/
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "rpi-armtimer.h"
 #include "rpi-base.h"
 #include "rpi-gpio.h"
 #include "rpi-interrupts.h"
 
-/** @brief The BCM2835/6 Interupt controller peripheral at it's base address */
-static rpi_irq_controller_t* rpiIRQController =
-        (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
+extern void outbyte( char b );
 
-volatile int calculate_frame_count = 0;
-
-/**
-    @brief Return the IRQ Controller register set
-*/
-rpi_irq_controller_t* RPI_GetIrqController( void )
-{
-    return rpiIRQController;
-}
-
+volatile int uptime = 0;
 
 /**
     @brief The Reset vector interrupt handler
@@ -31,7 +28,10 @@ rpi_irq_controller_t* RPI_GetIrqController( void )
 */
 void __attribute__((interrupt("ABORT"))) reset_vector(void)
 {
-    while( 1 )
+    outbyte('R');
+    outbyte('\r');
+    outbyte('\n');
+    while(1)
     {
         LED_ON();
     }
@@ -45,9 +45,11 @@ void __attribute__((interrupt("ABORT"))) reset_vector(void)
 */
 void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
 {
-    while( 1 )
+    outbyte('U');
+    outbyte('\r');
+    outbyte('\n');
+    while(1)
     {
-        /* Do Nothing! */
         LED_ON();
     }
 }
@@ -61,9 +63,11 @@ void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
 */
 void __attribute__((interrupt("SWI"))) software_interrupt_vector(void)
 {
-    while( 1 )
+    outbyte('S');
+    outbyte('\r');
+    outbyte('\n');
+    while(1)
     {
-        /* Do Nothing! */
         LED_ON();
     }
 }
@@ -77,7 +81,10 @@ void __attribute__((interrupt("SWI"))) software_interrupt_vector(void)
 */
 void __attribute__((interrupt("ABORT"))) prefetch_abort_vector(void)
 {
-    while( 1 )
+    outbyte('P');
+    outbyte('\r');
+    outbyte('\n');
+    while(1)
     {
         LED_ON();
     }
@@ -92,7 +99,10 @@ void __attribute__((interrupt("ABORT"))) prefetch_abort_vector(void)
 */
 void __attribute__((interrupt("ABORT"))) data_abort_vector(void)
 {
-    while( 1 )
+    outbyte('D');
+    outbyte('\r');
+    outbyte('\n');
+    while(1)
     {
         LED_ON();
     }
@@ -110,38 +120,32 @@ void __attribute__((interrupt("ABORT"))) data_abort_vector(void)
 void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 {
     static int lit = 0;
-    static int ticks = 0;
-    static int seconds = 0;
+    static int jiffies = 0;
 
-    /* Clear the ARM Timer interrupt - it's the only interrupt we have
-       enabled, so we want don't have to work out which interrupt source
-       caused us to interrupt */
-    RPI_GetArmTimer()->IRQClear = 1;
+    if( RPI_GetArmTimer()->MaskedIRQ ) {
+        /* Clear the ARM Timer interrupt - it's the only interrupt we have
+           enabled, so we want don't have to work out which interrupt source
+           caused us to interrupt */
+        RPI_GetArmTimer()->IRQClear = 1;
 
-    ticks++;
-    if( ticks > 1 )
-    {
-        ticks = 0;
-
-        /* Calculate the FPS once a minute */
-        seconds++;
-        if( seconds > 59 )
+        jiffies++;
+        if( jiffies == 2 )
         {
-            seconds = 0;
-            calculate_frame_count = 1;
+            jiffies = 0;
+            uptime++;
         }
-    }
 
-    /* Flip the LED */
-    if( lit )
-    {
-        LED_OFF();
-        lit = 0;
-    }
-    else
-    {
-        LED_ON();
-        lit = 1;
+        /* Flip the LED */
+        if( lit )
+        {
+            LED_OFF();
+            lit = 0;
+        }
+        else
+        {
+            LED_ON();
+            lit = 1;
+        }
     }
 }
 
@@ -173,5 +177,11 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 */
 void __attribute__((interrupt("FIQ"))) fast_interrupt_vector(void)
 {
-
+    outbyte('F');
+    outbyte('\r');
+    outbyte('\n');
+    while(1)
+    {
+        LED_ON();
+    }
 }

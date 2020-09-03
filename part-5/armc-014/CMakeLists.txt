@@ -1,6 +1,6 @@
 
 #   Part of the Raspberry-Pi Bare Metal Tutorials
-#   Copyright (c) 2015, Brian Sidebotham
+#   Copyright (c) 2013-2020, Brian Sidebotham
 #   All rights reserved.
 
 #   Redistribution and use in source and binary forms, with or without
@@ -16,14 +16,13 @@
 #   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 #   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 #   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-#   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-#   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-#   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-#   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-#   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-#   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-#   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-#   POSSIBILITY OF SUCH DAMAGE.
+#   ARE DISCLAIMED. IN NO EVENT SHALL THE
+#   Part of the Raspberry-Pi Bare Metal Tutorials
+#   https://www.valvers.com/rpi/bare-metal/
+#   Copyright (c) 2013, Brian Sidebotham
+
+#   This software is licensed under the MIT License.
+#   Please see the LICENSE file included with this software.
 
 # CMake build environment for the Valvers Raspberry-Pi bare metal tutorials
 
@@ -31,43 +30,37 @@
 
 cmake_minimum_required( VERSION 2.8 )
 
-# Set the tutorial number so it's easier to re-use the CMakeLists.txt
-set( TUT 014 )
-
 # Mark the language as C so that CMake doesn't try to test the C++
 # cross-compiler's ability to compile a simple program because that will fail
-project( armc-${TUT}-tutorial C ASM )
+project( valvers-${TUTORIAL} C ASM )
 
-# Add any C compiler flags here. The C flags concerned with processor tuning
-# are in the toolchain files toolchain-arm-none-eabi-bcm2835.cmake, etc.
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall" )
+# We had to adjust the CMAKE_C_FLAGS variable in the toolchain file to make sure
+# the compiler would work with CMake's simple program compilation test. So unset
+# it explicitly before re-setting it correctly for our system
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard" )
 
-add_executable( armc-${TUT}-${BOARD}
-    armc-${TUT}.c
+add_executable( kernel.${TUTORIAL}.${BOARD}
+    ${TUTORIAL}.c
     armc-cstartup.c
     armc-cstubs.c
     armc-start.S
-    rpi-armtimer.c
-    rpi-armtimer.h
-    rpi-aux.c
-    rpi-aux.h
+    gic-400.c gic-400.h
+    rpi-armtimer.c rpi-armtimer.h
+    rpi-aux.c rpi-aux.h
     rpi-base.h
-    rpi-gpio.c
-    rpi-gpio.h
-    rpi-interrupts.c
-    rpi-interrupts.h
-    rpi-mailbox.c
-    rpi-mailbox.h
-    rpi-mailbox-interface.c
-    rpi-mailbox-interface.h
-    rpi-systimer.c
-    rpi-systimer.h )
+    rpi-gpio.c rpi-gpio.h
+    rpi-interrupts-controller.c
+    rpi-interrupts.c rpi-interrupts.h
+    rpi-mailbox-interface.c rpi-mailbox-interface.h
+    rpi-mailbox.c rpi-mailbox.h
+    rpi-systimer.c rpi-systimer.h )
 
 add_custom_command(
-    TARGET armc-${TUT}-${BOARD} POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} ./armc-${TUT}-${BOARD}${CMAKE_EXECUTABLE_SUFFIX} -O binary ./kernel-${BOARD}.img
-    COMMAND ${CMAKE_OBJDUMP} -l -S -D ./armc-${TUT}-${BOARD}${CMAKE_EXECUTABLE_SUFFIX} > ./kernel-${BOARD}.img.asm
+    TARGET kernel.${TUTORIAL}.${BOARD} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} ./kernel.${TUTORIAL}.${BOARD}${CMAKE_EXECUTABLE_SUFFIX} -O binary ./kernel.${TUTORIAL}.${BOARD}.img
+    COMMAND ${CMAKE_OBJDUMP} -l -S -D ./kernel.${TUTORIAL}.${BOARD}${CMAKE_EXECUTABLE_SUFFIX} > ./kernel.${TUTORIAL}.${BOARD}.asm
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Convert the ELF output file to a binary image" )
