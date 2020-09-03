@@ -1,6 +1,6 @@
 
 #   Part of the Raspberry-Pi Bare Metal Tutorials
-#   Copyright (c) 2013-2015, Brian Sidebotham
+#   Copyright (c) 2013-2020, Brian Sidebotham
 #   All rights reserved.
 
 #   Redistribution and use in source and binary forms, with or without
