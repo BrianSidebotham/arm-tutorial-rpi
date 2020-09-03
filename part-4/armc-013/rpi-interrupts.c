@@ -1,7 +1,7 @@
 /*
     Part of the Raspberry-Pi Bare Metal Tutorials
     https://www.valvers.com/rpi/bare-metal/
-    Copyright (c) 2013-2018, Brian Sidebotham
+    Copyright (c) 2013-2020, Brian Sidebotham
 
     This software is licensed under the MIT License.
     Please see the LICENSE file included with this software.
@@ -101,12 +101,12 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
         /* Flip the LED */
         if( lit )
         {
-            RPI_SetGpioHi( LED_GPIO );
+            LED_OFF();
             lit = 0;
         }
         else
         {
-            RPI_SetGpioLo( LED_GPIO );
+            LED_ON();
             lit = 1;
         }
     }

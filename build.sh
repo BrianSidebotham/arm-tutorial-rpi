@@ -38,4 +38,8 @@ exit_if_errors ${scriptdir}/part-3/armc-012/build.sh ${RPI}
 
 exit_if_errors ${scriptdir}/part-4/armc-013/build.sh ${RPI}
 
+exit_if_errors ${scriptdir}/part-5/armc-014/build.sh ${RPI}
+exit_if_errors ${scriptdir}/part-5/armc-015/build.sh ${RPI}
+exit_if_errors ${scriptdir}/part-5/armc-016/build.sh ${RPI}
+
 exit 0

@@ -128,6 +128,19 @@ typedef struct {
     } data;
     } rpi_mailbox_property_t;
 
+typedef enum {
+    TAG_CLOCK_RESERVED = 0,
+    TAG_CLOCK_EMMC,
+    TAG_CLOCK_UART,
+    TAG_CLOCK_ARM,
+    TAG_CLOCK_CORE,
+    TAG_CLOCK_V3D,
+    TAG_CLOCK_H264,
+    TAG_CLOCK_ISP,
+    TAG_CLOCK_SDRAM,
+    TAG_CLOCK_PIXEL,
+    TAG_CLOCK_PWM,
+    } rpi_tag_clock_id_t;
 
 extern void RPI_PropertyInit( void );
 extern void RPI_PropertyAddTag( rpi_mailbox_tag_t tag, ... );

@@ -1,3 +1,12 @@
+/*
+    Part of the Raspberry-Pi Bare Metal Tutorials
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
+
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
+
+*/
 
 #include "rpi-aux.h"
 #include "rpi-base.h"
@@ -14,7 +23,7 @@ aux_t* RPI_GetAux( void )
 /* Define the system clock frequency in MHz for the baud rate calculation.
    This is clearly defined on the BCM2835 datasheet errata page:
    http://elinux.org/BCM2835_datasheet_errata */
-#define SYS_FREQ    250000000
+
 
 void RPI_AuxMiniUartInit( int baud, int bits )
 {
@@ -51,10 +60,10 @@ void RPI_AuxMiniUartInit( int baud, int bits )
 
     /* Transposed calculation from Section 2.2.1 of the ARM peripherals
        manual */
-    auxillary->MU_BAUD = ( SYS_FREQ / ( 8 * baud ) ) - 1;
+    auxillary->MU_BAUD = ( SYSFREQ / ( 8 * baud ) ) - 1;
 
      /* Setup GPIO 14 and 15 as alternative function 5 which is
-        UART 1 TXD/RXD. These need to be set before enabling the UART */
+        UART 1 TXD/RXD. These need to be set             before enabling the UART */
     RPI_SetGpioPinFunction( RPI_GPIO14, FS_ALT5 );
     RPI_SetGpioPinFunction( RPI_GPIO15, FS_ALT5 );
 

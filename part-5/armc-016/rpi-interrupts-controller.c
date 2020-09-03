@@ -69,7 +69,7 @@ void RPI_EnableARMTimerInterrupt(void)
 {
 #ifdef RPI4
 //    RPI_EnableGICInterrupts();
-    gic400_init(0xFF840000UL);
+    gic400_init((void*)0xFF840000UL);
 #endif
     RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
 }

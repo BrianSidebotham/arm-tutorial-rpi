@@ -78,6 +78,15 @@ start_file=${startfile}
 fixup_file=${fixupfile}
 EOF
 
+# See https://www.raspberrypi.org/documentation/configuration/boot_folder.md for the kernel filename
+# options and what they mean
+kernel_filename=kernel.img
+if [ "${model}X" = "rpi2X" ] || [ "${model}X" = "rpi2bp" ]; then
+    kernel_filename=kernel7.img
+elif [ "${model}X" = "rpi4X" ]; then
+    kernel_filename=kernel7l.img
+fi
+
 # Now we create a separate partition file which we can write the filesystem on. This can then be concatentated to the
 # parititon table we generated above
 dd bs=1024 count=$(($((${diskspace} - 1)) * 1024)) if=/dev/zero of="${tmpcardpart}"
@@ -94,13 +103,16 @@ mkfs.fat -S 512 -I "${tmpcardpart}"
 # https://github.com/Distrotech/mtools/blob/master/mcopy.c
 # It's also mentioned in "man mtools" too
 # Copy the kernel image file to the image's FAT file system and name the target file kernel.img
-mcopy -v -i ${tmpcardpart} ${kernel_file} ::kernel.img
+mcopy -v -i ${tmpcardpart} ${kernel_file} ::${kernel_filename}
 
 # Copy the rest of the files required in the same way
+# bootcode.bin is no longer used by the rpi4 - we could leave it in place though and the rpi4 will ignore it.
+if [ "${model}X" != "rpi4X" ]; then
 mcopy -v -i ${tmpcardpart} ${scriptdir}/../firmware/firmware/boot/bootcode.bin  ::bootcode.bin
+fi
 mcopy -v -i ${tmpcardpart} ${scriptdir}/../firmware/firmware/boot/${fixupfile}  ::${fixupfile}
 mcopy -v -i ${tmpcardpart} ${scriptdir}/../firmware/firmware/boot/${startfile}  ::${startfile}
-mcopy -v -i ${tmpcardpart} ${tmpcfg}                                               ::config.txt
+mcopy -v -i ${tmpcardpart} ${tmpcfg}                                             ::config.txt
 
 # Stich the disk image together by copying the partition table from the fake disk image and then concatentate the FAT
 # file system partition on the end

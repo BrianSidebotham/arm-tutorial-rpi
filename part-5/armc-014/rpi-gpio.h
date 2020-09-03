@@ -1,7 +1,7 @@
 /*
     Part of the Raspberry-Pi Bare Metal Tutorials
     https://www.valvers.com/rpi/bare-metal/
-    Copyright (c) 2013-2018, Brian Sidebotham
+    Copyright (c) 2013-2020, Brian Sidebotham
 
     This software is licensed under the MIT License.
     Please see the LICENSE file included with this software.
@@ -22,14 +22,14 @@
 
 #if defined( RPI1 ) && !defined( IOBPLUS )
 
-    /* Very early models of the RPi including the Model A or B had ACT LED available on GPIO */
+    /* Very early models of the RPi including the Model A or B had ACT LED
+       available on GPIO */
     #define LED_GPFSEL      GPFSEL1
     #define LED_GPFBIT      18
     #define LED_GPSET       GPSET0
     #define LED_GPCLR       GPCLR0
     #define LED_GPIO_BIT    16
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_GPIO        16
 
 #elif (defined( RPI1 ) && defined( IOBPLUS )) || defined( RPI2 ) || defined( RPI0 )
 
@@ -39,23 +39,41 @@
     #define LED_GPSET       GPSET1
     #define LED_GPCLR       GPCLR1
     #define LED_GPIO_BIT    15
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_GPIO        47
 
 #elif defined( RPI3 ) && defined( IOBPLUS )
 
     /* The RPi3B+ again made the ACT LED available on a GPIO pin (of course on yet another pin!) */
+    /* https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2837-rpi-3-b-plus.dts */
     #define LED_GPFSEL      GPFSEL2
     #define LED_GPFBIT      27
     #define LED_GPSET       GPSET0
     #define LED_GPCLR       GPCLR0
     #define LED_GPIO_BIT    29
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_GPIO        29
 
 #elif defined( RPI3 )
 
     #error The RPI3 has an ioexpander between the ACT LED and the GPU and so cannot be used in this tutorial
+
+#elif defined( RPI4 )
+    /* The RPi4 model has the ACT LED attached to GPIO 42
+       https://github.com/raspberrypi/linux/blob/rpi-4.19.y/arch/arm/boot/dts/bcm2838-rpi-4-b.dts */
+    #define LED_GPFSEL      GPFSEL4
+    #define LED_GPFBIT      6
+    #define LED_GPSET       GPSET1
+    #define LED_GPCLR       GPCLR1
+    #define LED_GPIO_BIT    10
+    #define LED_GPIO        42
+
+#endif
+
+#if defined(RPI0) || (defined(RPI1) && !defined(IOBPLUS))
+    #define LED_ON()        do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+#else
+    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
 #endif
 
 typedef enum {

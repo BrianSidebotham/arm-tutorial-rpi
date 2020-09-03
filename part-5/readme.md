@@ -1,23 +1,23 @@
 # Part 5 - Graphics (Basic)
 
 Finally, we get on to a tutorial that moves us away from blinking an LED as we explore the
-VideoCore IV GPU
-
-> **NOTE:** This tutorial has not yet been migrated to **RPI4**!
-> (See [Github Issue 29](https://github.com/BrianSidebotham/arm-tutorial-rpi/issues/29))
+VideoCore IV GPU's framebuffer.
 
 ## Reference Material
 
 We need some reading material for this tutorial - this is how I put the tutorial together, by
-reading and studying the manuals available for the Videcore, but for this tutorial mainly the
-information from the Cambridge Raspberry Pi Tutorials. Yes there's a lot of text and more than
-one manual - but that's the only way you learn!
+reading and studying the manuals available for the Videcore, mainly for this tutorial the
+information comes from the BCM238x peripherals datasheet and the raspberrypi gpu mailbox
+documnetation.
 
 Some material that's useful (Generally for late night reading!):
 
 - [Raspberry Pi Firmware Mailboxes information](https://github.com/raspberrypi/firmware/wiki/Accessing-mailboxes)
 
 This information is less important for now, but worth noting:
+
+Yes there's a lot of text and more than one manual - but that's the only way you
+learn!
 
 - [VideoCoreIv-AG100 3D Architecture Reference](http://www.broadcom.com/docs/support/videocore/VideoCoreIV-AG100-R.pdf)
 - [Android Graphics Driver Source Code for VideoCoreIV](http://www.broadcom.com/docs/support/videocore/Brcm_Android_ICS_Graphics_Stack.tar.gz)
@@ -33,7 +33,7 @@ graphics.
 A framebuffer is a term that really refers to a block of video memory. This video memory is used
 to display pixels on the screen. So we have access to each pixel on the screen and can change
 it's colour properties. The framebuffer should be at least as big as the screen resolution. The
-size of the framebuffer memory block is given by:
+size of the framebuffer memory block is given by a simple equation:
 
 ```c
 framebuffer_bytes = pixels_x * pixels_y * bytes_per_pixel
@@ -44,17 +44,17 @@ framebuffer_bytes = pixels_x * pixels_y * bytes_per_pixel
 
 The number of bytes per pixel sets the number of colours available. The Raspberry-Pi GPU supports
 8-bit, but in this mode the 8-bit value corresponds to a palette entry, and the palette appears
-to be very limited A palette mode can be really useful as it's fast (minimal amount of memory
+to be very limited. A palette mode can be really useful as it's fast (minimal amount of memory
 required for the graphics) and can be really useful for some special effects by simply altering
-the palette.
+the palette. These were great techniques for fast graphics on the old 16-bit machines in the 1990s.
 
 16-bit requires two bytes of data per pixel and directly represents the Red, Green and Blue
-levels of the colour of the pixel, and 32-bit has 4 bytes of data per pixel which has 8-bit per
-primary colour and an 8-biot alpha channel (transparency).
+levels of the colour of the pixel (awkwardly packed into 16-bits), and 32-bit has 4 bytes of data
+per pixel which has 8-bit per primary colour and an 8-bit alpha channel (transparency).
 
-The GPU is generally quite a closely guarded secret. It's a specialised processor, but also a
-powerful processor and most people would like to run code on it, just like we're running code
-on the GPU itself, but alas the GPU information is still under NDA (Non-Disclosure Agreement)
+The GPU inner workings are generally quite a closely guarded secret. It's a specialised processor,
+but also a powerful processor and most people would like to run code on it, just like we're running
+code on the GPU itself, but alas the GPU information is still under NDA (Non-Disclosure Agreement)
 terms.
 
 Broadcom however, did release some information and some of the most interesting information is
@@ -82,7 +82,7 @@ This mailbox is responsible for negotiating the framebuffer. We need some code t
 read and write data from the mailbox and we also need to define the data structure defined by
 the framebuffer mailbox documentation.
 
-## part-5/armc-014
+## Tutorial Background
 
 The ARM014 tutorial introduces a few new peices of the puzzle. Firstly, as an aid to debugging
 now the code is getting more complex it introduces the mini UART which means we can have a basic
@@ -94,6 +94,7 @@ the point of generating graphics, we must talk to the GPU!
 This code does generate an "animated" display, but as we'll see - it is extremely slow to
 use un-optimised software rendering on an RPI! If you want, go ahead and compile it now and
 plug the raspberry pi into a monitor or television with a HDMI interface. It **should** work!
+
 As we're now including new hardware into the mix it's possible that your monitor or TV doesn't
 support the resolution and colour depth that the example is hard coded to use. It's an example
 that's designed to be simple rather than supporting every HDMI panel out there. Hopefully
@@ -105,11 +106,11 @@ on [YouTube](https://youtube.com).
 
 This tutorial shows how a 700MHz (or 900MHz) processor doesn't give you carte-blanche to
 program in C and end up with an optimised output. In this example there is no vertical sync
-used, we simply dedicate 100% of the ARM processor time to drawing the rectangle in video
-memory and then moving it one pixel before drawing it to the video memory again. In this way
-we can see the raw speed of the processor at work. It's pretty slow isn't it!
+used, we simply dedicate 100% of the one of the ARM processors cores to drawing to every pixel in
+the framebuffer, varying the colour as we go. In this way we can see the raw speed of the processor
+at work. It's pretty slow isn't it!
 
-We'll optimise in the ARM015 code later on in this tutorial.
+We'll start to optimise in the `ARM015` code later on in this tutorial.
 
 ## Getting a UART Text Console
 
@@ -119,17 +120,17 @@ debugging. A later tutorial will talk about using JTAG but for now we can have t
 based text debugging that gets us out of most holes!
 
 This requires some hardware. Namely a
-[TTL-232R-3V3](http://cpc.farnell.com/ftdi/ttl-232r-3v3/cable-usb-to-ttl-level-seri-converter/dp/SC10142)
+[TTL-232R-3V3](https://cpc.farnell.com/ftdi/ttl-232r-3v3/cable-usb-to-ttl-level-seri-converter/dp/SC10142)
 or equivalent is required. The mini uart described in the AUX peripheral below is available on
 the RPI IO expansion headers on pins 8 (GPIO14/TXD) and 10 (GPIO15/RXD)
 
 Connecting the UART to a PC is pretty easy, a quick connection guide is available:
 
-![UART Connection](https://raw.githubusercontent.com/BrianSidebotham/arm-tutorial-rpi/master/part-5/images/ftdi-ttl-232r-3v3-rpi-connection.png)
+![UART Connection](/images/part-5-ftdi-ttl-232r-3v3-rpi-connection.png)
 
 Also, a quick photo of one connected up:
 
-![UART Connection](https://raw.githubusercontent.com/BrianSidebotham/arm-tutorial-rpi/master/part-5/images/ftdi-ttl-232r-3v3-rpi-connection-photo.jpg)
+![UART Connection](/images/part-5-ftdi-ttl-232r-3v3-rpi-connection-photo.jpg)
 
 ### AUX peripheral
 
@@ -142,6 +143,16 @@ We will do some more work on the c stubs to provide uart support in the write sy
 is what the likes of `printf()`, etc. functions use to write to the system.
 
 ```c
+/*
+    Part of the Raspberry-Pi Bare Metal Tutorials
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
+
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
+
+*/
+
 #include "rpi-aux.h"
 #include "rpi-base.h"
 #include "rpi-gpio.h"
@@ -157,12 +168,10 @@ aux_t* RPI_GetAux( void )
 /* Define the system clock frequency in MHz for the baud rate calculation.
    This is clearly defined on the BCM2835 datasheet errata page:
    http://elinux.org/BCM2835_datasheet_errata */
-#define SYS_FREQ    250000000
+
 
 void RPI_AuxMiniUartInit( int baud, int bits )
 {
-    volatile int i;
-
     /* As this is a mini uart the configuration is complete! Now just
        enable the uart. Note from the documentation in section 2.1.1 of
        the ARM peripherals manual:
@@ -170,9 +179,6 @@ void RPI_AuxMiniUartInit( int baud, int bits )
        If the enable bits are clear you will have no access to a
        peripheral. You can not even read or write the registers */
     auxillary->ENABLES = AUX_ENA_MINIUART;
-
-    /* Disable interrupts for now */
-    /* auxillary->IRQ &= ~AUX_IRQ_MU; */
 
     auxillary->MU_IER = 0;
 
@@ -192,19 +198,21 @@ void RPI_AuxMiniUartInit( int baud, int bits )
 
     auxillary->MU_IIR = 0xC6;
 
-    /* Transposed calculation from Section 2.2.1 of the ARM peripherals
-       manual */
-    auxillary->MU_BAUD = ( SYS_FREQ / ( 8 * baud ) ) - 1;
+    /* Transposed calculation from Section 2.2.1 of the ARM peripherals manual */
+    auxillary->MU_BAUD = ( SYSFREQ / ( 8 * baud ) ) - 1;
 
-     /* Setup GPIO 14 and 15 as alternative function 5 which is
-        UART 1 TXD/RXD. These need to be set before enabling the UART */
+    /* Setup GPIO 14 and 15 as alternative function 5 which is UART 1 TXD/RXD. These need to be
+       set before enabling the UART */
     RPI_SetGpioPinFunction( RPI_GPIO14, FS_ALT5 );
     RPI_SetGpioPinFunction( RPI_GPIO15, FS_ALT5 );
 
+    /* See the requirements in the GPIO section of the timing requirements of the GPIO controller.
+       Who knows why 150 cycles is mentioned - what if we're running at 1500MHz as opposed to
+       500MHz ? */
     RPI_GetGpio()->GPPUD = 0;
-    for( i=0; i<150; i++ ) { }
+    for( volatile int i=0; i<150; i++ ) { }
     RPI_GetGpio()->GPPUDCLK0 = ( 1 << 14 );
-    for( i=0; i<150; i++ ) { }
+    for( volatile int i=0; i<150; i++ ) { }
     RPI_GetGpio()->GPPUDCLK0 = 0;
 
     /* Disable flow control,enable transmitter and receiver! */
@@ -223,10 +231,26 @@ void RPI_AuxMiniUartWrite( char c )
 ```
 
 ```c
+/*
+    Part of the Raspberry-Pi Bare Metal Tutorials
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
+
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
+
+*/
+
 #ifndef RPI_AUX_H
 #define RPI_AUX_H
 
 #include "rpi-base.h"
+
+/* Although these values were originally from the BCM2835 Arm peripherals PDF
+   it's clear that was rushed and has some glaring errors - so these values
+   may appear to be different. These values have been changed due to data on
+   the elinux BCM2835 datasheet errata:
+   http://elinux.org/BCM2835_datasheet_errata */
 
 #define AUX_BASE    ( PERIPHERAL_BASE + 0x215000 )
 
@@ -331,9 +355,8 @@ code as possible. So there's no setting for parity or number of stop bits. It's 
 (No parity, one stop bit).
 
 > **HACK:** The calculation for the baud rate registers is done based on a defined system
-> frequency of 250MHz. It works, but it's not as nice as using a detected system frequency.
-> Perhaps after this tutorial you could get the system frequency and update the calculation
-> to use it!
+> frequency relative to the RPI type. It works, but it's not as nice as using a programatically
+> detected system frequency.
 
 The functions are written in a blocking mode, so the write function blocks until the UART can
 accept the next character, then it writes the new character and returns. Normally we'd use the
@@ -380,20 +403,28 @@ introduced in the last tutorial I was able to determine it was an undefined inst
 
 When you run this tutorials examples with PuTTY, you'll see output similar to this:
 
-![PuTTY RPi Connection](https://raw.githubusercontent.com/BrianSidebotham/arm-tutorial-rpi/master/part-5/images/putty-rpi-connection.png)
+![PuTTY RPi Connection](/images/part-5-putty-rpi-connection.png)
+
+If you're on Linux, you can use screen to view the output of the tutorial in the terminal:
+
+```shellsession
+screen /dev/ttyUSB0 115200,cs8,ixoff,-istrip
+```
+
+>**NOTE:** You may have to use sudo in order to open the USB tty!
 
 ### Enabling VFP Support
 
 After a bit more thinking and tinkering I realised we have to enable the VFP now in order to
-use printf. As we're compiling and telling the compiler (or more the linker actually) that we're
+use `printf`. As we're compiling and telling the compiler (or more the linker actually) that we're
 targeting a device with the VFP it is linking to a libc that can use VFP instructions and why
-shouldn't something in the printf implementation use the VFP instruction when necessary to
+shouldn't something in the `printf` implementation use the VFP instruction when necessary to
 speed things up?
 
 There is some [more information about the problem on a stackoverflow answer](http://stackoverflow.com/questions/24589235/application-hangs-when-calling-printf-to-uart-with-bare-metal-raspberry-pi/27257841#27257841).
 
 Without the VFP co-processor being enabled, VFP instructions will cause an undefined instruction
-exception. Enabling the VFP is another task that the C Runtime startup file crt0 would have
+exception. Enabling the VFP is another task that the C Runtime startup file `crt0` would have
 performed for us, but we're on our own since we have to use `-nostartfiles` (See an earlier
 tutorial).
 
@@ -430,7 +461,7 @@ a finger and try and implement something as fundamental as that ourselves.
 Also, this provides us with a debug/comms channel that is separate to the display. It's hard to
 use the display for debugging when the display isn't yet working!
 
-## Mailboxes
+### Mailboxes
 
 We introduce some code in a few files, namely `rpi-mailbox` and `rpi-mailbox-interface`. The
 first is a common interface to access the mailbox system which passes information from the GPU
@@ -442,6 +473,8 @@ firmware github wiki:
 
 - [Access Mailboxes](https://github.com/raspberrypi/firmware/wiki/Accessing-mailboxes)
 - [Mailboxes Wiki](https://github.com/raspberrypi/firmware/wiki/Mailboxes)
+
+`rpi-mailbox.h`
 
 ```c
 #ifndef RPI_MAILBOX_H
@@ -492,6 +525,8 @@ extern int RPI_Mailbox0Read( mailbox0_channel_t channel );
 
 #endif
 ```
+
+`rpi-mailbox.c`:
 
 ```c
 #include <stdint.h>
@@ -584,6 +619,8 @@ times to get a hold of how the data needs to be laid out.
 
 Here's the code we're using to support the Mailbox Property Interface:
 
+`rpi-mailbox-interface.c`:
+
 ```c
 #include <stdarg.h>
 #include <stdio.h>
@@ -650,10 +687,21 @@ void RPI_PropertyAddTag( rpi_mailbox_tag_t tag, ... )
             break;
 
         case TAG_ALLOCATE_BUFFER:
+        case TAG_GET_MAX_CLOCK_RATE:
+        case TAG_GET_MIN_CLOCK_RATE:
+        case TAG_GET_CLOCK_RATE:
             pt[pt_index++] = 8;
             pt[pt_index++] = 0; /* Request */
             pt[pt_index++] = va_arg( vl, int );
-            pt_index += 1;
+            pt[pt_index++] = 0;
+            break;
+
+        case TAG_SET_CLOCK_RATE:
+            pt[pt_index++] = 12;
+            pt[pt_index++] = 0; /* Request */
+            pt[pt_index++] = va_arg( vl, int ); /* Clock ID */
+            pt[pt_index++] = va_arg( vl, int ); /* Rate (in Hz) */
+            pt[pt_index++] = va_arg( vl, int ); /* Skip turbo setting if == 1 */
             break;
 
         case TAG_GET_PHYSICAL_SIZE:
@@ -681,7 +729,6 @@ void RPI_PropertyAddTag( rpi_mailbox_tag_t tag, ... )
                 pt_index += 2;
             }
             break;
-
 
         case TAG_GET_ALPHA_MODE:
         case TAG_SET_ALPHA_MODE:
@@ -797,6 +844,7 @@ rpi_mailbox_property_t* RPI_PropertyGet( rpi_mailbox_tag_t tag )
 
     return &property;
 }
+
 ```
 
 ```c
@@ -920,6 +968,19 @@ typedef struct {
     } data;
     } rpi_mailbox_property_t;
 
+typedef enum {
+    TAG_CLOCK_RESERVED = 0,
+    TAG_CLOCK_EMMC,
+    TAG_CLOCK_UART,
+    TAG_CLOCK_ARM,
+    TAG_CLOCK_CORE,
+    TAG_CLOCK_V3D,
+    TAG_CLOCK_H264,
+    TAG_CLOCK_ISP,
+    TAG_CLOCK_SDRAM,
+    TAG_CLOCK_PIXEL,
+    TAG_CLOCK_PWM,
+    } rpi_tag_clock_id_t;
 
 extern void RPI_PropertyInit( void );
 extern void RPI_PropertyAddTag( rpi_mailbox_tag_t tag, ... );
@@ -929,8 +990,8 @@ extern rpi_mailbox_property_t* RPI_PropertyGet( rpi_mailbox_tag_t tag );
 #endif
 ```
 
-> **NOTE:** As you can see, I've left some debugging `printf()` calls in so you can alter
-> `PRINT_PROP_DEBUG` to print them out - this means it'll print out the buffer you message
+> **NOTE:** As you can see, I've left some debugging `printf()` calls in so you can choose to
+> print them out - this means it'll print out the buffer you message
 > the GPU with and see the resulting buffer when the GPU has finished it's response
 
 We start off with a memory buffer which is large enough to hold a concatenated list of property
@@ -971,7 +1032,7 @@ RPI_PropertyProcess();
 property_value_buffer = RPI_PropertyGet( TAG_* );
 ```
 
-## The Framebuffer Properties
+### The Framebuffer Properties
 
 If you don't yet know, a framebuffer is a block of memory who's data is written to a display.
 The data organisation depends on the display's attributes such as width, height, colour depth,
@@ -1038,59 +1099,36 @@ than you'd realise to refresh the screen when every pixel is written to.
 This is the code that does the actual draw to the framebuffer:
 
 ```c
-pixel_offset = ( x * ( bpp >> 3 ) ) + ( y * pitch );
+/* Produce a colour spread across the screen */
+for( int y = 0; y < height; y++ )
+{
+    int line_offset = y * width;
 
-r = (int)( current_colour.r * 0xFF ) & 0xFF;
-g = (int)( current_colour.g * 0xFF ) & 0xFF;
-b = (int)( current_colour.b * 0xFF ) & 0xFF;
-a = (int)( current_colour.b * 0xFF ) & 0xFF;
-
-if( bpp == 32 )
-{
-    /* Four bytes to write */
-    fb[ pixel_offset++ ] = r;
-    fb[ pixel_offset++ ] = g;
-    fb[ pixel_offset++ ] = b;
-    fb[ pixel_offset++ ] = a;
-}
-else if( bpp == 24 )
-{
-    /* Three bytes to write */
-    fb[ pixel_offset++ ] = r;
-    fb[ pixel_offset++ ] = g;
-    fb[ pixel_offset++ ] = b;
-}
-else if( bpp == 16 )
-{
-    /* Two bytes to write */
-    /* Bit pack RGB565 into the 16-bit pixel offset */
-    *(unsigned short*)&fb[pixel_offset] = ( (r >> 3) << 11 ) | ( ( g >> 2 ) << 5 ) | ( b >> 3 );
-}
-else
-{
-    /* Palette mode. TODO: Work out a colour scheme for
-    packing rgb into an 8-bit palette! */
+    for( int x = 0; x < width; x++ )
+    {
+        fb[line_offset + x] = pixel_value++;
+    }
 }
 ```
 
-As you can see, for each colour depth there is a different drawing algorithm. The RPI also
-supports an 8-bit palette mode which is not supported here.
+We've stuck with 32 bits per pixel (previously this tutorial had an option). This simplifies the
+framebuffer drawing and we can see here what we're doing is really simple. All we're interested in
+is how fast we can write to the screen when modifying every pixel.
 
 The pixel offset calculation can be done based on the bpp (bits-per-pixel) or colour depth
-setting. Notice that normally we'd use the screen width in this calculation, but instead we're
-using `pitch`. This is because the GPU can optimse the number of bytes per pixel line so that
-it can do faster maths, so this is one of the values we request back from the GPU when we
-initialise the framebuffer.
+setting and the number of pixels per line. We're using the width and calculating the start of the
+next line based on the exact memory size taken up by the pixel data.
+
+This isn't entirely right however, because the GPU can choose to optimise the number of bytes per
+pixel row. The GPU refers to this as the pitch and is returned through the property interface. We
+should really use that when we move to an option for lower bits per pixel.
 
 The framebuffer memory is organised with the top left pixel being at offset 0, in screen
-coordinates this is 0,0.
+coordinates this is `0,0`. Bottom right is coordinate `width-1,height-1`.
 
-> **NOTE:** To notice any animation of the colour with this example, you may have to run the
-> sample code for a little while.
+## part-5/armc-014
 
-### armc-014
-
-This example expands on the previous pt4 interrupts code and introduces the mailbox API to
+This example expands on the previous part-4 interrupts code and introduces the mailbox API to
 negotiate a framebuffer with the GPU. It then draws an ever-changing colour square on the screen
 which changes colour to animate the display. The Frames Per Second (FPS) is also calculated and
 sent to the mini UART so if you're monitoring the UART with a terminal such as PuTTY you'll be
@@ -1101,20 +1139,83 @@ set to 640x480 so that the demo will work on every HDMI panel that's plugged in.
 exactly a big screen and yet below are the Frames Per Second (FPS) we managed to achieve on the
 RPI1 and RPI2.
 
-| RPI1 | RPI2
-| --- | ---
-| 3.67 | 0.68
+In order to calculate the frames per second, we need to know how long a second is. We therefore use
+the following code to determine the core frequency so we can calculate the required timer interrupt
+speed. The BCM2385 peripherals datasheet refers to the APB clock which is the same as the core
+clock.
 
-Those results are the right way round, I promise! It's time for us to do some thinking and
-optimising...
+The code is a bit messy, but it gets the job done so no matter the rpi we're running on, or the
+current core frequency, we'll get the right timer interrupt rate. We use this interrupt rate to keep
+track of the uptime in seconds and blinking the LED at 2Hz.
 
-### armc-015
+```c
+/* Use the GPU Mailbox to dynamically retrieve the CORE Clock Frequency. This is also what the
+   datasheet refers to as the APB (Advanced Peripheral Bus) clock which drives the ARM Timer
+   peripheral */
+RPI_PropertyInit();
+RPI_PropertyAddTag(TAG_GET_CLOCK_RATE, TAG_CLOCK_CORE);
+RPI_PropertyProcess();
+mp = RPI_PropertyGet(TAG_GET_CLOCK_RATE);
+uint32_t core_frequency = mp->data.buffer_32[1];
 
-In the RPI processor (both RPI1 and RPI2) there is a cache system which is disabled by default
+/* Calculate the timer reload register value so we achieve an interrupt rate of 2Hz. Every
+   second interrupt will therefore be one second. It's approximate, the division doesn't
+   really work out to be precisely 1s because of the divisor options and the core
+   frequency. */
+uint16_t prescales[] = {1, 16, 256, 1};
+uint32_t timer_load = (1.0 / 2) / (1.0/(core_frequency / (RPI_GetArmTimer()->PreDivider + 1) * (prescales[(RPI_GetArmTimer()->Control & 0xC) >> 2])));
+RPI_GetArmTimer()->Load = timer_load;
+```
+
+Run the code and you'll get some continually changing output on the UART console that shows you the
+board revision, clock speeds and the currently calculated Frames Per Second (FPS) achieve.
+
+```text
+------------------------------------------
+Valvers.com ARM Bare Metal Tutorials
+Initialise UART console with standard libc
+CORE Frequency: 200MHz
+ARM  Frequency: 600MHz
+Board Revision: 0x00b03111 rpi-4B BCM2711 2GiB Sony UK
+Firmware Version: 1593701958
+MAC Address: DC:A6:32:02:DB:E0
+Serial Number: C2702EF910000000
+Initialised Framebuffer: 640x480 32bpp
+Pitch: 2560 bytes
+Framebuffer address: 3E9A2000
+
+```
+
+### Results
+
+Here's some tabulated results about the ARM frequency (with no settings in config.txt) for
+the various boards I'm working with and the Frames Per Second (FPS) they all acheived:
+
+| Model | FPS | CORE Frequency | ARM Frequency | Board Revision |
+| --- | --- | --- | --- | --- |
+| RPI0 | 5.21 | 250MHz | 700MHz | `0x00900092` rpi-Zero BCM2835 512MB Sony UK |
+| RPI1B+ | 5.05 | 250MHz | 700MHz | `0x00000010` rpi-1B+ BCM2835 |
+| RPI2 | 2.30 | 250MHz | 600MHz | `0x00a01041` rpi-2B BCM2836 1GiB Sony UK |
+| RPI3B | 2.26 | 250MHz | 600MHz | `0x00a02082` rpi-3B BCM2837 1GiB Sony UK |
+| RPI4 | 2.77 | 200MHz | 600MHz | `0x00b03111` rpi-4B BCM2711 2GiB Sony UK |
+
+>**NOTE:** The RPI3B I have doesn't flash its LED because it's not a B+ where the ACK LED was moved
+> back to a GPIO pin. So on my model the ACK LED is attached to an IO expander and is meant to be
+> accessed through the GPU mailbox interface! I just compiled with `./build.sh rpi3bp`
+
+Those results are the right way round, I promise - the `RPI0` appears to be the winner here against
+all the other competition! It's time for us to do some thinking and some optimising...
+
+## part-5/armc-015
+
+In the RPI processor (all models) there is a cache system which is disabled by default
 and is designed to speed the processor up by enabling code to be (hopefully) run from the cache.
-In this example we add enabling the cache to the `armc-start.S` startup file:
 
-#### Enabling Cache
+In this example we enable the L1 cache in the `armc-start.S` startup file and programatically set
+the ARM frequency to the maximum it's allowed to be (without overclocking). This is the only change
+we're going to make to see if we see any worthwhile gain in enabling this layer.
+
+### Enabling Cache
 
 ```asm
 .equ    SCTLR_ENABLE_DATA_CACHE         0x4
@@ -1286,7 +1387,7 @@ Write the modified value back to the System Control Register:
 mcr p15,0,r0,c1,c0,0
 ```
 
-#### Maxmising the Clock Speed (RPI2)
+### Maxmising the Clock Speed
 
 I also added in some more mailbox properties to make the RPI2 run faster. When the RPI2 starts
 executing code from the ARM the ARM is running at 600MHz which is a way below its 900MHz maximum.
@@ -1304,35 +1405,43 @@ RPI_PropertyProcess();
 Both the above are fairly easy pickings for making sure we're getting the best speed available
 out of the processors, yet it was still a bit of work to get the gains!
 
-Run **armc-015** and see the gains! Here's the FPS results:
+Run **armc-015** and see the gains! Here's the FPS results with No cache for comparison, don't
+forget that some of the ARM frequencies have changed to the maximum available here too:
 
-| RPI1 | RPI2
-| --- | ---
-| 9.8 | 2.9
+| Model | FPS | FPS (L1 Cache) | Improvement | CORE Frequency | ARM Frequency | Board Revision |
+| --- | --- | --- | --- | --- | --- | --- |
+| RPI0 | 5.21 | 6.86 | **1.65** | 250MHz | 1000MHz | `0x00900092` rpi-Zero BCM2835 512MB Sony UK |
+| RPI1B+ | 5.05 | 5.95 | **0.9** | 250MHz | 700MHz | `0x00000010` rpi-1B+ BCM2835 |
+| RPI2 | 2.30 | 3.04 | **0.74** | 250MHz | 900MHz | `0x00a01041` rpi-2B BCM2836 1GiB Sony UK |
+| RPI3B | 2.26 | 3.08 | **0.82** | 250MHz | 1200MHz | `0x00a02082` rpi-3B BCM2837 1GiB Sony UK |
+| RPI4 | 2.77 | 3.75 | **0.98** | 200MHz | 1500MHz | `0x00b03111` rpi-4B BCM2711 2GiB Sony UK |
 
-Wow! A reasonable gain, but still not exactly fast enough to start writing demos or games
-(Other than text-based games!)
+Some reasonable gains, but still not exactly fast enough to start writing demos or games
+(Other than text-based games!). Considering some of the ARM frequency gains (+900MHz) the gains are
+pretty rubbish.
 
-#### RPI2 performance
+- `RPI0` improves a reasonable amount from a 300MHz increase in ARM frequency and the L1 Cache
+- `RPI1B+` improves slightly from just the L1 Cache
+- `RPI2` improves slighly from 300MHz increase in ARM frequency and the L1 Cache
+- `RPI3B+` improves a reasonable amount with 600MHz increase in ARM frequency and the L1 Cache
+- `RPI4` improves a reasonable amount with the largest increase of 900MHz increase in ARM Frequency
+  and the L1 Cache
 
-At this point the question of why the RPI2 is so much slower than the RPI1 should come to mind!
-I don't have the answer (Send them on a postcard please!)
+### RPI2+ Performance
 
-The only thing going for the RPI1 is a much simpler memory system. Since the RPI2 introduces
+At this point the question of why the RPI2/3/4 models are so much slower than the RPI1 should come
+to mind! I don't have the answer (Send them on a postcard please!)
+
+The only thing going for the RPI1 is a much simpler memory system. Since the rest introduce
 a quad-core architecture, things got a whole bunch more complicated on the memory bus.
 
 Anyway, let's see what else we can do.
 
 ### Making the Compiler work for us
 
-Up until now we've been working with optimisation levels `-O0`(pre-interrupts) and
-`-01`(post-interrupts). The reason for the move to `-01` was to get rid of the caveat that these
-tutorials required an earlier version of gcc than the latest that gcc-arm-emedded offered. The
-issue was down to [this gcc bug](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=59602) and as
-that bug has sat there for at least one minor version, it was time to fix the issue in the code
-as opposed to waiting for gcc and gcc-arm-embedded to catch up!
+Up until now we've been working with optimisation levels `-O0`. Let's change that...
 
-### armc-016
+## part-5/armc-016
 
 One simple change to this code to see what gains can be had by the compiler. If we're using a C
 compiler, we really should take advantage of the fact that a massive part of it's job is to
@@ -1341,18 +1450,23 @@ optimise the code it generates to run as fast as possible.
 We'll change the optimisation level, from `-O1` to `-O4`. Nothing else, let's see what happens
 to the FPS:
 
-| RPI1 | RPI2
-| --- | ---
-| 11.2 | 62
+| Model | FPS | FPS (L1 Cache) | FPS (`-O4`) | Improvement | CORE Frequency | ARM Frequency | Board Revision |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| RPI0 | 5.21 | 6.86 | 119 | **112** | 250MHz | 1000MHz | `0x00900092` rpi-Zero BCM2835 512MB Sony UK |
+| RPI1B+ | 5.05 | 5.95 | 96 | **90** | 250MHz | 700MHz | `0x00000010` rpi-1B+ BCM2835 |
+| RPI2 | 2.30 | 3.04 | 139 | **136** | 250MHz | 900MHz | `0x00a01041` rpi-2B BCM2836 1GiB Sony UK |
+| RPI3B | 2.26 | 3.08 | 168 | **165** | 250MHz | 1200MHz | `0x00a02082` rpi-3B BCM2837 1GiB Sony UK |
+| RPI4 | 2.77 | 3.75 | 250 | **246** | 500MHz | 1500MHz | `0x00b03111` rpi-4B BCM2711 2GiB Sony UK |
 
-That is 62, not 6.2 in the RPI2. Clearly the compiler has done something essential for the RPI2,
-and about what I'd expect for the RPI1 target.
+Those are some impressive gains across the board! Clearly the compiler has done something essential
+for such big gainst. Perhaps it enables the code to entirely sit within cache or something as simple
+as that.
 
 What's it done? I don't know, that's for the compiler to know and for me to find out if I can
 be bothered. Right now I need get on with writing code.
 
 If you're interested in finding out, you can disassemble the code and see if you can see the
-major difference between an `-O1` binary and an `-O4` binary!
+major difference between an `-O0` binary and an `-O4` binary!
 
 I've run out of time, so we'll leave graphics here for now and come back to it in a few
 tutorials time to do some more advanced stuff. We'll look at using hardware accelerated
