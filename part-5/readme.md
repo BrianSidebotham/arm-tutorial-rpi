@@ -52,9 +52,9 @@ the palette. These were great techniques for fast graphics on the old 16-bit mac
 levels of the colour of the pixel (awkwardly packed into 16-bits), and 32-bit has 4 bytes of data
 per pixel which has 8-bit per primary colour and an 8-bit alpha channel (transparency).
 
-The GPU inner workings are generally quite a closely guarded secret. It's a specialised processor, but also a
-powerful processor and most people would like to run code on it, just like we're running code
-on the GPU itself, but alas the GPU information is still under NDA (Non-Disclosure Agreement)
+The GPU inner workings are generally quite a closely guarded secret. It's a specialised processor,
+but also a powerful processor and most people would like to run code on it, just like we're running
+code on the GPU itself, but alas the GPU information is still under NDA (Non-Disclosure Agreement)
 terms.
 
 Broadcom however, did release some information and some of the most interesting information is
@@ -370,7 +370,6 @@ This is one of the original c-stubs we wrote in a previous tutorial. We previous
 implemented a blank function. Here's the blank function we had. As you can see, it's not quite
 blank, but `outbyte` does nothing with the data, it's an empty sink.
 
-
 ```c
 void outbyte( char b )
 {
@@ -408,8 +407,9 @@ When you run this tutorials examples with PuTTY, you'll see output similar to th
 
 If you're on Linux, you can use screen to view the output of the tutorial in the terminal:
 
-```
+```shellsession
 $ screen /dev/ttyUSB0 115200,cs8,ixoff,-istrip
+
 ```
 
 >**NOTE:** You may have to use sudo in order to open the USB tty!
@@ -1171,7 +1171,7 @@ RPI_GetArmTimer()->Load = timer_load;
 Run the code and you'll get some continually changing output on the UART console that shows you the
 board revision, clock speeds and the currently calculated Frames Per Second (FPS) achieve.
 
-```
+```text
 ------------------------------------------
 Valvers.com ARM Bare Metal Tutorials
 Initialise UART console with standard libc
@@ -1425,7 +1425,8 @@ pretty rubbish.
 - `RPI1B+` improves slightly from just the L1 Cache
 - `RPI2` improves slighly from 300MHz increase in ARM frequency and the L1 Cache
 - `RPI3B+` improves a reasonable amount with 600MHz increase in ARM frequency and the L1 Cache
-- `RPI4` improves a reasonable amount with the largest increase of 900MHz increase in ARM Frequency and the L1 Cache
+- `RPI4` improves a reasonable amount with the largest increase of 900MHz increase in ARM Frequency
+  and the L1 Cache
 
 ### RPI2+ Performance
 
