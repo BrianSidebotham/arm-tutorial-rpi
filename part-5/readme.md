@@ -408,8 +408,7 @@ When you run this tutorials examples with PuTTY, you'll see output similar to th
 If you're on Linux, you can use screen to view the output of the tutorial in the terminal:
 
 ```shellsession
-$ screen /dev/ttyUSB0 115200,cs8,ixoff,-istrip
-
+screen /dev/ttyUSB0 115200,cs8,ixoff,-istrip
 ```
 
 >**NOTE:** You may have to use sudo in order to open the USB tty!
