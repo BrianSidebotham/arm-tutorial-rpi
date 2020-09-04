@@ -11,8 +11,7 @@ and [github](https://github.com/BrianSidebotham/arm-tutorial-rpi)
 
 The tutorial supports all RPi models, except:
 
-- rpi3 because the ACT LED is not connected to an IO pin
-- rpi4 (Part1-4 only - Part-5 will support RPI4 very soon!)
+- rpi3 (rpi3B+ is supported) because the ACT LED is not connected to an IO pin
 
 The tutorial only supports a Linux host for compiling the tutorial code.
 
