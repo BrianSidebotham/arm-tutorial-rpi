@@ -19,8 +19,10 @@ set( CMAKE_SYSTEM_NAME          Generic )
 set( CMAKE_SYSTEM_PROCESSOR     BCM2836 )
 
 # Set a toolchain path. You only need to set this if the toolchain isn't in
-# your system path. Don't forget a trailing path separator!
-#set( TC_PATH "" )
+# your system path.
+IF( $TC_PATH )
+STRING(APPEND TC_PATH "/")
+ENDIF()
 
 # The toolchain prefix for all toolchain executables
 set( CROSS_COMPILE arm-none-eabi- )
