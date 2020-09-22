@@ -19,8 +19,10 @@ set( CMAKE_SYSTEM_NAME          Generic )
 set( CMAKE_SYSTEM_PROCESSOR     BCM2835 )
 
 # Set a toolchain path. You only need to set this if the toolchain isn't in
-# your system path. Don't forget a trailing path separator!
-#set( TC_PATH "" )
+# your system path.
+IF( $TC_PATH )
+STRING(APPEND TC_PATH "/")
+ENDIF()
 
 # The toolchain prefix for all toolchain executables
 set( CROSS_COMPILE arm-none-eabi- )
@@ -28,12 +30,14 @@ set( CROSS_COMPILE arm-none-eabi- )
 # specify the cross compiler. We force the compiler so that CMake doesn't
 # attempt to build a simple test program as this will fail without us using
 # the -nostartfiles option on the command line
+
 CMAKE_FORCE_C_COMPILER( "${TC_PATH}${CROSS_COMPILE}gcc" GNU )
 SET( CMAKE_ASM_COMPILER "${TC_PATH}${CROSS_COMPILE}gcc" )
 
 # We must set the OBJCOPY setting into cache so that it's available to the
 # whole project. Otherwise, this does not get set into the CACHE and therefore
 # the build doesn't know what the OBJCOPY filepath is
+
 set( CMAKE_OBJCOPY      ${TC_PATH}${CROSS_COMPILE}objcopy
     CACHE FILEPATH "The toolchain objcopy command " FORCE )
 
