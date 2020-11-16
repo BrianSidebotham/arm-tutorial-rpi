@@ -21,21 +21,13 @@ example that the target is MinGW when the host is Linux and CMake will setup a l
 knowing that they are useful for targetting Windows. On embedded systems we're describing the
 system ourself. It's very easy to describe to CMake because it doesn't need to know much. It
 needs to know what the toolchain filename's are and where they're located. Let's look at the
-`toolchain-arm-none-eabi-rpi.cmake` that I've added to the `compiler/cmake-toolchains` directory:
+`toolchain-arm-none-eabi-rpi0.cmake` that I've added to the `compiler/cmake-toolchains` directory:
 
-## toolchain-arm-none-eabi-rpi.cmake
+## toolchain-arm-none-eabi-rpi0.cmake
 
 ```cmake
-#   Part of the Raspberry-Pi Bare Metal Tutorials
-#   https://www.valvers.com/rpi/bare-metal/
-#   Copyright (c) 2013, Brian Sidebotham
-
-#   This software is licensed under the MIT License.
-#   Please see the LICENSE file included with this software.
 
 # A CMake toolchain file so we can cross-compile for the Rapsberry-Pi bare-metal
-
-include(CMakeForceCompiler)
 
 # usage
 # cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-arm-none-eabi.cmake ../
@@ -46,8 +38,10 @@ set( CMAKE_SYSTEM_NAME          Generic )
 set( CMAKE_SYSTEM_PROCESSOR     BCM2835 )
 
 # Set a toolchain path. You only need to set this if the toolchain isn't in
-# your system path. Don't forget a trailing path separator!
-#set( TC_PATH "" )
+# your system path.
+IF( $TC_PATH )
+STRING(APPEND TC_PATH "/")
+ENDIF()
 
 # The toolchain prefix for all toolchain executables
 set( CROSS_COMPILE arm-none-eabi- )
@@ -55,12 +49,18 @@ set( CROSS_COMPILE arm-none-eabi- )
 # specify the cross compiler. We force the compiler so that CMake doesn't
 # attempt to build a simple test program as this will fail without us using
 # the -nostartfiles option on the command line
-CMAKE_FORCE_C_COMPILER( "${TC_PATH}${CROSS_COMPILE}gcc" GNU )
-SET( CMAKE_ASM_COMPILER "${TC_PATH}${CROSS_COMPILE}gcc" )
+
+set( CMAKE_C_COMPILER ${CROSS_COMPILE}gcc )
+set( CMAKE_ASM_COMPILER ${CROSS_COMPILE}gcc )
+
+# Because the cross-compiler cannot directly generate a binary without complaining, just test
+# compiling a static library instead of an executable program
+set( CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY )
 
 # We must set the OBJCOPY setting into cache so that it's available to the
 # whole project. Otherwise, this does not get set into the CACHE and therefore
 # the build doesn't know what the OBJCOPY filepath is
+
 set( CMAKE_OBJCOPY      ${TC_PATH}${CROSS_COMPILE}objcopy
     CACHE FILEPATH "The toolchain objcopy command " FORCE )
 
@@ -68,6 +68,13 @@ set( CMAKE_OBJDUMP      ${TC_PATH}${CROSS_COMPILE}objdump
 CACHE FILEPATH "The toolchain objdump command " FORCE )
 
 # Set the common build flags
+
+# Set the CMAKE C flags (which should also be used by the assembler!
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard" )
+
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv6zk" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
@@ -75,8 +82,8 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtune=arm1176jzf-s" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 set( CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 
-add_definitions( -DRPI1=1 )
-set( BOARD rpi1 )
+add_definitions( -DRPI0=1 )
+set( BOARD rpi0 )
 ```
 
 If you've not used CMake before, some things may look a bit strange - but it's only syntatical.
@@ -94,12 +101,16 @@ a trailing path separator!
 
 The `CROSS_COMPILE` settings is simply the toolchain executable prefix.
 
-The `CMAKE_FORCE_C_COMPILER` setting is the executable name of the c compiler and it's type (GNU),
-it's mainly built up of variables that we set earlier. We use the FORCE c compiler variable to
-tell CMake that it shouldn't try to use the compiler before we tell it to. Normally CMake trys
-to build a blank test program with the compiler to make sure it's working correctly. However, we
-need the `-nostartfiles` flag in order to build something that succeeds and so CMake's test would
-fail and it would not it would think the compiler was broken.
+The `CMAKE_C_COMPILER` setting is the executable name of the c compiler.
+It's mainly built up of variables that we set earlier. Normally CMake trys to build a blank test
+program with the compiler to make sure it's working correctly. However, we need the `-nostartfiles`
+flag in order to build something that succeeds and so CMake's test would fail and it would not it
+would think the compiler was broken.
+
+So instead, we add the option `CMAKE_TRY_COMPILE_TARGET_TYPE` which we set to `STATIC_LIBRARY`. This
+tells CMake not to try and compile an executable to test the compiler, but instead to just test
+building a rudimentary static library instead. This should always compile file as we do not need to
+the C startup code.
 
 The `CMAKE_OBJCOPY` setting looks a bit fancier doesn't it!? CMake knows that `CMAKE_C_COMPILER`
 needs to be accessible by the entire project, so it adds it automatically to the CACHE. The CACHE
@@ -114,13 +125,13 @@ compiling a c source file. Here, we just use the processor-specific flags and ag
 OBJCOPY we want to put the `CMAKE_C_FLAGS` setting from here in the CACHE so that the entire
 project has this variable. We can add more generic flags like optimisation level to the c flags
 later on because they're not specific to a particular processor. So, notice that we also have
-`toolchain-arm-none-eabi-rpibplus` and `toolchain-arm-none-eabi-rpi2` for the other board types.
+`toolchain-arm-none-eabi-rpi1` and `toolchain-arm-none-eabi-rpi1bp` for the other board types.
 
 As with autotools, CMake uses a configuration step which works out what should be built and how.
 The result of the configuration step, if successful, is a Makefile which we can use with make
 (On Windows you must use `mingw32-make`) to build our project.
 
-CMake uses a file in each directory that needs building called CMakeLists.txt. It's a simple text
+CMake uses a file in each directory that needs building called `CMakeLists.txt`. It's a simple text
 file as it's extension suggests. Here's the `CMakeLists.txt` file for `armc-010`:
 
 ### CMakeLists.txt
