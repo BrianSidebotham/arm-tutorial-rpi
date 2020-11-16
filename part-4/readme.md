@@ -872,7 +872,7 @@ In keeping with this tutorial series, let's not get bogged down with trying to o
 driver. All we want to do is configure this peripheral from it's reset state to send all
 interrupts to `CPU0`.
 
-### Documetation
+### Documentation
 
 There is [GIC-400 documentation](https://static.docs.arm.com/ddi0471/a/DDI0471A_gic400_r0p0_trm.pdf)
 available from ARM.
