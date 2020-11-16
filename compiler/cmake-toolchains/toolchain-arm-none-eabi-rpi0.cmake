@@ -29,8 +29,8 @@ set( CROSS_COMPILE arm-none-eabi- )
 # attempt to build a simple test program as this will fail without us using
 # the -nostartfiles option on the command line
 
-set( CMAKE_C_COMPILER ${CROSS_COMPILE}gcc )
-set( CMAKE_ASM_COMPILER ${CROSS_COMPILE}gcc )
+set( CMAKE_C_COMPILER "${TC_PATH}${CROSS_COMPILE}gcc" )
+set( CMAKE_ASM_COMPILER "${TC_PATH}${CROSS_COMPILE}gcc" )
 
 # Because the cross-compiler cannot directly generate a binary without complaining, just test
 # compiling a static library instead of an executable program
