@@ -8,8 +8,6 @@
 
 # A CMake toolchain file so we can cross-compile for the Rapsberry-Pi bare-metal
 
-include(CMakeForceCompiler)
-
 # usage
 # cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-arm-none-eabi.cmake ../
 
@@ -31,8 +29,12 @@ set( CROSS_COMPILE arm-none-eabi- )
 # attempt to build a simple test program as this will fail without us using
 # the -nostartfiles option on the command line
 
-CMAKE_FORCE_C_COMPILER( "${TC_PATH}${CROSS_COMPILE}gcc" GNU )
-SET( CMAKE_ASM_COMPILER "${TC_PATH}${CROSS_COMPILE}gcc" )
+set( CMAKE_C_COMPILER ${CROSS_COMPILE}gcc )
+set( CMAKE_ASM_COMPILER ${CROSS_COMPILE}gcc )
+
+# Because the cross-compiler cannot directly generate a binary without complaining, just test
+# compiling a static library instead of an executable program
+set( CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY )
 
 # We must set the OBJCOPY setting into cache so that it's available to the
 # whole project. Otherwise, this does not get set into the CACHE and therefore
