@@ -45,7 +45,13 @@ tmpcfg=$(mktemp)
 # We generate a dummy file the same size as the disk size. We could just generate a file that has the same size as
 # the parition table only, but sfdisk bombs out when you doing, reporting that the partition start position is past
 # the end of the image. Perfectly acceptable failure mode I guess.
-dd bs=1024 count=$((1024*${diskspace})) if=/dev/zero of="${tmpcardimg}"
+echo "Creating temporary partition ${tmpcardimg} to create the partition table"
+dd bs=1024 count=$((1024*${diskspace})) if=/dev/zero of="${tmpcardimg}" > /dev/null
+
+if [ $? -ne 0 ]; then
+  echo "Failed to create the parititon table image" >&2
+  exit 1
+fi
 
 # Create the partition table putting the FAT32 partition at 1MiB offset (2048 sector offset with 512 byte sector size)
 # to allow for the partition table. We pipe a heredoc to sfdisk
@@ -54,11 +60,16 @@ dd bs=1024 count=$((1024*${diskspace})) if=/dev/zero of="${tmpcardimg}"
 # size=      -- The size of the partition (so sfdisk can calculate the amount of sectors consumed by the partition)
 # type=c     -- 0xc is the WIN95 FAT partition type
 # bootable   -- Set the bootable flag - don't think the RPi takes any notice of this to be fair
+echo "Creating the master boot record for a FAT partition on ${tmpcardimg}"
 cat << EOF | sfdisk "${tmpcardimg}"
 label: dos
 
 start=2048,size=${diskspace}M,type=c,bootable
 EOF
+if [ $? -ne 0 ]; then
+  echo "Failed to create the Master Boot Record on ${tmpcardimg}" >&2
+  exit 1
+fi
 
 # These are the normal files required to boot a Raspberry Pi - which come from the official Raspberry Pi github
 # firmware repository. For the RPI4 we require a different startup file because it uses a different version of
@@ -89,12 +100,24 @@ fi
 
 # Now we create a separate partition file which we can write the filesystem on. This can then be concatentated to the
 # parititon table we generated above
-dd bs=1024 count=$(($((${diskspace} - 1)) * 1024)) if=/dev/zero of="${tmpcardpart}"
+echo "Creating temporary card image ${tmpcardpart} partition for the filesystem"
+dd bs=1024 count=$(($((${diskspace} - 1)) * 1024)) if=/dev/zero of="${tmpcardpart}" > /dev/null
+
+if [ $? -ne 0 ]; then
+  echo "Failed to create temporary card image" >&2
+  exit 1
+fi
 
 # Generate a FAT file system (Leave mkfs.fat to work out which FAT to use)
 # -I use the entire space of the partition (We've got the partition table elsewhere)
 # -S 512 - make sure the geometry is 512 sector size
+echo "Creating FAT filesystem on temporary card image ${tmpcardpart}"
 mkfs.fat -S 512 -I "${tmpcardpart}"
+
+if [ $? -ne 0 ]; then
+  echo "Failed to create filesystem on temporary card image" >&2
+  exit 1
+fi
 
 # mcopy is cool - it works with fat file systems in image files which saves us doing these things as root on a
 # mounted loop device which is always flaky as hell.
