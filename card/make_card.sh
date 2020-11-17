@@ -58,13 +58,16 @@ fi
 
 # start=2048 -- The start sector for the partition
 # size=      -- The size of the partition (so sfdisk can calculate the amount of sectors consumed by the partition)
+#               This must be 1MiB less than the total disk size. which is taken up by the boot record space.
+#               We've allowed 1MiB for that overhead (2048 sectors at 512bytes each ).
+#               sfdisk 2.36+ will not allow us to create a partition larger than the space available on the disk
 # type=c     -- 0xc is the WIN95 FAT partition type
 # bootable   -- Set the bootable flag - don't think the RPi takes any notice of this to be fair
 echo "Creating the master boot record for a FAT partition on ${tmpcardimg}"
 cat << EOF | sfdisk "${tmpcardimg}"
 label: dos
 
-start=2048,size=${diskspace}M,type=c,bootable
+start=2048,size=$(( ${diskspace} - 1 ))M,type=c,bootable
 EOF
 if [ $? -ne 0 ]; then
   echo "Failed to create the Master Boot Record on ${tmpcardimg}" >&2
