@@ -90,7 +90,7 @@ esac
 
 # Linker flags to pass through the compiler
 lflags=""
-lflags="${lflags} -Wl,-T,${scriptdir}/rpi.x"
+lflags="${lflags} -Wl,-z,max-page-size=0x04"
 
 kernel_elf="${scriptdir}/kernel.${tutorial}.${model}.elf"
 kernel_img="${scriptdir}/kernel.${tutorial}.${model}.img"
