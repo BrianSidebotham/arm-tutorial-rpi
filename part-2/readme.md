@@ -113,8 +113,9 @@ chosen for you and linked in.
 I urge you to go and look at your `arm-none-gcc-eabi` install now to see some of these files.
 Look under the `arm-none-eabi` sub-directory and then under the lib sub-directory. The C-Runtime
 code is a binary object file and is called `crt0.o`, the C Library for info is an archive of
-object files called libc.a (there may be several versions with different names), and then you'll
+object files called `libc.a` (there may be several versions with different names), and then you'll
 have some `.ld` files. Under the ldscripts subdirectory you'll find the standard linker scripts.
+
 It's just worth a look to know they're there. GCC uses a thing called specs files too, which
 allow specifying system settings so that you can create a machine specification that allows you
 to target a machine easily. You can select a custom specs file with a command line option for
@@ -530,7 +531,7 @@ the [gcc documentation](http://gcc.gnu.org/onlinedocs/gcc/Link-Options.html) whi
 options you can pass.
 
 Now we have control of the linker script. We can try to find out what's "wrong". I quote wrong,
-because technically this works, but we've got an annoying 0x8000 offset. It'll be a pain to
+because technically this works, but we've got an annoying `0x8000` offset. It'll be a pain to
 debug one day, I know it. Let's find out what we need to do to fix it instead. You can also see
 how complicated a linker script can get when it needs to deal with C++ sections!
 
@@ -1109,6 +1110,24 @@ implement it easily and also implement it in C easily too! Of course occasionall
 to drop down to assembler to get certain register values or talk to some special hardware
 features. Keep the [cheat-sheet](http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf)
 close at hand while you're working with the C-Stubs.
+
+While we're here, we also remove the custom linker script at this point. We don't need to be using
+anymore. There is an option to control the `MAXPAGESIZE` variable in the linker script to keep the
+binary small. See the
+[GNU LD documentation](https://sourceware.org/binutils/docs/ld/Options.html#Options)
+for details of the max-page-size option.
+
+There's a great description of this
+[option here](https://jonathanhamberg.com/post/2018-10-03-decreasing-elf-size/) and thanks to
+[eyalabraham](https://github.com/eyalabraham) for
+[bringing it to my attention](https://github.com/BrianSidebotham/arm-tutorial-rpi/issues/18).
+
+For `armc-09` we change the linker flags to include the `max-page-size` option and set it to just
+4 bytes. The build.sh file now has the following linker setting:
+
+```sh
+lflags="${lflags} -Wl,-z,max-page-size=0x04"
+```
 
 ## Part 3
 
