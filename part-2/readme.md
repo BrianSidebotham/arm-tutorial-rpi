@@ -1122,6 +1122,12 @@ There's a great description of this
 [eyalabraham](https://github.com/eyalabraham) for
 [bringing it to my attention](https://github.com/BrianSidebotham/arm-tutorial-rpi/issues/18).
 
+For `armc-09` we change the linker flags to include the `max-page-size` option and set it to just
+4 bytes. The build.sh file now has the following linker setting:
+
+```sh
+lflags="${lflags} -Wl,-z,max-page-size=0x04"
+```
 
 ## Part 3
 
