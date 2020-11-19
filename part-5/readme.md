@@ -1468,6 +1468,39 @@ be bothered. Right now I need get on with writing code.
 If you're interested in finding out, you can disassemble the code and see if you can see the
 major difference between an `-O0` binary and an `-O4` binary!
 
+## More Interesting Graphics
+
+I had this stuff lying around for quite some time before I included it in the turotial, but it
+moves things in a better direction - a more fun direction. I grabbed a an old demoscene style font
+as a GIF and use that to do actually display some graphics on the screen.
+
+Use GIMP to save a GIF as a c source code. Go and find some other fonts to play with. Although this
+is a demoscene style font, we'll need a font to generate a console for our RPi in the upcoming
+tutorials, so it's worth playing around with this stuff.
+
+The c soruce needs to be modified slightly as we need access to the struct from outside of the c
+file. We `typedef` the struct in our own header file `gimp-image.h`. It's all that header does.
+
+Loading and displaying images is great for working out how the graphics works at a lower level.
+The things we have to pay particular attention to are the number of bits per pixel for both the
+image data and the screen. They must match, or be transposed to match each other some how. We do
+this by transforming the image data to make it match that of the current dislay. This also includes
+getting the byte order correct so we know that the colour will be correct when it's displayed on
+the screen.
+
+I've probably not been as thorough as I should be with the graphics in this tutorial code. I know
+that it works on my monitor with the GIF data in the tutorial though.
+
+We have a `PutPixel` function now and we also have some other functions too. We also have some Blit
+functions which are simply memory copies from the image data memory space to the video graphics
+memory space.
+
+In modern GPUs, we would load this font/image data up to the graphics card and the GPU would take
+care of blitting for us. Unfortunately we have to suffer "software rendering" which is obscenely
+slow in comparison.
+
+## Next
+
 I've run out of time, so we'll leave graphics here for now and come back to it in a few
 tutorials time to do some more advanced stuff. We'll look at using hardware accelerated
 graphics next time.
