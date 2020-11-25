@@ -1,7 +1,7 @@
 /*
     Part of the Raspberry-Pi Bare Metal Tutorials
     https://www.valvers.com/rpi/bare-metal/
-    Copyright (c) 2013-2018, Brian Sidebotham
+    Copyright (c) 2020, Brian Sidebotham
 
     This software is licensed under the MIT License.
     Please see the LICENSE file included with this software.
@@ -22,8 +22,10 @@
 #include "rpi-mailbox-interface.h"
 #include "rpi-systimer.h"
 
+#include "effects.h"
 #include "fonts/font09.h"
 #include "image-font.h"
+#include "starfield.h"
 
 #define SCREEN_WIDTH    800
 #define SCREEN_HEIGHT   600
@@ -43,6 +45,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     uint32_t pixel_value = 0;
     image_t* font_image;
     image_font_t* font;
+    rpi_cpu_time_t cputime;
 
     /* Write 1 to the LED init nibble in the Function Select GPIO peripheral register to enable
        LED pin as an output */
@@ -190,15 +193,42 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     font_image = image16_from_gimp( &font09 );
     font = font_from_image( 29, 35, font_image, 0 );
 
+    RPI_GetCurrentCpuTime( &cputime );
+
+    int idx = 0;
+    int screen_centre = ( RPI_GetFramebuffer()->physical_height >> 1 ) - ( font->pixel_height >> 1 );
+
+    sinewave_effect_t* text_fx = FX_NewSine((sinewave_settings_t){
+            .amplitude = 45,
+            .frequency = 1,
+            .speed = 4,
+            .fb = RPI_GetFramebuffer() });
+
+    sinewave_effect_t* position_fx = FX_NewSine((sinewave_settings_t){
+            .amplitude = 100,
+            .frequency = 2,
+            .speed = 1,
+            .fb = RPI_GetFramebuffer() });
+
     while( 1 )
     {
-        font_puts( 200, 100, "HELLO WORLD!", font );
+        /* Force 50Hz Framerate - we do not have access to a vsync :( */
+        RPI_ClearScreen();
+        process_starfield();
+        FX_AnimateSine( text_fx );
+        FX_AnimateSine( position_fx );
+
+        font_puts( 200, screen_centre + position_fx->effect.vertical_blit_y_processor(0, &position_fx->effect ),
+                   "HELLO WORLD!", font, &text_fx->effect );
+
+        RPI_SwitchFramebuffer();
+        RPI_TimeEvent( &cputime, 20000 );
 
         frame_count++;
 
-        if( uptime ) {
+        if( uptime && ( ( uptime % 10 ) == 0 ) ) {
             float fps = (float)frame_count / uptime;
-            printf( "Uptime: %4ds Frames: %10d FPS: %.2f\r", uptime, frame_count, fps );
+            printf( "Uptime: %4ds Frames: %10d FPS: %.2f\r\n", uptime, frame_count, fps );
         }
     }
 }

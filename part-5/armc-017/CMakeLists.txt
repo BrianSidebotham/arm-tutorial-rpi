@@ -1,28 +1,10 @@
 
-#   Part of the Raspberry-Pi Bare Metal Tutorials
-#   Copyright (c) 2013-2020, Brian Sidebotham
-#   All rights reserved.
-
-#   Redistribution and use in source and binary forms, with or without
-#   modification, are permitted provided that the following conditions are met:
-
-#   1. Redistributions of source code must retain the above copyright notice,
-#       this list of conditions and the following disclaimer.
-
-#   2. Redistributions in binary form must reproduce the above copyright notice,
-#       this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-
-#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-#   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-#   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-#   ARE DISCLAIMED. IN NO EVENT SHALL THE
-#   Part of the Raspberry-Pi Bare Metal Tutorials
-#   https://www.valvers.com/rpi/bare-metal/
-#   Copyright (c) 2013, Brian Sidebotham
-
-#   This software is licensed under the MIT License.
-#   Please see the LICENSE file included with this software.
+# Part of the Raspberry-Pi Bare Metal Tutorials
+# https://www.valvers.com/rpi/bare-metal/
+# Copyright (c) 2013-2018, Brian Sidebotham
+#
+# This software is licensed under the MIT License.
+# Please see the LICENSE file included with this software.
 
 # CMake build environment for the Valvers Raspberry-Pi bare metal tutorials
 
@@ -47,6 +29,7 @@ add_executable( kernel.${TUTORIAL}.${BOARD}
     armc-cstartup.c
     armc-cstubs.c
     armc-start.S
+    effects.h effects-sinewave.c
     fonts/font09.c fonts/font09.h
     gic-400.c gic-400.h
     gimp-image.h
@@ -61,7 +44,11 @@ add_executable( kernel.${TUTORIAL}.${BOARD}
     rpi-interrupts.c rpi-interrupts.h
     rpi-mailbox-interface.c rpi-mailbox-interface.h
     rpi-mailbox.c rpi-mailbox.h
-    rpi-systimer.c rpi-systimer.h )
+    rpi-systimer.c rpi-systimer.h
+    sinewave.c sinewave.h
+    stars.c stars.h starfield.c starfield.h )
+
+target_link_libraries( kernel.${TUTORIAL}.${BOARD} m )
 
 target_include_directories( kernel.${TUTORIAL}.${BOARD} PUBLIC ${PROJECT_SOURCE_DIR} )
 

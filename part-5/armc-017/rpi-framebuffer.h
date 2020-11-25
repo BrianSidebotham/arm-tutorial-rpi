@@ -1,3 +1,12 @@
+/*
+    Part of the Raspberry-Pi Bare Metal Tutorials
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
+
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
+
+*/
 
 #ifndef RPI_FRAMEBUFFER_H
 #define RPI_FRAMEBUFFER_H
@@ -18,7 +27,8 @@ typedef struct {
     int bytes_per_pixel;
     int virtual_offset;
     int buffer_size;
-    volatile void* buffer;
+    volatile void* buffers[2];
+    volatile void* current_buffer;
 } framebuffer_info_t __attribute__( ( aligned (16) ) );
 
 
@@ -60,5 +70,8 @@ extern void RPI_DrawRectangle( graphic_rectangle_t* rectangle );
 extern void RPI_DrawMovingRectangle( graphic_moving_rectangle_t* mrectangle );
 extern void RPI_DrawImage( int x, int y, image_t* image );
 extern void RPI_Blit( int x, int y, void* data, int datacount );
+extern void RPI_BlitV( int x, int y, void* data, int datacount, uint32_t pitch );
+extern void RPI_SwitchFramebuffer( void );
+extern void RPI_PutPixel( int x, int y, int colour );
 
 #endif

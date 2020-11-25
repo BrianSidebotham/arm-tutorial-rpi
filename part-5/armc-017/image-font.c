@@ -1,12 +1,21 @@
+/*
+    Part of the Raspberry-Pi Bare Metal Tutorials
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
+
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
+
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "rpi-framebuffer.h"
 #include "image.h"
 #include "image-font.h"
-
 
 image_font_t* font_from_image( int width, int height, image_t* image, char unknown )
 {
@@ -84,24 +93,51 @@ image_font_t* font_from_image( int width, int height, image_t* image, char unkno
     return font;
 }
 
-
-void font_putc( int x, int y, char c, image_font_t* font )
+#if 0
+int sinewave_process(int x, int y, int index, int amplitude )
 {
-    if( font == NULL )
-        return;
+    static int* sine_lookup = NULL;
 
-    int blit_addr = font->character_offsets[(int)c];
-    int py;
-
-    for( py = 0; py < font->pixel_height; py++ )
+    if( sine_lookup == NULL )
     {
-        RPI_Blit( x, y + py, &font->image->pixel_data[blit_addr], font->pixel_width );
-        blit_addr += font->image->pitch;
+        sine_lookup = malloc( sizeof(int) * 360 );
+        for( int w = 0; w < 360; w++ )
+        {
+            /* Convert w (degrees) to radians before sin function */
+            sine_lookup[w] = sin((double)w * 0.0174533 ) * amplitude;
+        }
+    }
+
+    return y + sine_lookup[(x + index) % 360];
+}
+#endif
+
+void _font_putc( int x, int y, char c, image_font_t* font, effect_info_t* effect )
+{
+    int blit_addr = font->character_offsets[(int)c];
+
+    if( effect == NULL )
+    {
+        for( int py = 0; py < font->pixel_height; py++ )
+        {
+            RPI_Blit( x, y + py, &font->image->pixel_data[blit_addr], font->pixel_width );
+            blit_addr += font->image->pitch;
+        }
+    }
+    else
+    {
+        /* Some effects (like sinewave scrolling) result in a different y coord per x coord.
+           This means we need to use the (much slower) veritical blit function */
+        for( int px = 0; px < font->pixel_width; px++ )
+        {
+            int py = ( effect && effect->vertical_blit_y_processor ) ? effect->vertical_blit_y_processor(x + px, effect) : 0;
+            RPI_BlitV(x + px, y + py, &font->image->pixel_data[blit_addr + ( px << 1 )], font->pixel_height, font->image->pitch );
+        }
     }
 }
 
 
-void font_puts( int x, int y, const char* str, image_font_t* font )
+void font_puts( int x, int y, const char* str, image_font_t* font, effect_info_t* effect )
 {
     /* Sanitise the input parameters */
     if( ( str == NULL ) || ( font == NULL ) )
@@ -109,7 +145,7 @@ void font_puts( int x, int y, const char* str, image_font_t* font )
 
     while( *str != '\0' )
     {
-        font_putc( x, y, *str, font );
+        _font_putc( x, y, *str, font, effect );
         x += font->pixel_width;
         str++;
     }

@@ -1497,7 +1497,8 @@ memory space.
 
 In modern GPUs, we would load this font/image data up to the graphics card and the GPU would take
 care of blitting for us. Unfortunately we have to suffer "software rendering" which is obscenely
-slow in comparison.
+slow in comparison. Of course, only for now - until we get some hardware acceleration going!
+
 
 ## Next
 

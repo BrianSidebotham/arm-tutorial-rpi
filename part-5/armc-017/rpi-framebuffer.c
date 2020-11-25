@@ -1,3 +1,12 @@
+/*
+    Part of the Raspberry-Pi Bare Metal Tutorials
+    https://www.valvers.com/rpi/bare-metal/
+    Copyright (c) 2013-2018, Brian Sidebotham
+
+    This software is licensed under the MIT License.
+    Please see the LICENSE file included with this software.
+
+*/
 
 /* Implements functions that allow us to negotiate, and use a graphics
    framebuffer provided by the VideoCore IV GPU using the mailbox interface. */
@@ -56,13 +65,46 @@ void RPI_InitFramebuffer( int width, int height, int bpp )
         printf( "Pitch: %d bytes\r\n", framebuffer.pitch );
     }
 
+    /* We now have enough knowledge to calculate the size of a single physical buffer */
+    framebuffer.buffer_size = framebuffer.pitch * framebuffer.physical_height;
+
     if( ( mp = RPI_PropertyGet( TAG_ALLOCATE_BUFFER ) ) )
     {
-        framebuffer.buffer = (volatile uint32_t*)(mp->data.buffer_32[0] & ~0xC0000000);
-        printf( "Framebuffer address: %8.8X\r\n", (unsigned int)framebuffer.buffer );
-    }
+        framebuffer.buffers[0] = (volatile uint32_t*)(mp->data.buffer_32[0] & ~0xC0000000);
 
-    framebuffer.buffer_size = framebuffer.pitch * framebuffer.physical_height;
+        /* The second framebuffer for double buffering is at the following address */
+        framebuffer.buffers[1] = framebuffer.buffers[0] + framebuffer.buffer_size;
+
+        /* Start by displaying the current buffer */
+        framebuffer.current_buffer = framebuffer.buffers[0];
+
+        printf( "Framebuffer addresses: 0x%8.8X 0x%8.8X\r\n",
+                (unsigned int)framebuffer.buffers[0],
+                (unsigned int)framebuffer.buffers[1] );
+    }
+}
+
+
+void RPI_SwitchFramebuffer( void )
+{
+    if( framebuffer.current_buffer == framebuffer.buffers[0] )
+    {
+        /* We've been drawing to buffer 0 - so now show that on the screen and flip the graphics
+           pointers over to the other canvas */
+        RPI_PropertyInit();
+        RPI_PropertyAddTag( TAG_SET_VIRTUAL_OFFSET, 0, 0);
+        RPI_PropertyProcess();
+
+        framebuffer.current_buffer = framebuffer.buffers[1];
+    }
+    else
+    {
+        RPI_PropertyInit();
+        RPI_PropertyAddTag( TAG_SET_VIRTUAL_OFFSET, 0, framebuffer.physical_height );
+        RPI_PropertyProcess();
+
+        framebuffer.current_buffer = framebuffer.buffers[0];
+    }
 }
 
 
@@ -71,52 +113,73 @@ framebuffer_info_t* RPI_GetFramebuffer( void )
     return &framebuffer;
 }
 
-void RPI_Blit( int x, int y, void* data, int datacount )
+
+/**
+ * @fn void RPI_BlitV( int x, int y, void* data, int datacount, uint32_t pitch )
+ * @brief Vertical pixel blitter. Will blit vertical line of pixels at x,y to x,y+datacount
+ * @param x Horizontal pixel location to start blitting into the current framebuffer
+ * @param y Vertical pixel location to start blitting into the current framebuffer
+ * @param data Souce pixel data
+ * @param datacount The amount of vertical pixels to blit
+ * @param pitch The pitch (in bytes) of the source image to get to the next vertical pixel data
+ *
+ * The source data can be arranged in a standard horizontal row memory layout. The pitch provides
+ * the jump between vertical pixels in the source data.
+ */
+void RPI_BlitV( int x, int y, void* data, int datacount, uint32_t pitch )
 {
-    /* Splat the data to the screen buffer */
-    if ( framebuffer.bits_per_pixel == 8 )
+    if( ( x < 0 ) || ( x >= framebuffer.physical_height) )
+        return;
+
+    for( int py = 0; py < datacount; py++ )
     {
-        memcpy( ((char*)framebuffer.buffer + ( y * framebuffer.physical_width ) + x ), data, datacount );
-    }
-    else if( framebuffer.bits_per_pixel == 16 )
-    {
-        memcpy( ((short*)framebuffer.buffer + ( y * framebuffer.physical_width ) + x ), data, datacount * sizeof( short ) );
-    }
-    else if( framebuffer.bits_per_pixel == 32 )
-    {
-        memcpy( ((unsigned int*)framebuffer.buffer + ( y * framebuffer.physical_width ) + x ), data, datacount * sizeof( short ) );
-    }
-    else
-    {
-        printf("RPI_Blit Unsupported bits_per_pixel(%d)", framebuffer.bits_per_pixel );
+        if( ( ( py + y ) >= 0 ) && ( ( py + y ) < framebuffer.physical_height ) )
+        {
+            *(short*)(framebuffer.current_buffer +
+                     ( ( py + y ) * framebuffer.pitch ) +
+                     ( x * framebuffer.bytes_per_pixel ) ) = *(unsigned short*)data;
+        }
+        data += pitch;
     }
 }
 
+void RPI_Blit( int x, int y, void* data, int datacount )
+{
+    if( ( x < 0 ) || ( x >= framebuffer.physical_height) )
+        return;
 
-static inline void RPI_PutPixel( int x, int y, int colour )
+    if( ( y < 0 ) || ( y >= framebuffer.physical_height ) )
+        return;
+
+    /* Splat the data to the screen buffer */
+    memcpy( (char*)framebuffer.current_buffer + ( y * framebuffer.pitch ) + ( x * framebuffer.bytes_per_pixel ),
+            data, datacount * framebuffer.bytes_per_pixel );
+}
+
+void RPI_PutPixel( int x, int y, int colour )
 {
     if( framebuffer.bits_per_pixel == 8 )
     {
-        *(unsigned char*)(framebuffer.buffer + ( y * framebuffer.pitch ) + x ) = colour;
+        *(unsigned char*)(framebuffer.current_buffer + ( y * framebuffer.pitch ) + x ) = colour;
     }
     else if ( framebuffer.bits_per_pixel == 16 )
     {
-        *(short*)(framebuffer.buffer + ( y * framebuffer.pitch ) + x ) = colour;
+        *(short*)(framebuffer.current_buffer + ( y * framebuffer.pitch ) + ( x * framebuffer.bytes_per_pixel ) ) = colour;
     }
     else if ( framebuffer.bits_per_pixel == 16 )
     {
-        *(unsigned int*)(framebuffer.buffer + ( y * framebuffer.pitch ) + x ) = colour;
+        *(unsigned int*)(framebuffer.current_buffer + ( y * framebuffer.pitch ) + x ) = colour;
     }
     else
     {
-        printf("RPI_PutPixel Unsupported bits_per_pixel(%d)", framebuffer.bits_per_pixel );
+        printf("RPI_PutPixel Unsupported bits_per_pixel(%d)\r\n", framebuffer.bits_per_pixel );
     }
 }
 
 
 void RPI_ClearScreen( void )
 {
-    memset( (char*)framebuffer.buffer, 0, framebuffer.buffer_size );
+    memset( (char*)framebuffer.current_buffer, 0, framebuffer.buffer_size );
 }
 
 
