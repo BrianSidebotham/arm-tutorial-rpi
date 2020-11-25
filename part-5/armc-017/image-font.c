@@ -93,24 +93,6 @@ image_font_t* font_from_image( int width, int height, image_t* image, char unkno
     return font;
 }
 
-#if 0
-int sinewave_process(int x, int y, int index, int amplitude )
-{
-    static int* sine_lookup = NULL;
-
-    if( sine_lookup == NULL )
-    {
-        sine_lookup = malloc( sizeof(int) * 360 );
-        for( int w = 0; w < 360; w++ )
-        {
-            /* Convert w (degrees) to radians before sin function */
-            sine_lookup[w] = sin((double)w * 0.0174533 ) * amplitude;
-        }
-    }
-
-    return y + sine_lookup[(x + index) % 360];
-}
-#endif
 
 void _font_putc( int x, int y, char c, image_font_t* font, effect_info_t* effect )
 {
