@@ -1771,5 +1771,6 @@ I've run out of time, so we'll leave graphics here for now and come back to it i
 tutorials time to do some more advanced stuff. We'll look at using hardware accelerated
 graphics next time.
 
-When you're ready, head over to [Part 6]() where we'll be using SD-Cards a LOT less and move to a new
-method of developing.
+When you're ready, head over to
+[part 6](https://www.valvers.com/embedded-linux/raspberry-pi/step06-bare-metal-programming-in-c-pt6)
+where we'll be using SD-Cards a LOT less and move to a new method of developing.

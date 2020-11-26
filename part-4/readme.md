@@ -931,4 +931,4 @@ the global enabling of interrupts.
 We should obviously make this code better, but for now we just know that we need to initialise
 this controller to get any interrupts working.
 
-When you're ready head over to Pt5...
+When you're ready head over to [Part 5](https://www.valvers.com/embedded-linux/raspberry-pi/step05-bare-metal-programming-in-c-pt5)
