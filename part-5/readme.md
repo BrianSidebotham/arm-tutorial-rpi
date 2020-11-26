@@ -1468,9 +1468,309 @@ be bothered. Right now I need get on with writing code.
 If you're interested in finding out, you can disassemble the code and see if you can see the
 major difference between an `-O0` binary and an `-O4` binary!
 
+## More Interesting Graphics
+
+Back in the 90s I used to love programming demos on the Commodore Amiga 500. I loved the results.
+Everything was written in assembler and the tricks and cheats you used were really clever. It was a
+competitive environment - the moment you saw someone show a demo with something you hadn't coded
+you just had to get it done. It was hard!
+
+With the RPi we have a lot of hardware in front of us - it must be possible to do some rudimentary
+(and ineffecient) effects.
+
+Let's have a go:
+
+![Sinewave Effects](/images/part-5-rpi2-sinewave-scroller-armc017.gif)
+
+I had this stuff lying around for quite some time before I included it in the turotial, but it
+moves things in a better direction - a more fun direction. I grabbed a an old demoscene style font
+as a GIF and use that to do actually display some graphics on the screen.
+
+Use GIMP to save a (non-animated) GIF as a c source code. Go and find some other fonts to play with.
+Although this is a demoscene style font, we'll need a font to generate a console for our RPi in the
+upcoming tutorials, so it's worth playing around with this stuff.
+
+The c soruce from gimp needs to be modified slightly as we need access to the struct from outside
+of the c file. We `typedef` the struct in our own header file `gimp-image.h`. It's all that header
+does.
+
+The c source containing the image data contains 16-bit data. This 16-bit data is the same as the
+graphics memory in the GPU when we get a 16-bit framebuffer.
+
+Loading and displaying images is great for working out how the graphics works at a lower level.
+The things we have to pay particular attention to are the number of bits per pixel for both the
+image data and the screen. They must match, or be transposed to match each other some how. We do
+this by transforming the image data to make it match that of the current dislay. This also includes
+getting the byte order correct so we know that the colour will be correct when it's displayed on
+the screen.
+
+I've probably not been as thorough as I should be with the graphics in this tutorial code. I know
+that it works on my monitor with the GIF data in the tutorial though.
+
+The code is starting to get messy - we'll need a tidy up in the next tutorial.
+
+We have a `PutPixel` function now, a vertical blit (`RPI_BlitV`) and we also have some
+other functions too. We also have a standard Blit (`RPI_Blit`) function which are simply memory
+copies from the image data memory space to the video graphics memory space. I've not introduced
+surfaces, so we've really just got image data and the gpu data in the same format to make things as
+simple as possible.
+
+>**NOTE**: The only supported format at the moment is a 16-bit colour framebuffer. It's enough to
+> get us going, but doesn't have alpha transparency.
+
+In modern GPUs, we would load this font/image data up to the graphics card and the GPU would take
+care of blitting for us. Unfortunately we have to suffer "software rendering" which is obscenely
+slow in comparison. Of course, only for now - until we get some hardware acceleration going!
+
+We don't have any hardware acceleration and we only have one thread (we have no context switching
+yet, and the other processors are parked). So this is all pretty inefficient.
+
+There's no vertical sync interrupt that I've found. Instead, I've implemented delta timing in order
+to stick to a 50Hz refresh rate on the graphics (your mileage may vary here) so it's as
+flicker-free as possible.
+
+Here's the code I've introduced (at a high level):
+
+```c
+/* Wait 500ms to let UART to settle before we use it. The UART takes a little time to switch
+   speeds. Comment out this to see some garbage at the start of the UART output if you like */
+RPI_WaitMicroSeconds( 500000 );
+```
+
+Turns out, after we switch the baud rate of the mini uart, we need to wait a certain amount of time
+before using the uart as it takes a while for the baud rate change to take effect. I'm sure the wait
+time is more like 10-50 cycles, but it doesn't harm to wait "enough" time.
+
+```c
+font_image = image16_from_gimp( &font09 );
+font = font_from_image( 29, 35, font_image, 0 );
+```
+
+We "normalise" the font image (which we exported from GIMP) to a 16-bit internal image struct. In
+this case, the conversion is almost straight-through. But it's important when we've got a framebuffer
+to normalise all image data to the same data layout as the graphics memory. This way we can "Blit",
+or simply copy chunks of memory into video memory to instantly show graphics.
+
+We also do the same for the font when we've normalised the graphical data. Now we have graphical
+objects representing letters so we can write text to the framebuffer.
+
+```c
+sinewave_effect_t* text_fx = FX_NewSine((sinewave_settings_t){
+        .amplitude = 45,
+        .frequency = 1,
+        .speed = 4,
+        .fb = RPI_GetFramebuffer() });
+```
+
+I introduced a very basic effects system that is based around sinewaves. They produce the finest
+effects. Here, under the hood we create a sinewave lookup table which has various attributes.
+
+The framebuffer is passed in to the effects generation in order to apply units to the frequency
+attribute. The width of the screen is set to 1Hz. Therefore if you have, here a frequency of 1Hz
+will generate 1 full sinewave across the width of the screen.
+
+Let's have a closer look, because this stuff represents the biggest changes in the code. Not
+rpi-specific, but it's important anyway.
+
+```c
+
+sinewave_effect_t* FX_NewSine( sinewave_settings_t settings )
+{
+    sinewave_effect_t* fx = malloc( sizeof(sinewave_effect_t) );
+    fx->effect.effect_type = TEXT_EFFECT_SINEWAVE;
+    fx->effect.vertical_blit_y_processor = sin_vertical_blit_y_processor;
+    fx->index = 0;
+
+    fx->settings.amplitude = settings.amplitude;
+    fx->settings.fb = settings.fb;
+    fx->settings.frequency = settings.frequency;
+    fx->settings.speed = settings.speed;
+
+    fx->sinewave = SIN_New( settings.amplitude, settings.frequency, settings.fb );
+    return fx;
+}
+
+sinewave_t* SIN_New( int amplitude, int frequency, framebuffer_info_t* fb )
+{
+    sinewave_t* newsine = malloc( sizeof(sinewave_t) );
+
+    newsine->amplitude = amplitude;
+    newsine->steps = (fb) ? fb->physical_width : 360;
+    newsine->data = malloc( sizeof(int) * newsine->steps );
+
+    double delta = (double)360 / ( newsine->steps / frequency );
+    double deg = 0;
+
+    for( int step = 0; step < newsine->steps; step++ )
+    {
+        /* Convert degrees to radians before sin function */
+        newsine->data[step] = sin(deg * 0.0174533 ) * amplitude;
+        deg += delta;
+    }
+
+    return newsine;
+}
+```
+
+Here, we generate a sinewave at a set amplitude and number of steps (relative to the screen width)
+with a frequency of our choosing.
+
+We use a common effects structure with an ENUM that identifies the type of effect in case in future
+if we develop more effects we need to determine some logical conditions based on the effect type.
+
+```c
+    fx->effect.vertical_blit_y_processor = sin_vertical_blit_y_processor;
+```
+
+Here, we set a function against a graphical event.
+
+```c
+static int sin_vertical_blit_y_processor(int x, sinewave_effect_t* fx)
+{
+    return fx->sinewave->data[( x + fx->index ) % fx->sinewave->steps];
+}
+```
+
+In this function, which will get run for every x-pixel position on a supporting graphical function,
+we return a value from the sinewave data. The vertical blitter was written to support this
+functionality because normally we can just use memcpy with the front graphical data to move it
+quickly to video memory to display it.
+
+```c
+for( int px = 0; px < font->pixel_width; px++ )
+{
+    int py = ( effect && effect->vertical_blit_y_processor ) ? effect->vertical_blit_y_processor(x + px, effect) : 0;
+    RPI_BlitV(x + px, y + py, &font->image->pixel_data[blit_addr + ( px << 1 )], font->pixel_height, font->image->pitch );
+}
+```
+
+In the `font_putc()` function that's responsible for putting this on the screen we make the function
+effect-aware. For each column of pixels in each character we run the `veritcal_blit_y_processor`
+handler if it is set and apply the effect to the y value of the pixel column.
+
+Remember we set the frequency and amplitude of the sinewave? This determines the curvature of the
+text on-screen. As things stand here, the sinewave effect is static. If the text doesn't move in
+the horizontal direction the text will simply stay in the same shape every frame.
+
+In order to animate the effect we need a new method.
+
+```c
+void FX_AnimateSine( sinewave_effect_t* fx )
+{
+    if( fx == NULL )
+        return;
+
+    fx->index += fx->settings.speed;
+}
+```
+
+et, voila. This is why we have speed and an index. We can shift the reference between pixel offset
+and sinewave step. This moves the sinewave effect across the screen. We move the same amount every
+frame.
+
+To show off the effects we also set up another sinewave and apply it to the text position which
+moves the effected text around the screen centre.
+
+### Starfield
+
+The starfield implementation is a bit crude, but works. We're not going to introduce the RPi random
+number generator capabilities here because they're essentially undocumented outside of the linux
+source code. They're also quite different between the RPI4 and the other PIs (urgh).
+
+There's a new python file `create-random-stars.py` therefore which accepts a `--count` argument for
+the amount of stars, everything else is hard coded.
+
+`stars.c` and `stars.h` contain the randomised stars. Have a go at creating a new set with a
+different amount of stars, etc.
+
+You could always apply a sinewave effect to the stars which is scaled by their speed/depth.
+
+### Double Buffer and No Vertical Sync
+
+If you're at all familiar with graphics, we tend to draw to an area of memory that is not currently
+visible and when the graphics card is ready we flip the video memory pointer to the area we've been
+drawing.
+
+Once we've flipped, we start drawing in the other area that was previously visible and then the
+process flips the video memory pointer back again at the next sync point for the graphics card.
+
+We don't have a vertical sync reference unfortunately. The RPi doesn't appear to expose this to the
+ARM device easily.
+
+In order to do flicker-free (almost anyway) graphics rendering we must do something called delta
+timing. The ensures we lock to a 50Hz framerate in the code. So long as this time is very tightly
+controlled and we use double buffering we generally end up with flicker-free graphics.
+
+```c
+void RPI_SwitchFramebuffer( void )
+{
+    if( framebuffer.current_buffer == framebuffer.buffers[0] )
+    {
+        /* We've been drawing to buffer 0 - so now show that on the screen and flip the graphics
+           pointers over to the other canvas */
+        RPI_PropertyInit();
+        RPI_PropertyAddTag( TAG_SET_VIRTUAL_OFFSET, 0, 0);
+        RPI_PropertyProcess();
+
+        framebuffer.current_buffer = framebuffer.buffers[1];
+    }
+    else
+    {
+        RPI_PropertyInit();
+        RPI_PropertyAddTag( TAG_SET_VIRTUAL_OFFSET, 0, framebuffer.physical_height );
+        RPI_PropertyProcess();
+
+        framebuffer.current_buffer = framebuffer.buffers[0];
+    }
+}
+```
+
+So now we have this function in the framebuffer code which instructs the GPU to flip to either
+`buffer[0]` or `buffer[1]` depending on where we've been drawing.
+
+For timing we also have a new function:
+
+```c
+void RPI_TimeEvent( rpi_cpu_time_t* cputime, uint32_t us )
+{
+    rpi_cpu_time_t current_time;
+    uint32_t inbound_time = cputime->lo;
+    cputime->lo += us;
+
+    if( inbound_time > cputime->lo )
+    {
+        /* The lo register overflowed, so increas the high timer */
+        cputime->hi += 1;
+    }
+
+    while(1)
+    {
+        RPI_GetCurrentCpuTime( &current_time );
+        if( ( current_time.hi > cputime->hi ) ||
+          ( ( current_time.hi == cputime->hi ) && ( current_time.lo >= cputime->lo ) ) )
+        {
+            break;
+        }
+    }
+}
+```
+
+This is used in the main loop to synchronise the graphic buffer switch:
+
+```c
+    RPI_SwitchFramebuffer();
+    RPI_TimeEvent( &cputime, 20000 );
+```
+
+The RPI_TimeEvent function will make sure that between calls of the function the required amount
+of time has passed. It's not amazingly accurate, but it's enough to get a good graphical experience.
+
+## Next
+
 I've run out of time, so we'll leave graphics here for now and come back to it in a few
 tutorials time to do some more advanced stuff. We'll look at using hardware accelerated
 graphics next time.
 
-For now, I think we need to look at JTAG next - I for one am wearing out the SD Card slots on my
-RPIs testing and re-testing these tutorials!!
+When you're ready, head over to
+[part 6](https://www.valvers.com/embedded-linux/raspberry-pi/step06-bare-metal-programming-in-c-pt6)
+where we'll be using SD-Cards a LOT less and move to a new method of developing.
