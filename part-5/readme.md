@@ -1422,7 +1422,7 @@ pretty rubbish.
 
 - `RPI0` improves a reasonable amount from a 300MHz increase in ARM frequency and the L1 Cache
 - `RPI1B+` improves slightly from just the L1 Cache
-- `RPI2` improves slighly from 300MHz increase in ARM frequency and the L1 Cache
+- `RPI2` improves slightly from 300MHz increase in ARM frequency and the L1 Cache
 - `RPI3B+` improves a reasonable amount with 600MHz increase in ARM frequency and the L1 Cache
 - `RPI4` improves a reasonable amount with the largest increase of 900MHz increase in ARM Frequency
   and the L1 Cache
